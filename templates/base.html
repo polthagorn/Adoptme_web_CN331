@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Adoptme{% endblock %}</title>
+    <link rel="icon" href="{% static 'img/favicon.ico' %}">
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #e6edf3;
+            font-family: "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-size: 1.5em;
+            color: #58a6ff;
+            margin: 0;
+        }
+        nav a {
+            color: #c9d1d9;
+            text-decoration: none;
+            margin-left: 20px;
+            transition: color 0.2s ease;
+        }
+        nav a:hover {
+            color: #79c0ff;
+        }
+        main {
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 20px;
+            background-color: #161b22;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            color: #8b949e;
+            font-size: 0.9em;
+            border-top: 1px solid #30363d;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Adoptme</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/about/">About</a>
+            <a href="/posts/">Posts</a>
+            <a href="/accounts/login/">Login</a>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        &copy; {{ year|default:2025 }} PetRescue | Made by ผู้ดีBangkok
+    </footer>
+</body>
+</html>
