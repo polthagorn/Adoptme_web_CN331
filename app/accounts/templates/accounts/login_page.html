@@ -4,4 +4,26 @@
 
 {% block content %}
 <h2 style="text-align:center; color:#58a6ff;">Login</h2>
-{% endblock %}
+<form method="POST">
+    {% csrf_token %}
+    <p><input type="text" name="username_or_email" placeholder="Username or Email" required></p>
+    <p><input type="password" id="password" name="password" placeholder="Password" required></p>
+    <p><input type="checkbox" onclick="togglePassword()"> Show Password</p>
+    <button type="submit">Register</button>
+</form>
+<a href="{% url 'register' %}">Register</a>
+
+
+<script>
+function togglePassword() {
+  var pwd = document.getElementById("password");
+  if (pwd.type === "password") {
+    pwd.type = "text";     // show password
+  } else {
+    pwd.type = "password"; // hide password
+  }
+}
+</script>
+{% endblock %}  
+
+
