@@ -1,20 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Register{% endblock %}
 
 {% block content %}
 <h2 style="text-align:center; color:#58a6ff;">Register</h2>
 <form method="POST">
     {% csrf_token %}
     <p><input type="text" name="username" placeholder="Username" required></p>
-    <p><input type="text" name="email" placeholder="Email" required></p>
+    <p><input type="email" name="email" placeholder="Email" required></p>
+    <p><input type="tel" name="phone" placeholder="Phone Number" required></p>
     <p><input type="password" id="password1" name="password" placeholder="Password" required></p>
     <p><input type="password" id="password2" name="confirm_password" placeholder="Confirm Password" required></p>
     <p><input type="checkbox" onclick="togglePasswords()"> Show Passwords</p>
     <p><input type="text" name="first_name" placeholder="First Name" required></p>
     <p><input type="text" name="last_name" placeholder="Last Name" required></p>
     <p><input type="text" name="country" placeholder="Country" required></p>
-    <p><input type="text" name="city" placeholder="City" required></p>
+    <p><input type="text" name="city" placeholder="City / Province" required></p>
     <button type="submit">Register</button>
 </form>
 
