@@ -7,17 +7,19 @@ from .models import Profile
 # Create your views here.
 def login_page(request):
     if request.method == "POST":
-        username = request.POST.get("username")
+        username = request.POST.get("username_or_email")
         password = request.POST.get("password")
 
         user = authenticate(request, username=username, password=password)
-
+        print("hello")
+        print(user)
         if user is not None:
             login(request, user)
-            return redirect("/")  # redirect to homepage
+            return redirect("https://www.facebook.com/")
+            print("hello")
         else:
             messages.error(request, "Wrong username or password")
-            
+
     return render(request, 'accounts/login_page.html')
 
 def register_page(request):
