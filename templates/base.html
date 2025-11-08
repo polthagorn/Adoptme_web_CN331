@@ -30,7 +30,7 @@
     }
   </script>
 
-  <!-- prevent flash -->
+  <!-- Prevent flash -->
   <script>
     (function() {
       if(localStorage.getItem('theme') === 'dark') {
@@ -48,39 +48,50 @@
 
     <!-- Navigation -->
     <nav class="relative flex items-center space-x-4">
+
+      <!-- Desktop Menu -->
       <div class="hidden md:flex space-x-6 items-center">
         <a href="{% url 'home' %}" class="hover:text-accent transition-colors">Home</a>
         <a href="{% url 'about' %}" class="hover:text-accent transition-colors">About</a>
         <a href="{% url 'posts' %}" class="hover:text-accent transition-colors">Posts</a>
-        <a href="{% url 'login' %}" class="hover:text-accent transition-colors">Login</a>
+
+        {% if request.user.is_authenticated %}
+          <a href="{% url 'logout' %}" class="hover:text-accent transition-colors">Logout</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="hover:text-accent transition-colors">Login</a>
+        {% endif %}
 
         <!-- Desktop Theme Toggle -->
-        <button id="theme-toggle" aria-label="Toggle Dark Mode" 
-            class="ml-4 w-10 h-10 rounded-full overflow-hidden hover:scale-105 transition-transform duration-300">
-            <img id="theme-icon" src="{% static 'img/moon.png' %}" alt="theme toggle" class="w-full h-full object-cover transition-all duration-500">
+        <button id="theme-toggle" aria-label="Toggle Dark Mode" class="ml-4 w-10 h-10 rounded-full overflow-hidden hover:scale-105 transition-transform duration-300">
+          <img id="theme-icon" src="{% static 'img/moon.png' %}" alt="theme toggle" class="w-full h-full object-cover transition-all duration-500">
         </button>
       </div>
 
-      <!-- Mobile -->
+      <!-- Mobile Menu & Theme -->
       <div class="md:hidden flex items-center space-x-2">
         <button id="mobile-menu-toggle" aria-label="Open Menu" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">☰</button>
-        <button id="theme-toggle-mobile" aria-label="Toggle Dark Mode" 
-            class="w-10 h-10 rounded-full overflow-hidden hover:scale-105 transition-transform duration-300">
-            <img id="theme-icon-mobile" src="{% static 'img/moon.png' %}" alt="theme toggle" class="w-full h-full object-cover transition-all duration-500">
+        <button id="theme-toggle-mobile" aria-label="Toggle Dark Mode" class="w-10 h-10 rounded-full overflow-hidden hover:scale-105 transition-transform duration-300">
+          <img id="theme-icon-mobile" src="{% static 'img/moon.png' %}" alt="theme toggle" class="w-full h-full object-cover transition-all duration-500">
         </button>
       </div>
 
       <!-- Mobile Menu -->
-      <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-40 bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded-lg shadow-lg flex flex-col p-2 space-y-2 transition-all duration-300">
+      <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-48 bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded-lg shadow-lg flex flex-col p-2 space-y-2 transition-all duration-300">
         <a href="{% url 'home' %}" class="hover:text-accent transition-colors">Home</a>
         <a href="{% url 'about' %}" class="hover:text-accent transition-colors">About</a>
         <a href="{% url 'posts' %}" class="hover:text-accent transition-colors">Posts</a>
-        <a href="{% url 'login' %}" class="hover:text-accent transition-colors">Login</a>
+
+        {% if request.user.is_authenticated %}
+          <span class="text-sm dark:text-darktext">Hi, {{ request.user.first_name }}!</span>
+          <a href="{% url 'logout' %}" class="hover:text-accent transition-colors">Logout</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="hover:text-accent transition-colors">Login</a>
+        {% endif %}
       </div>
     </nav>
   </header>
 
-  <!-- Main -->
+  <!-- Main Content -->
   <main class="flex-grow p-6 transition-colors duration-500">
     {% block content %}{% endblock %}
   </main>
@@ -94,7 +105,7 @@
   <script>
     const root = document.documentElement;
 
-    // Icons
+    // Theme icons
     const moonIcon = "{% static 'img/moon.png' %}";
     const sunIcon = "{% static 'img/sun.png' %}";
 
@@ -128,6 +139,7 @@
     const mobileMenuBtn = document.getElementById('mobile-menu-toggle');
     const mobileMenu = document.getElementById('mobile-menu');
     mobileMenuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+
     document.addEventListener('click', (e) => {
       if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
         mobileMenu.classList.add('hidden');

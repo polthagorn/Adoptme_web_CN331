@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from .models import Profile
+from django.contrib.auth import logout
 
 def login_page(request):
     if request.method == "POST":
@@ -77,3 +78,8 @@ def register_page(request):
         return redirect('login')
 
     return render(request, 'accounts/register_page.html')
+
+def logout_page(request):
+    logout(request)
+    messages.success(request, "You have successfully logged out.")
+    return redirect('home')
