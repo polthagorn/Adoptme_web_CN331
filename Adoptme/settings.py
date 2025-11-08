@@ -154,3 +154,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 from django.conf import settings
 print(settings.DATABASES['default']['ENGINE']) #database engine check
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
