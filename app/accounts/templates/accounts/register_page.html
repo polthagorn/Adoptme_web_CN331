@@ -3,36 +3,57 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
-<h2 style="text-align:center; color:#58a6ff;">Register</h2>
-<form method="POST">
+<div class="max-w-md mx-auto bg-surface dark:bg-darksurface p-8 rounded-2xl shadow-lg transition-colors duration-500">
+  <h2 class="text-3xl font-bold text-accent text-center mb-6">Register</h2>
+  
+  <form method="POST" class="space-y-4">
     {% csrf_token %}
-    <p><input type="text" name="username" placeholder="Username" required></p>
-    <p><input type="email" name="email" placeholder="Email" required></p>
-    <p><input type="tel" name="phone" placeholder="Phone Number" required></p>
-    <p><input type="password" id="password1" name="password" placeholder="Password" required></p>
-    <p><input type="password" id="password2" name="confirm_password" placeholder="Confirm Password" required></p>
-    <p><input type="checkbox" onclick="togglePasswords()"> Show Passwords</p>
-    <p><input type="text" name="first_name" placeholder="First Name" required></p>
-    <p><input type="text" name="last_name" placeholder="Last Name" required></p>
-    <p><input type="text" name="country" placeholder="Country" required></p>
-    <p><input type="text" name="city" placeholder="City / Province" required></p>
-    <button type="submit">Register</button>
-</form>
+    
+    <input type="text" name="username" placeholder="Username" required
+      class="w-full px-4 py-2 border border-border dark:border-darkborder rounded-lg bg-background dark:bg-darksurface text-text dark:text-darktext focus:outline-none focus:ring-2 focus:ring-accent transition-colors duration-300">
 
+    <input type="email" name="email" placeholder="Email" required
+      class="w-full px-4 py-2 border border-border dark:border-darkborder rounded-lg bg-background dark:bg-darksurface text-text dark:text-darktext focus:outline-none focus:ring-2 focus:ring-accent transition-colors duration-300">
+
+    <input type="tel" name="phone" placeholder="Phone Number" required
+      class="w-full px-4 py-2 border border-border dark:border-darkborder rounded-lg bg-background dark:bg-darksurface text-text dark:text-darktext focus:outline-none focus:ring-2 focus:ring-accent transition-colors duration-300">
+
+    <input type="password" id="password1" name="password" placeholder="Password" required
+      class="w-full px-4 py-2 border border-border dark:border-darkborder rounded-lg bg-background dark:bg-darksurface text-text dark:text-darktext focus:outline-none focus:ring-2 focus:ring-accent transition-colors duration-300">
+
+    <input type="password" id="password2" name="confirm_password" placeholder="Confirm Password" required
+      class="w-full px-4 py-2 border border-border dark:border-darkborder rounded-lg bg-background dark:bg-darksurface text-text dark:text-darktext focus:outline-none focus:ring-2 focus:ring-accent transition-colors duration-300">
+
+    <div class="flex items-center space-x-2">
+      <input type="checkbox" id="show-passwords" onclick="togglePasswords()" class="accent-accent">
+      <label for="show-passwords" class="text-sm dark:text-darktext">Show Passwords</label>
+    </div>
+
+    <input type="text" name="first_name" placeholder="First Name" required
+      class="w-full px-4 py-2 border border-border dark:border-darkborder rounded-lg bg-background dark:bg-darksurface text-text dark:text-darktext focus:outline-none focus:ring-2 focus:ring-accent transition-colors duration-300">
+
+    <input type="text" name="last_name" placeholder="Last Name" required
+      class="w-full px-4 py-2 border border-border dark:border-darkborder rounded-lg bg-background dark:bg-darksurface text-text dark:text-darktext focus:outline-none focus:ring-2 focus:ring-accent transition-colors duration-300">
+
+    <input type="text" name="country" placeholder="Country" required
+      class="w-full px-4 py-2 border border-border dark:border-darkborder rounded-lg bg-background dark:bg-darksurface text-text dark:text-darktext focus:outline-none focus:ring-2 focus:ring-accent transition-colors duration-300">
+
+    <input type="text" name="city" placeholder="City / Province" required
+      class="w-full px-4 py-2 border border-border dark:border-darkborder rounded-lg bg-background dark:bg-darksurface text-text dark:text-darktext focus:outline-none focus:ring-2 focus:ring-accent transition-colors duration-300">
+
+    <button type="submit" class="w-full bg-accent text-white py-2 rounded-lg hover:bg-accent/90 transition-colors duration-300 font-semibold">
+      Register
+    </button>
+  </form>
+
+</div>
 
 <script>
 function togglePasswords() {
-  var p1 = document.getElementById("password1");
-  var p2 = document.getElementById("password2");
-
-  if (p1.type === "password") {
-    p1.type = "text";
-    p2.type = "text";
-  } else {
-    p1.type = "password";
-    p2.type = "password";
-  }
+  const p1 = document.getElementById("password1");
+  const p2 = document.getElementById("password2");
+  p1.type = p1.type === "password" ? "text" : "password";
+  p2.type = p2.type === "password" ? "text" : "password";
 }
 </script>
-
-{% endblock %}  
+{% endblock %}
