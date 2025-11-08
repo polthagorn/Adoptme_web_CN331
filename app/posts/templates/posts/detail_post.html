@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }}{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto bg-surface dark:bg-darksurface p-6 rounded-lg shadow">
+  <h1 class="text-3xl font-bold mb-2">{{ post.title }}</h1>
+  <p class="text-gray-500 mb-4">
+    By {{ post.author.username }} on {{ post.created_at|date:"M d, Y" }}
+  </p>
+
+  {% if post.image %}
+  <img src="{{ post.image.url }}" alt="Post image" class="rounded-lg mb-4">
+  {% endif %}
+
+  <p class="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-line">{{ post.content }}</p>
+
+  {% if user == post.author %}
+  <div class="mt-6 flex space-x-3">
+    <a href="{% url 'edit_post' post.id %}" class="bg-yellow-400 text-black px-3 py-2 rounded hover:bg-yellow-500">Edit</a>
+    <a href="{% url 'delete_post' post.id %}" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">Delete</a>
+  </div>
+  {% endif %}
+
+  <div class="mt-6">
+    <a href="{% url 'posts' %}" class="text-accent hover:underline">← Back to posts</a>
+  </div>
+</div>
+{% endblock %}

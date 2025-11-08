@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Edit Post{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto mt-10 bg-surface dark:bg-darksurface p-8 rounded-2xl shadow-lg transition-colors duration-500">
+  <h2 class="text-3xl font-bold mb-6 text-accent text-center">Edit Post</h2>
+
+  <form method="POST" enctype="multipart/form-data" class="space-y-5">
+    {% csrf_token %}
+    
+    <!-- Title -->
+    <div>
+      <label for="id_title" class="block text-sm font-semibold mb-2">Title</label>
+      <input type="text" name="title" id="id_title" 
+             class="w-full p-3 border border-border dark:border-darkborder rounded-lg bg-white dark:bg-darksurface text-text dark:text-darktext focus:ring-2 focus:ring-accent focus:outline-none"
+             value="{{ form.title.value|default_if_none:'' }}">
+      {% if form.title.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.title.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Image -->
+    <div>
+      <label for="id_image" class="block text-sm font-semibold mb-2">Image</label>
+      {% if form.instance.image %}
+        <img src="{{ form.instance.image.url }}" alt="Current image" class="mb-2 w-48 h-auto rounded-lg">
+      {% endif %}
+      <input type="file" name="image" id="id_image"
+             class="w-full border border-border dark:border-darkborder rounded-lg p-2 bg-white dark:bg-darksurface text-text dark:text-darktext">
+      {% if form.image.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.image.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Content -->
+    <div>
+      <label for="id_content" class="block text-sm font-semibold mb-2">Content</label>
+      <textarea name="content" id="id_content" rows="5"
+                class="w-full p-3 border border-border dark:border-darkborder rounded-lg bg-white dark:bg-darksurface text-text dark:text-darktext focus:ring-2 focus:ring-accent focus:outline-none">{{ form.content.value|default_if_none:'' }}</textarea>
+      {% if form.content.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.content.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Submit -->
+    <div class="text-center">
+      <button type="submit" class="bg-accent hover:bg-accent/90 text-white font-semibold px-6 py-2 rounded-lg shadow transition duration-200">
+        Save Changes
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
