@@ -4,23 +4,30 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from .models import Profile
 
-# Create your views here.
 def login_page(request):
     if request.method == "POST":
-        username = request.POST.get("username_or_email")
+        username_or_email = request.POST.get("username_or_email")
         password = request.POST.get("password")
 
-        user = authenticate(request, username=username, password=password)
-        print("hello")
-        print(user)
+        # Try username first
+        user = authenticate(request, username=username_or_email, password=password)
+
+        # If not found, try email
+        if user is None:
+            try:
+                u = User.objects.get(email=username_or_email)
+                user = authenticate(request, username=u.username, password=password)
+            except User.DoesNotExist:
+                user = None
+
         if user is not None:
             login(request, user)
-            return redirect("https://www.facebook.com/")
-            print("hello")
+            return redirect('/')  # Redirect to homepage
         else:
             messages.error(request, "Wrong username or password")
 
     return render(request, 'accounts/login_page.html')
+
 
 def register_page(request):
     if request.method == "POST":
@@ -34,17 +41,22 @@ def register_page(request):
         country = request.POST.get('country')
         city = request.POST.get('city')
 
-        # Password Match Check
+        # Password match check
         if password != confirm_password:
             messages.error(request, "Passwords do not match")
             return redirect('register')
 
-        # Username Already Exists
+        # Username already exists
         if User.objects.filter(username=username).exists():
             messages.error(request, "Username already taken")
             return redirect('register')
 
-        # Create User
+        # Email already exists
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered")
+            return redirect('register')
+
+        # Create user
         user = User.objects.create_user(
             username=username,
             email=email,
@@ -53,7 +65,7 @@ def register_page(request):
             last_name=last_name,
         )
 
-        # Create Profile
+        # Create profile
         Profile.objects.create(
             user=user,
             phone=phone,
