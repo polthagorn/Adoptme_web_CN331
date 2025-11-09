@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from .models import Profile
 from django.contrib.auth import logout
 
@@ -83,3 +84,8 @@ def logout_page(request):
     logout(request)
     messages.success(request, "You have successfully logged out.")
     return redirect('home')
+
+@login_required
+def profile_page(request):
+    profile = request.user.profile  # get profile of logged in user
+    return render(request, 'accounts/profile_page.html', {'profile': profile})

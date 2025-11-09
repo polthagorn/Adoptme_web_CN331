@@ -3,6 +3,10 @@ from django.contrib.auth.decorators import login_required
 from .models import Post
 from .forms import PostForm
 
+
+def welcome(request):
+    return render(request, 'posts/welcome.html')
+
 def home(request):
     return render(request, 'posts/index.html')
 
