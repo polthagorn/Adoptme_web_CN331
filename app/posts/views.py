@@ -55,3 +55,22 @@ def delete_post(request, post_id):
         return redirect('posts')
     return render(request, 'posts/delete_post.html', {'post': post})
 
+
+'''shelter post creation view'''
+@login_required
+def create_post(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.author = request.user
+            
+            # check if the user has an approved shelter profile
+            if hasattr(request.user, 'shelter_profile') and request.user.shelter_profile.status == 'APPROVED':
+                post.shelter = request.user.shelter_profile
+            
+            post.save()
+            return redirect('posts')
+    else:
+        form = PostForm()
+    return render(request, 'posts/create_post.html', {'form': form})
