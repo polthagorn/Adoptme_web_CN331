@@ -3,7 +3,7 @@ name: Django Unit Tests with PostgreSQL
 on:
   push:
     branches:
-      - testing
+      - test
   workflow_dispatch:
 
 jobs:
