@@ -5,7 +5,7 @@ class ShelterRegistrationForm(forms.ModelForm):
     class Meta:
         model = ShelterProfile
         fields = [
-            'name', 'description', 'address', 'phone_number',
+            'name', 'description', 'address', 'phone',
             'profile_image', 'cover_image', 'verification_document'
         ]
         help_texts = {
@@ -21,7 +21,7 @@ class ShelterRegistrationForm(forms.ModelForm):
         self.fields['name'].widget.attrs.update({'class': common_classes})
         self.fields['description'].widget.attrs.update({'class': common_classes, 'rows': 4})
         self.fields['address'].widget.attrs.update({'class': common_classes, 'rows': 3})
-        self.fields['phone_number'].widget.attrs.update({'class': common_classes})
+        self.fields['phone'].widget.attrs.update({'class': common_classes})
         
         self.fields['profile_image'].widget.attrs.update({'class': file_input_classes})
         self.fields['cover_image'].widget.attrs.update({'class': file_input_classes})
@@ -31,7 +31,7 @@ class ShelterUpdateForm(forms.ModelForm):
     class Meta:
         model = ShelterProfile
         fields = [
-            'name', 'description', 'address', 'phone_number',
+            'name', 'description', 'address', 'phone',
             'profile_image', 'cover_image'
         ]
 
@@ -43,7 +43,7 @@ class ShelterUpdateForm(forms.ModelForm):
         self.fields['name'].widget.attrs.update({'class': common_classes})
         self.fields['description'].widget.attrs.update({'class': common_classes, 'rows': 4})
         self.fields['address'].widget.attrs.update({'class': common_classes, 'rows': 3})
-        self.fields['phone_number'].widget.attrs.update({'class': common_classes})
+        self.fields['phone'].widget.attrs.update({'class': common_classes})
         
         self.fields['profile_image'].widget.attrs.update({'class': file_input_classes})
         self.fields['cover_image'].widget.attrs.update({'class': file_input_classes})   

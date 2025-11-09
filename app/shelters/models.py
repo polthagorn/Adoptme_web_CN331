@@ -13,7 +13,7 @@ class ShelterProfile(models.Model):
     name = models.CharField(max_length=255, verbose_name="shelter name")
     description = models.TextField(verbose_name="about the shelter")
     address = models.TextField(verbose_name="address")
-    phone_number = models.CharField(max_length=20, verbose_name="phone number")
+    phone = models.CharField(max_length=20, verbose_name="phone number")
     email = models.EmailField(verbose_name="email address")
 
     profile_image = models.ImageField(upload_to='shelter_profiles/', null=True, blank=True, verbose_name="profile image")
