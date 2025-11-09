@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-2xl font-bold">Manage Product</h2>
+            <p class="text-gray-600">Store: {{ store.name }}</p>
+        </div>
+        {% if store.status == 'APPROVED' %}
+            <a href="{% url 'product_create' pk=store.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                + Add New Product
+            </a>
+        {% else %}
+            <p class="text-yellow-600 bg-yellow-100 p-2 rounded">Your store haven't got approved yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for product in products %}
+            <div class="bg-white border border-gray-200 rounded-lg shadow">
+                {% if product.image %}
+                    <img class="rounded-t-lg h-48 w-full object-cover" src="{{ product.image.url }}" alt="{{ product.name }}" />
+                {% else %}
+                    <div class="rounded-t-lg h-48 w-full bg-gray-200 flex items-center justify-center">
+                        <span class="text-gray-500">no image</span>
+                    </div>
+                {% endif %}
+                <div class="p-5">
+                    <h5 class="mb-2 text-xl font-bold tracking-tight text-gray-900">{{ product.name }}</h5>
+                    <p class="mb-3 font-normal text-gray-700">Price: {{ product.price }} Baht</p>
+                    <p class="mb-3 font-normal text-gray-700">Stock: {{ product.stock }} Piece</p>
+
+                </div>
+            </div>
+        {% empty %}
+            <p class="col-span-full text-center text-gray-500">Your store don't have any product yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock content %}

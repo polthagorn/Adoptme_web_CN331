@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'app.posts',
     'app.notifications',
     'app.dashboard',
+    'app.stores',
+    
 ]
 
 MIDDLEWARE = [

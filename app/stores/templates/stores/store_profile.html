@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}{{ store.name }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <!-- Header  -->
+    <div class="bg-surface dark:bg-darksurface p-8 rounded-lg shadow-md mb-8 border border-border dark:border-darkborder">
+        <div class="h-48 bg-gray-200 dark:bg-gray-700 rounded-t-lg -mt-8 -mx-8"></div>
+        <div class="flex items-end -mt-16 ml-8">
+            <div class="w-32 h-32 bg-gray-300 dark:bg-gray-600 rounded-full border-4 border-surface dark:border-darksurface"></div>
+        </div>
+        <div class="mt-4">
+            <h1 class="text-3xl font-bold text-text dark:text-darktext">{{ store.name }}</h1>
+            <p class="text-gray-500 dark:text-gray-400">{{ store.get_store_type_display }}</p>
+            <p class="mt-4 text-text dark:text-darktext">{{ store.description }}</p>
+        </div>
+    </div>
+
+    <!-- Products -->
+    <h2 class="text-2xl font-bold text-text dark:text-darktext mb-4">All products from {{ store.name }}</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {% for product in products %}
+            <div class="bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded-lg shadow flex flex-col group transition-shadow hover:shadow-xl">
+                <a href="{% url 'product_detail' pk=product.pk %}" class="overflow-hidden rounded-t-lg">
+                    {% if product.image %}
+                        <img class="h-48 w-full object-cover group-hover:scale-105 transition-transform duration-300" src="{{ product.image.url }}" alt="{{ product.name }}" />
+                    {% else %}
+                        <div class="h-48 w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <span class="text-gray-500 dark:text-gray-400">no image</span>
+                        </div>
+                    {% endif %}
+                </a>
+                <div class="p-5 flex-grow flex flex-col">
+                    <a href="{% url 'product_detail' pk=product.pk %}">
+                        <h5 class="mb-2 text-xl font-bold tracking-tight text-text dark:text-darktext group-hover:text-accent transition-colors">{{ product.name }}</h5>
+                    </a>
+                    <p class="mb-3 font-normal text-lg text-accent">{{ product.price }} บาท</p>
+                </div>
+            </div>
+        {% empty %}
+            <p class="col-span-full text-center text-gray-500 dark:text-gray-400">This store don't have any product yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock content %}

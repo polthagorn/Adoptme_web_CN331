@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}My Store - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 max-w-4xl">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+        <h1 class="text-3xl font-bold text-text dark:text-darktext">My Store</h1>
+        <a href="{% url 'store_request' %}" class="mt-4 sm:mt-0 inline-block bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+            + Ask for new store
+        </a>
+    </div>
+
+    <!-- store list -->
+    <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow-md border border-border dark:border-darkborder">
+        <div class="space-y-4">
+            {% for store in my_stores %}
+                <div class="p-4 border-b border-border dark:border-darkborder last:border-b-0 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <!-- store description -->
+                    <div>
+                        <h2 class="text-xl font-semibold text-text dark:text-darktext">{{ store.name }}</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ store.get_store_type_display }}</p>
+                    </div>
+                    
+                    <!-- status and edit store -->
+                    <div class="mt-3 sm:mt-0 flex items-center space-x-4">
+                        <!-- edit store -->
+                        {% if store.status == 'APPROVED' %}
+                            <a href="{% url 'store_manage' pk=store.pk %}" class="bg-green-500 hover:bg-green-600 text-white text-sm font-bold py-2 px-3 rounded-md transition-colors">
+                                Manage Store
+                            </a>
+                        {% endif %}
+
+                        <!-- Status badge -->
+                        {% if store.status == 'APPROVED' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                APPROVED
+                            </span>
+                        {% elif store.status == 'PENDING' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                PENDING
+                            </span>
+                        {% elif store.status == 'REJECTED' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                REJECTED
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center py-10">
+                    <p class="text-gray-500 dark:text-gray-400">Don't have any store yet.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

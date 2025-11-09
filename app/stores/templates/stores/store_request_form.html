@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Ask for new store - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-surface dark:bg-darksurface p-8 rounded-lg shadow-md border border-border dark:border-darkborder">
+    
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <fieldset>
+            <legend class="text-2xl font-bold text-text dark:text-darktext border-b border-border dark:border-darkborder pb-4 mb-6">Ask for new store</legend>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">Your store information will be sent to the administrator for review and approval.</p>
+
+            <!-- Name -->
+            <div class="mb-5">
+                <label for="{{ form.name.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">{{ form.name.label }}</label>
+                {{ form.name }}
+            </div>
+
+            <!-- Description -->
+            <div class="mb-5">
+                <label for="{{ form.description.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">{{ form.description.label }}</label>
+                {{ form.description }}
+            </div>
+
+            <!-- Store Type -->
+            <div class="mb-5">
+                <label for="{{ form.store_type.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">{{ form.store_type.label }}</label>
+                {{ form.store_type }}
+            </div>
+
+        </fieldset>
+
+        <div class="mt-6">
+            <button type="submit" class="w-full text-white bg-accent hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                Submit Request
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock content %}
