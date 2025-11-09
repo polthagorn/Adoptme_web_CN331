@@ -31,6 +31,8 @@ INSTALLED_APPS = [
     'app.notifications',
     'app.dashboard',
     'app.stores',
+    'app.shelters',
+    
 ]
 
 MIDDLEWARE = [
@@ -71,7 +73,7 @@ if DATABASE_URL:
         "default": dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=600,
-            ssl_require=False  # CI / local container ไม่มี SSL
+            ssl_require=False
         )
     }
 else:
