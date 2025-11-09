@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.http import HttpResponseForbidden
 from .models import ShelterProfile
-from .forms import ShelterRegistrationForm
+from .forms import ShelterRegistrationForm, ShelterUpdateForm
 from app.posts.models import Post
 from app.posts.forms import PostForm
 
@@ -48,3 +48,11 @@ class ShelterUpdateView(LoginRequiredMixin, UpdateView):
     def get_object(self, queryset=None):
         return get_object_or_404(ShelterProfile, user=self.request.user)
     
+class ShelterUpdateView(LoginRequiredMixin, UpdateView):
+    model = ShelterProfile
+    form_class = ShelterUpdateForm
+    template_name = 'shelters/shelter_update_form.html'
+    success_url = reverse_lazy('shelter_profile') 
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(ShelterProfile, user=self.request.user)
