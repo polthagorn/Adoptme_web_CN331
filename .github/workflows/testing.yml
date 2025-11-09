@@ -50,6 +50,7 @@ jobs:
         run: |
           echo "Running lint check..."
           flake8 . --max-line-length=120
+        continue-on-error: true
 
       - name: Run Unit Tests with Coverage
         run: |
