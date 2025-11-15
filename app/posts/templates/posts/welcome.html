@@ -5,8 +5,7 @@
 {% block content %}
 {% load static %}
 
-<!-- Full-screen video section -->
-<div class="relative w-full h-screen overflow-hidden">
+<div class="relative w-full h-screen overflow-hidden"><!-- Full-screen video section -->
   <video
     src="{% static 'video/play_with_pet.mp4' %}"
     autoplay
@@ -27,14 +26,13 @@
   <div class="absolute bottom-0 left-0 w-full">
     <img 
       src="{% static 'img/branch_upper.png' %}" 
-      alt="Branch Border"
       class="w-full h-auto"
     >
   </div>
 </div>
 
-<!-- Hot Spring image with branch_lower on top -->
-<div class="w-full overflow-hidden relative">
+
+<div class="w-full overflow-hidden relative"><!-- Full-screen Hot Spring section -->
   <!-- Hot Spring -->
   <img 
     src="{% static 'img/Hot-Spring.webp' %}"
@@ -46,10 +44,39 @@
   <div class="absolute top-0 left-0 w-full">
     <img 
       src="{% static 'img/branch_lower.png' %}"
-      alt="Branch Lower"
+      class="w-full relative z-20"
+    >
+  </div>
+  <!-- bar_upper touching bottom edge of Hot-Spring -->
+    <div class="absolute bottom-0 left-0 w-full">
+    <img 
+      src="{% static 'img/bar_upper.png' %}"
       class="w-full relative z-20"
     >
   </div>
 </div>
 
+<div class="w-full overflow-hidden relative"><!-- Full-screen Forest section -->
+  <!-- Hot Spring -->
+  <img 
+    src="{% static 'img/Forest.webp' %}"
+    alt="Forest"
+    class="w-full -mt-5"
+  >
+
+  <!-- branch_lower touching top edge of Hot-Spring -->
+  <div class="absolute top-0 left-0 w-full">
+    <img 
+      src="{% static 'img/bar_lower.png' %}"
+      class="w-full relative z-20"
+    >
+  </div>
+  <!-- bar_upper touching bottom edge of Hot-Spring -->
+    <div class="absolute bottom-0 left-0 w-full">
+    <img 
+      src="{% static 'img/ripped.png' %}"
+      class="w-full relative z-40"
+    >
+  </div>
+</div>
 {% endblock %}
