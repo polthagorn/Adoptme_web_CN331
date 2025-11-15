@@ -72,11 +72,18 @@
     >
   </div>
   <!-- bar_upper touching bottom edge of Hot-Spring -->
-    <div class="absolute bottom-0 left-0 w-full">
+  <div class="absolute bottom-0 left-0 w-full">
     <img 
-      src="{% static 'img/ripped.png' %}"
-      class="w-full relative z-40"
-    >
+    src="{% static 'img/ripped.png' %}"
+    class="w-full block dark:hidden"
+  >
+
+  <!-- Dark mode version -->
+  <img 
+  src="{% static 'img/ripped_dark.png' %}"
+  class="w-full hidden dark:block"
+  >
   </div>
 </div>
+
 {% endblock %}
