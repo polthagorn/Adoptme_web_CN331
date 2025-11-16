@@ -150,7 +150,7 @@ class StoreUpdateView(LoginRequiredMixin, UpdateView):
 class ProductUpdateView(LoginRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
-    template_name = 'stores/product_form.html'
+    template_name = 'stores/product_update_form.html'
     context_object_name = 'product'
 
     def get_queryset(self):
