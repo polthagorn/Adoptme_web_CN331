@@ -7,6 +7,7 @@ from .models import ShelterProfile
 from .forms import ShelterRegistrationForm, ShelterUpdateForm
 from app.posts.models import Post
 from app.posts.forms import PostForm
+from django.contrib import messages
 
 class ShelterRegisterView(LoginRequiredMixin, CreateView):
     model = ShelterProfile
@@ -17,8 +18,9 @@ class ShelterRegisterView(LoginRequiredMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         # check if the user already has a shelter profile
         if hasattr(request.user, 'shelter_profile'):
-            # if yes, redirect to the profile view
-            return redirect('shelter_profile')
+            profile = request.user.shelter_profile
+            if profile.status in ['PENDING', 'APPROVED']:
+                return redirect('shelter_profile')
         return super().dispatch(request, *args, **kwargs) # pragma: no cover
 
     def form_valid(self, form): # pragma: no cover
@@ -49,6 +51,13 @@ class ShelterUpdateView(LoginRequiredMixin, UpdateView):
     def get_object(self, queryset=None):
         return get_object_or_404(ShelterProfile, user=self.request.user)
     
+    def form_valid(self, form):
+        shelter_profile = form.save(commit=False)
+        shelter_profile.status = 'PENDING'
+        shelter_profile.save()
+        messages.success(self.request, 'Your application has been re-submitted and is pending review.')
+        return redirect(self.get_success_url())
+
 class PublicShelterProfileView(DetailView):
     model = ShelterProfile
     template_name = 'shelters/public_shelter_profile.html' # สร้าง template ใหม่

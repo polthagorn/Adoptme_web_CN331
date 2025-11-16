@@ -4,20 +4,20 @@
 
 {% block content %}
 <div class="container mx-auto px-4">
-    <!-- status -->
+    <!-- ส่วนแสดงสถานะ -->
     {% if shelter.status == 'PENDING' %}
         <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mb-6" role="alert">
             <p class="font-bold">PENDING</p>
-            <p>Admin is verifying you application.</p>
+            <p>Admin is verifying your application.</p>
         </div>
     {% elif shelter.status == 'REJECTED' %}
         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6" role="alert">
             <p class="font-bold">REJECTED</p>
-            <p>Your application has been rejected. Please contact the administrator for further information.</p>
+            <p>Your application has been rejected. You can edit your information and re-apply.</p>
         </div>
     {% endif %}
 
-    <!-- Profile -->
+    <!-- ส่วนโปรไฟล์ -->
     <div class="bg-surface dark:bg-darksurface rounded-lg shadow-md border border-border dark:border-darkborder">
         <!-- Cover Image -->
         {% if shelter.cover_image %}
@@ -41,9 +41,19 @@
                             <h1 class="text-2xl font-bold text-text dark:text-darktext">{{ shelter.name }}</h1>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Status: {{ shelter.get_status_display }}</p>
                         </div>
-                        <a href="{% url 'shelter_update' %}" class="mt-3 sm:mt-0 text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text dark:text-darktext font-bold py-2 px-4 rounded-lg">
-                            Profile Edit
-                        </a>
+                        
+                        <!-- ================================================== -->
+                        <!-- **ปุ่มแก้ไขโปรไฟล์ / สมัครใหม่**                  -->
+                        <!-- ================================================== -->
+                        {% if shelter.status == 'REJECTED' %}
+                            <a href="{% url 'shelter_update' %}" class="mt-3 sm:mt-0 text-sm bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                                Edit and Re-apply
+                            </a>
+                        {% else %}
+                            <a href="{% url 'shelter_update' %}" class="mt-3 sm:mt-0 text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text dark:text-darktext font-bold py-2 px-4 rounded-lg transition-colors">
+                                Profile Edit
+                            </a>
+                        {% endif %}
                     </div>
                     <p class="mt-2 text-gray-600 dark:text-gray-400">{{ shelter.description }}</p>
                 </div>
@@ -51,18 +61,18 @@
         </div>
     </div>
 
-    <!-- Post -->
+    <!-- ส่วนจัดการโพสต์ (จะแสดงก็ต่อเมื่อสถานะเป็น APPROVED) -->
     {% if shelter.status == 'APPROVED' %}
         <div class="mt-8 bg-surface dark:bg-darksurface p-6 rounded-lg shadow-md border border-border dark:border-darkborder">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-text dark:text-darktext">Feed of {{ shelter.name }}</h2>
-                <!-- post vreate -->
+                <!-- ปุ่มสร้างโพสต์ -->
                 <a href="{% url 'create_post' %}" class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg text-sm">
                     + Create New Post
                 </a>
             </div>
             
-            <!-- Shelter feed -->
+            <!-- ฟีดของ Shelter -->
             <div class="space-y-6">
                 {% for post in shelter_posts %}
                     <div class="border-b border-border dark:border-darkborder pb-4 last:border-b-0">
@@ -76,7 +86,7 @@
                             <img src="{{ post.image.url }}" alt="{{ post.title }}" class="mt-2 rounded-lg max-h-64">
                         {% endif %}
                         <p class="text-sm text-gray-400 mt-2">
-                            Create at {{ post.created_at|date:"M d, Y" }}
+                            Created at {{ post.created_at|date:"M d, Y" }}
                         </p>
 
                         {% if request.user == post.author %}
@@ -92,7 +102,7 @@
 
                     </div>
                 {% empty %}
-                    <p class="text-gray-500">No post yet</p>
+                    <p class="text-gray-500">No posts yet</p>
                 {% endfor %}
             </div>
         </div>
