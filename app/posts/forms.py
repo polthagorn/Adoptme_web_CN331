@@ -1,10 +1,21 @@
 from django import forms
 from .models import Post, Comment
 
+
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['title', 'content', 'image']
+        fields = ['title', 'content', 'image', 'location', 'tag']
+        widgets = {
+            'tag': forms.Select(attrs={
+                'class': 'w-full p-2 border border-border dark:border-darkborder rounded-md bg-background dark:bg-darkbg text-text dark:text-darktext'
+            }),
+            'location': forms.TextInput(attrs={
+                'class': 'w-full p-2 border border-border dark:border-darkborder rounded-md bg-background dark:bg-darkbg text-text dark:text-darktext',
+                'placeholder': 'สถานที่ (เช่น Bangkok)'
+            }),
+        }
+
 
 class CommentForm(forms.ModelForm):
     class Meta:
@@ -18,5 +29,5 @@ class CommentForm(forms.ModelForm):
             })
         }
         labels = {
-            'content': '' # No label for content field
+            'content': ''
         }
