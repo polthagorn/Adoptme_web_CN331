@@ -15,14 +15,26 @@
     class="w-full h-full object-cover"
   ></video>
 
-  <div class="absolute inset-0 flex items-center justify-center">
-    <img 
+<div class="absolute inset-0 flex flex-col items-center justify-center z-30 space-y-8 scale-[1.5]">
+  <img 
       src="{% static 'img/AM_logo.png' %}" 
       alt="Adopt Me!"
-      class="w-48 md:w-72 drop-shadow-xl scale-[2.8]"
+      class="w-48 md:w-72 drop-shadow-xl scale-[1.5]"
     >
-  </div>
-
+  {% if user.is_authenticated %}
+      <a href="{% url 'home' %}">
+        <img src="{% static 'img/getstart_button.png' %}" 
+             alt="Get Started"
+             class="cursor-pointer transform transition-all duration-200 hover:scale-105 active:scale-90 w-64 md:w-72">
+      </a>
+  {% else %}
+      <a href="{% url 'login' %}">
+        <img src="{% static 'img/getstart_button.png' %}" 
+             alt="Get Started"
+             class="cursor-pointer transform transition-all duration-200 hover:scale-105 active:scale-90 w-64 md:w-72">
+      </a>
+  {% endif %}
+</div>
   <div class="absolute bottom-0 left-0 w-full">
     <img 
       src="{% static 'img/branch_upper.png' %}" 
