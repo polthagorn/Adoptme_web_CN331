@@ -4,7 +4,6 @@ from django.contrib.auth.decorators import login_required
 from .models import Post, Comment
 from .forms import PostForm, CommentForm
 
-
 def welcome(request):
     return render(request, 'posts/welcome.html')
 
