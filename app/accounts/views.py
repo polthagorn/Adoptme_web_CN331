@@ -111,5 +111,17 @@ def logout_page(request):
 
 @login_required
 def profile_page(request):
-    profile = request.user.profile
+    user = request.user
+
+    try:
+        profile = user.profile
+    except Profile.DoesNotExist:
+        profile = Profile.objects.create(
+            user=user,
+            phone="N/A",
+            country="N/A",
+            city="N/A"
+        )
+
     return render(request, 'accounts/profile_page.html', {'profile': profile})
+
