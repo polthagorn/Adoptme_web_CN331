@@ -20,12 +20,12 @@ class StoreRequestForm(forms.ModelForm):
 class StoreUpdateForm(forms.ModelForm):
     class Meta:
         model = Store
-        # อนุญาตให้แก้ไขได้แค่ชื่อ, คำอธิบาย, รูปโปรไฟล์, และรูปหน้าปก
+        # only allow updating name, description, profile_image, and cover_image
         fields = ['name', 'description', 'profile_image', 'cover_image']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # กำหนดคลาส Tailwind ให้กับฟอร์ม
+        # tailwindcss classes
         common_classes = "w-full p-2 border border-border dark:border-darkborder rounded-md bg-background dark:bg-darkbg text-text dark:text-darktext focus:ring-accent focus:border-accent"
         image_classes = "w-full text-sm text-text dark:text-darktext border border-border dark:border-darkborder rounded-lg cursor-pointer bg-background dark:bg-darkbg"
 

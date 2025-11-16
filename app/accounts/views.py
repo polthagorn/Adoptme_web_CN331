@@ -1,10 +1,12 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from .models import Profile
+from app.posts.models import Post
+from .forms import UserUpdateForm, ProfileUpdateForm
 
 
 def login_page(request):
@@ -111,5 +113,67 @@ def logout_page(request):
 
 @login_required
 def profile_page(request):
-    profile = request.user.profile
-    return render(request, 'accounts/profile_page.html', {'profile': profile})
+    # pull user posts from Post model
+    user_posts = Post.objects.filter(author=request.user).order_by('-created_at')
+    
+    # create context
+    context = {
+        'profile': request.user.profile,
+        'posts': user_posts,
+    }
+    
+    return render(request, 'accounts/profile_page.html', context)
+
+@login_required
+def profile_edit_page(request):
+    if request.method == 'POST':
+        if 'remove_image' in request.POST:
+            profile = request.user.profile
+
+            profile.image = 'default.jpg'    
+            profile.save()
+            messages.success(request, 'Your profile picture has been removed.')
+            return redirect('profile_edit')
+
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+
+         # --- ส่วนสำคัญคือ u_form.is_valid() ---
+        # ถ้า is_valid() เป็น False, Django จะผูก Error เข้ากับฟิลด์นั้นๆ ใน u_form โดยอัตโนมัติ
+        if u_form.is_valid() and p_form.is_valid():
+            new_username = u_form.cleaned_data.get('username')
+            
+            if User.objects.exclude(pk=request.user.pk).filter(username=new_username).exists():
+                # --- เปลี่ยนจากการใช้ messages.error มาเป็นการเพิ่ม Error ให้กับฟอร์มโดยตรง ---
+                u_form.add_error('username', f"Username '{new_username}' is already taken.")
+                # จากนั้นปล่อยให้โค้ดทำงานต่อไปยังส่วน render ด้านล่าง
+            else:
+                u_form.save()
+                p_form.save()
+                messages.success(request, 'Your profile has been updated successfully!')
+                return redirect('profile')
+
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+    # เมื่อมี Error, u_form ที่มี Error จะถูกส่งกลับไปที่ Template ผ่าน context นี้
+    return render(request, 'accounts/profile_edit_page.html', context)
+
+def user_profile_page(request, username):
+    # หา user จาก username ที่ได้รับมา
+    user_obj = get_object_or_404(User, username=username)
+    # ดึงโพสต์ทั้งหมดของ user คนนั้น
+    user_posts = Post.objects.filter(author=user_obj).order_by('-created_at')
+    
+    context = {
+        'profile_user': user_obj, # ส่ง user object ไปที่ template
+        'posts': user_posts,
+    }
+    # เราสามารถสร้าง template ใหม่ หรือใช้ template เดิมก็ได้
+    # ในที่นี้จะสร้าง template ใหม่เพื่อให้แยกจากกันชัดเจน
+    return render(request, 'accounts/user_profile_page.html', context)

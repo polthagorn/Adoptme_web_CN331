@@ -56,3 +56,14 @@ class ShelterUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_object(self, queryset=None):
         return get_object_or_404(ShelterProfile, user=self.request.user)
+    
+class PublicShelterProfileView(DetailView):
+    model = ShelterProfile
+    template_name = 'shelters/public_shelter_profile.html' # สร้าง template ใหม่
+    context_object_name = 'shelter'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        shelter = self.get_object()
+        context['shelter_posts'] = Post.objects.filter(shelter=shelter).order_by('-created_at')
+        return context

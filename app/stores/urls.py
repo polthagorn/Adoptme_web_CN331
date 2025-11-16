@@ -7,7 +7,10 @@ from .views import (
     ProductDetailView,
     StoreManageView,
     StoreProfileView,
-    StoreUpdateView
+    StoreUpdateView,
+    ProductUpdateView,
+    ProductDeleteView,
+
 )
 
 urlpatterns = [
@@ -19,4 +22,6 @@ urlpatterns = [
     path('<int:pk>/manage/', StoreManageView.as_view(), name='store_manage'),
     path('<int:pk>/add-product/', ProductCreateView.as_view(), name='product_create'),
     path('<int:pk>/edit/', StoreUpdateView.as_view(), name='store_update'),
+    path('product/<int:pk>/edit/', ProductUpdateView.as_view(), name='product_update'),
+    path('product/<int:pk>/delete/', ProductDeleteView.as_view(), name='product_delete'),
 ]

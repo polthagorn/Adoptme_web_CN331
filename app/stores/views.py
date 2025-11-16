@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from django.views.generic import CreateView, ListView, DetailView, UpdateView
+from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy, reverse
 from django.http import HttpResponseForbidden
@@ -146,3 +146,37 @@ class StoreUpdateView(LoginRequiredMixin, UpdateView):
         if store.owner != request.user:
             return HttpResponseForbidden("You do not have permission to edit this store.")
         return handler
+
+class ProductUpdateView(LoginRequiredMixin, UpdateView):
+    model = Product
+    form_class = ProductForm
+    template_name = 'stores/product_form.html'
+    context_object_name = 'product'
+
+    def get_queryset(self):
+        # only allow updating products that belong to the user's store
+        return Product.objects.filter(store__owner=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['store'] = self.get_object().store
+        return context
+
+    def get_success_url(self):
+        # when update is successful, redirect to store manage page
+        product = self.get_object()
+        return reverse_lazy('store_manage', kwargs={'pk': product.store.pk})
+
+class ProductDeleteView(LoginRequiredMixin, DeleteView):
+    model = Product
+    template_name = 'stores/product_confirm_delete.html'
+    context_object_name = 'product'
+
+    def get_queryset(self):
+        # only allow deleting products that belong to the user's store
+        return Product.objects.filter(store__owner=self.request.user)
+
+    def get_success_url(self):
+        # redirect to store manage page after deletion
+        product = self.get_object()
+        return reverse_lazy('store_manage', kwargs={'pk': product.store.pk})
