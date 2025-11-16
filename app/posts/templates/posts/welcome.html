@@ -5,7 +5,9 @@
 {% block content %}
 {% load static %}
 
-<div class="relative w-full h-screen overflow-hidden"><!-- Full-screen video section -->
+<!-- ✦✦ FULLSCREEN VIDEO SECTION ✦✦ -->
+<div class="relative w-full h-screen overflow-hidden">
+
   <video
     src="{% static 'video/play_with_pet.mp4' %}"
     autoplay
@@ -15,87 +17,208 @@
     class="w-full h-full object-cover"
   ></video>
 
-<div class="absolute inset-0 flex flex-col items-center justify-center z-30 space-y-8 scale-[1.5]">
-  <img 
+  <div class="absolute inset-0 flex flex-col items-center justify-center z-30 space-y-8 scale-[1.5]">
+
+    <img 
       src="{% static 'img/AM_logo.png' %}" 
       alt="Adopt Me!"
       class="w-48 md:w-72 drop-shadow-xl scale-[1.5]"
     >
-  {% if user.is_authenticated %}
+
+    {% if user.is_authenticated %}
       <a href="{% url 'home' %}">
         <img src="{% static 'img/getstart_button.png' %}" 
              alt="Get Started"
              class="cursor-pointer transform transition-all duration-200 hover:scale-105 active:scale-90 w-64 md:w-72">
       </a>
-  {% else %}
+    {% else %}
       <a href="{% url 'login' %}">
         <img src="{% static 'img/getstart_button.png' %}" 
              alt="Get Started"
              class="cursor-pointer transform transition-all duration-200 hover:scale-105 active:scale-90 w-64 md:w-72">
       </a>
-  {% endif %}
-</div>
-  <div class="absolute bottom-0 left-0 w-full">
-    <img 
-      src="{% static 'img/branch_upper.png' %}" 
-      class="w-full h-auto"
-    >
+    {% endif %}
+  </div>
+
+  <div class="absolute bottom-0 left-0 w-full z-30">
+    <img src="{% static 'img/branch_upper.png' %}" class="w-full h-auto">
   </div>
 </div>
 
 
-<div class="w-full overflow-hidden relative"><!-- Full-screen Hot Spring section -->
-  <!-- Hot Spring -->
+
+<!-- ✦✦ HOT SPRING SECTION ✦✦ -->
+<div class="w-full overflow-hidden relative">
+
+  <!-- Background Image -->
   <img 
     src="{% static 'img/Hot-Spring.webp' %}"
     alt="Hot Spring"
     class="w-full -mt-5"
   >
 
-  <!-- branch_lower touching top edge of Hot-Spring -->
-  <div class="absolute top-0 left-0 w-full">
-    <img 
-      src="{% static 'img/branch_lower.png' %}"
-      class="w-full relative z-20"
-    >
+  <!-- ✦ TEXT LEFT + IMAGE RIGHT OVERLAY ✦ -->
+  <div class="absolute inset-0 z-30 flex items-center justify-center">
+      <div class="max-w-6xl w-full px-6 
+                  flex flex-col md:flex-row 
+                  items-center justify-center gap-12">
+
+          <!-- TEXT LEFT -->
+          <div class="w-full md:w-1/2 text-white text-center md:text-left space-y-4">
+              <h2 class="text-3xl md:text-4xl font-bold drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
+                  Find your perfect companion.
+              </h2>
+              <p class="text-lg md:text-xl drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
+                  Bring love into your life.
+              </p>
+              <p class="text-lg md:text-xl drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
+                  And your home might be the perfect place.
+              </p>
+          </div>
+
+          <!-- IMAGE RIGHT (ANIMATED) -->
+          <div class="flex justify-center md:justify-start w-full md:w-1/2">
+              <img 
+                  src="{% static 'img/modern_house.webp' %}"
+                  class="w-96 md:w-[500px] drop-shadow-2xl scale-125
+                         opacity-0 translate-x-20 transition-all duration-700 ease-out reveal"
+                  alt="Modern House"
+              >
+          </div>
+
+      </div>
   </div>
-  <!-- bar_upper touching bottom edge of Hot-Spring -->
-    <div class="absolute bottom-0 left-0 w-full">
-    <img 
-      src="{% static 'img/bar_upper.png' %}"
-      class="w-full relative z-20"
-    >
+
+  <!-- Gradient L→R -->
+  <div id="hot-gradient"
+       class="absolute inset-0 opacity-0 transition-opacity duration-700
+              bg-gradient-to-r from-[#44bcec66] to-[#44bcec00] pointer-events-none">
+  </div>
+
+  <div class="absolute top-0 left-0 w-full">
+    <img src="{% static 'img/branch_lower.png' %}" class="w-full relative z-20">
+  </div>
+
+  <div class="absolute bottom-0 left-0 w-full">
+    <img src="{% static 'img/bar_upper.png' %}" class="w-full relative z-20">
   </div>
 </div>
 
-<div class="w-full overflow-hidden relative"><!-- Full-screen Forest section -->
-  <!-- Hot Spring -->
+
+
+
+<!-- ✦✦ FOREST SECTION ✦✦ -->
+<div class="w-full overflow-hidden relative">
+
   <img 
     src="{% static 'img/Forest.webp' %}"
     alt="Forest"
     class="w-full -mt-5"
   >
 
-  <!-- branch_lower touching top edge of Hot-Spring -->
-  <div class="absolute top-0 left-0 w-full">
-    <img 
-      src="{% static 'img/bar_lower.png' %}"
-      class="w-full relative z-20"
-    >
-  </div>
-  <!-- bar_upper touching bottom edge of Hot-Spring -->
-  <div class="absolute bottom-0 left-0 w-full">
-    <img 
-    src="{% static 'img/ripped.png' %}"
-    class="w-full block dark:hidden"
-  >
+  <!-- OVERLAY (IMAGE LEFT + TEXT RIGHT) -->
+  <div class="absolute inset-0 z-30 flex items-center justify-center">
+    <div class="max-w-6xl w-full px-6 
+                flex flex-col md:flex-row 
+                items-center justify-center gap-12">
 
-  <!-- Dark mode version -->
-  <img 
-  src="{% static 'img/ripped_dark.png' %}"
-  class="w-full hidden dark:block"
-  >
+        <!-- IMAGE LEFT (ANIMATED) -->
+        <div class="flex justify-center md:justify-start w-full md:w-1/2">
+            <img 
+                src="{% static 'img/Shop.png' %}" 
+                class="w-80 md:w-[450px] drop-shadow-2xl scale-125
+                       opacity-0 -translate-x-20 transition-all duration-700 ease-out reveal"
+                alt="Shop"
+            >
+        </div>
+
+        <!-- TEXT RIGHT -->
+        <div class="w-full md:w-1/2 text-white text-center md:text-left space-y-4">
+            <h2 class="text-3xl md:text-4xl font-bold drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
+                Join a community that loves pets like family.
+            </h2>
+            <p class="text-lg md:text-xl drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
+                Everything your pet needs in one marketplace.
+            </p>
+            <p class="text-lg md:text-xl drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
+                We watch each other's backs — especially for lost pets.
+            </p>
+        </div>
+
+    </div>
+  </div>
+
+
+
+  <!-- Gradient R→L -->
+  <div id="forest-gradient"
+       class="absolute inset-0 opacity-0 transition-opacity duration-700
+              bg-gradient-to-l from-[#44bcec66] to-[#44bcec00] pointer-events-none">
+  </div>
+
+  <div class="absolute top-0 left-0 w-full">
+    <img src="{% static 'img/bar_lower.png' %}" class="w-full relative z-20">
+  </div>
+
+  <div class="absolute bottom-0 left-0 w-full">
+    <img src="{% static 'img/ripped.png' %}" class="w-full block dark:hidden">
+    <img src="{% static 'img/ripped_dark.png' %}" class="w-full hidden dark:block">
   </div>
 </div>
+
+
+
+
+
+<!-- ✦ SCROLL GRADIENT SCRIPT ✦ -->
+<script>
+document.addEventListener("scroll", function () {
+    const hot = document.getElementById("hot-gradient");
+    const forest = document.getElementById("forest-gradient");
+
+    if (window.scrollY > 550) {
+        hot.classList.add("opacity-100");
+        hot.classList.remove("opacity-0");
+    } else {
+        hot.classList.add("opacity-0");
+        hot.classList.remove("opacity-100");
+    }
+
+    if (window.scrollY > 1300) {
+        forest.classList.add("opacity-100");
+        forest.classList.remove("opacity-0");
+    } else {
+        forest.classList.add("opacity-0");
+        forest.classList.remove("opacity-100");
+    }
+});
+</script>
+
+
+
+
+<!-- ✦ REVEAL ON SCROLL (SAFE, MODERN) ✦ -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const targets = document.querySelectorAll(".reveal");
+
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.remove("opacity-0");
+                    entry.target.classList.remove("translate-x-20");
+                    entry.target.classList.remove("-translate-x-20");
+                    entry.target.classList.add("opacity-100");
+                    entry.target.classList.add("translate-x-0");
+                }
+            });
+        },
+        { threshold: 0.2 }
+    );
+
+    targets.forEach(el => observer.observe(el));
+});
+</script>
 
 {% endblock %}
