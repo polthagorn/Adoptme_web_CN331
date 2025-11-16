@@ -6,155 +6,222 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Adopt Me{% endblock %}</title>
   <link rel="icon" href="{% static 'img/favicon.ico' %}">
-  <meta name="description" content="Find and adopt pets near you.">
 
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: 'class',
+      darkMode: "class",
       theme: {
         extend: {
           colors: {
-            background: '#f8fafc',
-            surface: '#ffffff',
-            border: '#e2e8f0',
-            text: '#0f172a',
-            accent: '#3b82f6',
-            darkbg: '#0d1117',
-            darksurface: '#161b22',
-            darkborder: '#30363d',
-            darktext: '#e6edf3',
+            background: "#f8fafc",
+            surface: "#ffffff",
+            border: "#e2e8f0",
+            text: "#0f172a",
+            accent: "#3b82f6",
+            darkbg: "#0d1117",
+            darksurface: "#161b22",
+            darkborder: "#30363d",
+            darktext: "#e6edf3",
           }
         }
       }
     }
   </script>
 
-  <!-- Prevent flash -->
+  <!-- Prevent Flash -->
   <script>
-    (function() {
-      if(localStorage.getItem('theme') === 'dark') {
-        document.documentElement.classList.add('dark');
-      }
-    })();
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.classList.add("dark");
+    }
   </script>
 </head>
 
-<body class="bg-background text-text dark:bg-darkbg dark:text-darktext font-sans min-h-screen flex flex-col transition-colors duration-500">
+<body class="bg-background dark:bg-darkbg text-text dark:text-darktext min-h-screen flex flex-col">
 
-  <!-- Header -->
-  <header class="bg-surface dark:bg-darksurface border-b border-border dark:border-darkborder p-4 md:px-10 flex justify-between items-center shadow-sm transition-colors duration-500">
-    <h1 class="text-xl font-bold text-accent">Adopt Me</h1>
+<!-- Toast Container -->
+<div id="toast-container" class="fixed bottom-5 right-5 space-y-3 z-50 pointer-events-none"></div>
 
-    <!-- Navigation -->
-    <nav class="relative flex items-center space-x-4">
+<!-- Header -->
+<header class="bg-surface dark:bg-darksurface border-b border-border dark:border-darkborder p-4 md:px-10 shadow-sm">
+  <nav class="flex justify-between items-center">
 
-      <!-- Desktop Menu -->
-      <div class="hidden md:flex space-x-6 items-center">
-        <a href="{% url 'home' %}" class="hover:text-accent transition-colors">Home</a>
-        <a href="{% url 'about' %}" class="hover:text-accent transition-colors">About</a>
-        <a href="{% url 'posts' %}" class="hover:text-accent transition-colors">Posts</a>
+    <a href="{% url 'home' %}" class="text-xl font-bold text-accent">Adopt Me</a>
 
-        {% if request.user.is_authenticated %}
-          {% if request.user.shelter_profile %}
-              <a href="{% url 'shelter_profile' %}" class="hover:text-accent transition-colors">Shelter Profile</a>
-          {% else %}
-              <a href="{% url 'shelter_register' %}" class="hover:text-accent transition-colors">Become a Shelter</a>
-          {% endif %}
-        {% endif %}
+    <!-- Desktop Nav -->
+    <div class="hidden md:flex items-center space-x-6">
+      <a href="{% url 'home' %}" class="hover:text-accent">Home</a>
+      <a href="{% url 'about' %}" class="hover:text-accent">About</a>
+      <a href="{% url 'posts' %}" class="hover:text-accent">Posts</a>
 
-    
-
-        {% if user.is_authenticated %}
-        <a href="{% url 'profile' %}">Profile</a>
+      {% if user.is_authenticated %}
+        {% if user.shelter_profile %}
+          <a href="{% url 'shelter_profile' %}" class="hover:text-accent">Shelter Profile</a>
         {% else %}
-        <a href="{% url 'login' %}">Login</a>
+          <a href="{% url 'shelter_register' %}" class="hover:text-accent">Become a Shelter</a>
         {% endif %}
 
-        <!-- Desktop Theme Toggle -->
-        <button id="theme-toggle" aria-label="Toggle Dark Mode" class="ml-4 w-10 h-10 rounded-full overflow-hidden hover:scale-105 transition-transform duration-300">
-          <img id="theme-icon" src="{% static 'img/moon.png' %}" alt="theme toggle" class="w-full h-full object-cover transition-all duration-500">
-        </button>
-      </div>
-
-      <!-- Mobile Menu & Theme -->
-      <div class="md:hidden flex items-center space-x-2">
-        <button id="mobile-menu-toggle" aria-label="Open Menu" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">☰</button>
-        <button id="theme-toggle-mobile" aria-label="Toggle Dark Mode" class="w-10 h-10 rounded-full overflow-hidden hover:scale-105 transition-transform duration-300">
-          <img id="theme-icon-mobile" src="{% static 'img/moon.png' %}" alt="theme toggle" class="w-full h-full object-cover transition-all duration-500">
-        </button>
-      </div>
-
-      <!-- Mobile Menu -->
-      <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-48 bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded-lg shadow-lg flex flex-col p-2 space-y-2 transition-all duration-300">
-        <a href="{% url 'home' %}" class="hover:text-accent transition-colors">Home</a>
-        <a href="{% url 'about' %}" class="hover:text-accent transition-colors">About</a>
-        <a href="{% url 'posts' %}" class="hover:text-accent transition-colors">Posts</a>
-
-        {% if request.user.is_authenticated %}
-          <span class="text-sm dark:text-darktext">Hi, {{ request.user.first_name }}!</span>
-          <a href="{% url 'logout' %}" class="hover:text-accent transition-colors">Logout</a>
-        {% else %}
-          <a href="{% url 'login' %}" class="hover:text-accent transition-colors">Login</a>
+        {% if user.is_superuser %}
+          <a href="{% url 'dashboard_home' %}" class="hover:text-accent font-semibold">Dashboard</a>
         {% endif %}
-      </div>
-    </nav>
-  </header>
 
-  <!-- Main Content -->
-  <main class="flex-grow transition-colors duration-500">
-    {% block content %}{% endblock %}
-  </main>
+        <a href="{% url 'profile' %}" class="hover:text-accent">Profile</a>
+        <a href="{% url 'logout' %}" class="hover:text-red-500">Logout</a>
 
-  <!-- Footer -->
-  <footer class="text-center text-sm text-gray-500 dark:text-gray-400 border-t border-border dark:border-darkborder py-6 mt-10 transition-colors duration-500">
-    &copy; {% now "Y" %} Adopt Me | Made by ผู้ดีBangkok
-  </footer>
+      {% else %}
+        <a href="{% url 'login' %}" class="hover:text-accent">Login</a>
+      {% endif %}
 
-  <!-- Scripts -->
-  <script>
-    const root = document.documentElement;
+      <!-- Theme -->
+      <button id="theme-toggle" class="w-10 h-10 rounded-full overflow-hidden">
+        <img id="theme-icon" src="{% static 'img/sun.png' %}">
+      </button>
 
-    // Theme icons
-    const moonIcon = "{% static 'img/moon.png' %}";
-    const sunIcon = "{% static 'img/sun.png' %}";
+    </div>
 
-    const themeDesktop = document.getElementById('theme-toggle');
-    const iconDesktop = document.getElementById('theme-icon');
-    const themeMobile = document.getElementById('theme-toggle-mobile');
-    const iconMobile = document.getElementById('theme-icon-mobile');
+    <!-- Mobile -->
+    <div class="md:hidden flex items-center space-x-2">
+      <button id="mobile-menu-toggle" class="text-xl px-3 py-1">☰</button>
 
-    // Set theme icons
-    if(localStorage.getItem('theme') === 'dark') {
-      if(iconDesktop) iconDesktop.src = moonIcon;
-      if(iconMobile) iconMobile.src = moonIcon;
-    } else {
-      if(iconDesktop) iconDesktop.src = sunIcon;
-      if(iconMobile) iconMobile.src = sunIcon;
-    }
+      <button id="theme-toggle-mobile" class="w-10 h-10 rounded-full overflow-hidden">
+        <img id="theme-icon-mobile" src="{% static 'img/sun.png' %}">
+      </button>
+    </div>
 
-    // Toggle function
-    function toggleTheme() {
-      root.classList.toggle('dark');
-      const isDark = root.classList.contains('dark');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      if(iconDesktop) iconDesktop.src = isDark ? moonIcon : sunIcon;
-      if(iconMobile) iconMobile.src = isDark ? moonIcon : sunIcon;
-    }
+  </nav>
 
-    if(themeDesktop) themeDesktop.addEventListener('click', toggleTheme);
-    if(themeMobile) themeMobile.addEventListener('click', toggleTheme);
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden md:hidden mt-3 bg-surface dark:bg-darksurface border dark:border-darkborder rounded-lg p-4 space-y-2">
 
-    // Mobile menu
-    const mobileMenuBtn = document.getElementById('mobile-menu-toggle');
-    const mobileMenu = document.getElementById('mobile-menu');
-    mobileMenuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+    <a href="{% url 'home' %}" class="block hover:text-accent">Home</a>
+    <a href="{% url 'about' %}" class="block hover:text-accent">About</a>
+    <a href="{% url 'posts' %}" class="block hover:text-accent">Posts</a>
 
-    document.addEventListener('click', (e) => {
-      if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
-        mobileMenu.classList.add('hidden');
-      }
-    });
-  </script>
+    {% if user.is_superuser %}
+      <a href="{% url 'dashboard_home' %}" class="block text-accent">Dashboard</a>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+      <a href="{% url 'profile' %}" class="block hover:text-accent">Profile</a>
+      <a href="{% url 'logout' %}" class="block hover:text-red-500">Logout</a>
+    {% else %}
+      <a href="{% url 'login' %}" class="block hover:text-accent">Login</a>
+    {% endif %}
+  </div>
+
+</header>
+
+<!-- Main -->
+<main class="flex-grow">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="text-center text-sm text-gray-500 dark:text-gray-400 border-t dark:border-darkborder py-6">
+  &copy; {% now "Y" %} Adopt Me | Made by ผู้ดีBangkok
+</footer>
+
+<!-- Django Messages → JS Safe Encoding -->
+{% if messages %}
+<script>
+window.DjangoMessages = JSON.parse(`[
+  {% for msg in messages %}
+    {"level":"{{ msg.tags|escapejs }}","text":"{{ msg|escapejs }}"}{% if not forloop.last %},{% endif %}
+  {% endfor %}
+]`);
+</script>
+{% endif %}
+
+<!-- Toast System (Protected with VERBATIM) -->
+{% verbatim %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (!window.DjangoMessages) return;
+
+  const container = document.getElementById("toast-container");
+
+  window.DjangoMessages.forEach(msg => createToast(msg.text, msg.level));
+
+  function createToast(text, level) {
+    const t = document.createElement("div");
+
+    t.className = `
+      pointer-events-auto flex items-start gap-3 p-4 w-80 rounded-xl shadow-xl
+      border text-sm font-medium cursor-pointer bg-opacity-90
+      transform translate-y-5 opacity-0 transition-all duration-500
+      ${color(level)}
+    `;
+
+    t.innerHTML = `
+      <div class="pt-1">${icon(level)}</div>
+      <div>${text}</div>
+    `;
+
+    container.appendChild(t);
+
+    setTimeout(() => {
+      t.classList.remove("translate-y-5", "opacity-0");
+      t.classList.add("translate-y-0", "opacity-100");
+    }, 20);
+
+    const timer = setTimeout(() => dismiss(t), 4000);
+    t.onclick = () => { clearTimeout(timer); dismiss(t); };
+  }
+
+  function dismiss(t) {
+    t.classList.add("translate-y-5", "opacity-0");
+    setTimeout(() => t.remove(), 500);
+  }
+
+  function color(level) {
+    return {
+      error: "bg-red-600 text-white border-red-700",
+      success: "bg-green-600 text-white border-green-700",
+      info: "bg-blue-600 text-white border-blue-700"
+    }[level] || "bg-blue-600 text-white border-blue-700";
+  }
+
+  function icon(level) {
+    return { error: "❌", success: "✔️", info: "ℹ️" }[level] || "ℹ️";
+  }
+});
+</script>
+{% endverbatim %}
+
+<!-- Theme Toggle -->
+<script>
+const html = document.documentElement;
+const themeBtn = document.getElementById("theme-toggle");
+const themeBtnMobile = document.getElementById("theme-toggle-mobile");
+const iconDesktop = document.getElementById("theme-icon");
+const iconMobile = document.getElementById("theme-icon-mobile");
+const sun = "{% static 'img/sun.png' %}";
+const moon = "{% static 'img/moon.png' %}";
+
+function updateIcons() {
+  const dark = html.classList.contains("dark");
+  iconDesktop.src = dark ? moon : sun;
+  iconMobile.src = dark ? moon : sun;
+}
+
+function toggleTheme() {
+  html.classList.toggle("dark");
+  localStorage.setItem("theme", html.classList.contains("dark") ? "dark" : "light");
+  updateIcons();
+}
+
+themeBtn.onclick = toggleTheme;
+themeBtnMobile.onclick = toggleTheme;
+updateIcons();
+</script>
+
+<!-- Mobile Menu -->
+<script>
+document.getElementById("mobile-menu-toggle").onclick = () => {
+  document.getElementById("mobile-menu").classList.toggle("hidden");
+};
+</script>
+
 </body>
 </html>
