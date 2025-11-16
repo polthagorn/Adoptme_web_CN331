@@ -244,6 +244,32 @@
                     </p>
                 </div>
 
+                <!-- **interaction** -->
+                <div class="px-4 py-2 border-t border-border dark:border-darkborder flex justify-between items-center bg-gray-50 dark:bg-gray-700/50">
+                  <div class="flex items-center space-x-4">
+                    <a href="{% url 'like_post' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-red-500">
+                      <!-- like status -->
+                      {% if user in post.likes.all %}
+                        <svg class="w-5 h-5 text-red-500 fill-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
+                      {% else %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
+                      {% endif %}
+                      <span>{{ post.total_likes }}</span>
+                    </a>
+                    <a href="{% url 'post_detail' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-accent">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                      <span span>{{ post.comments.count }}</span>
+                    </a>
+                  </div>
+                  <a href="{% url 'bookmark_post' post.id %}" class="text-gray-500 hover:text-accent">
+                    {% if user in post.bookmarks.all %}
+                      <svg class="w-5 h-5 text-accent fill-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                    {% else %}
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                    {% endif %}
+                  </a>
+                </div>
+
 
                 <!-- ⭐ EDIT & DELETE BUTTONS (OWNER ONLY!) ⭐ -->
                 {% if user == post.author %}
