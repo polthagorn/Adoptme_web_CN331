@@ -1,10 +1,13 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from .models import Profile
+from app.posts.models import Post
+from .forms import UserUpdateForm, ProfileUpdateForm
+import re
 
 
 def login_page(request):
@@ -58,7 +61,7 @@ def register_page(request):
         # ----------------------
         # PHONE VALIDATION (NEW)
         # ----------------------
-        import re
+        
         phone_pattern = r'^(\+66|0)\d{8,9}$'
 
         if not re.match(phone_pattern, phone):
@@ -111,17 +114,67 @@ def logout_page(request):
 
 @login_required
 def profile_page(request):
-    user = request.user
+    # pull user posts from Post model
+    user_posts = Post.objects.filter(author=request.user).order_by('-created_at')
+    
+    # create context
+    context = {
+        'profile': request.user.profile,
+        'posts': user_posts,
+    }
+    
+    return render(request, 'accounts/profile_page.html', context)
 
-    try:
-        profile = user.profile
-    except Profile.DoesNotExist:
-        profile = Profile.objects.create(
-            user=user,
-            phone="N/A",
-            country="N/A",
-            city="N/A"
-        )
+@login_required
+def profile_edit_page(request):
+    if request.method == 'POST':
+        if 'remove_image' in request.POST:
+            profile = request.user.profile
+            profile.image.delete(save=False)
+            profile.image = 'default.jpg'    
+            profile.save()
+            messages.success(request, 'Your profile picture has been removed.')
+            return redirect('profile_edit')
 
-    return render(request, 'accounts/profile_page.html', {'profile': profile})
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
 
+        if u_form.is_valid() and p_form.is_valid():
+            new_username = u_form.cleaned_data.get('username')
+            
+            if User.objects.exclude(pk=request.user.pk).filter(username=new_username).exists():
+                u_form.add_error('username', f"Username '{new_username}' is already taken.")
+            else:
+                u_form.save()
+                p_form.save()
+                messages.success(request, 'Your profile has been updated successfully!')
+                return redirect('profile')
+
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+    return render(request, 'accounts/profile_edit_page.html', context)
+
+def user_profile_page(request, username):
+    user_obj = get_object_or_404(User, username=username)
+    user_posts = Post.objects.filter(author=user_obj).order_by('-created_at')
+    
+    context = {
+        'profile_user': user_obj, 
+        'posts': user_posts,
+    }
+    return render(request, 'accounts/user_profile_page.html', context)
+
+@login_required
+def my_bookmarks_page(request):
+    bookmarked_posts = request.user.bookmarked_posts.all().order_by('-created_at')
+    
+    context = {
+        'posts': bookmarked_posts
+    }
+    return render(request, 'accounts/my_bookmarks_page.html', context)

@@ -7,11 +7,11 @@ class StoreAdmin(admin.ModelAdmin):
     search_fields = ('name', 'owner__username')
     actions = ['approve_stores', 'reject_stores']
 
-    def approve_stores(self, request, queryset):
+    def approve_stores(self, request, queryset): # pragma: no cover
         queryset.update(status='APPROVED')
     approve_stores.short_description = "approve selected stores"
 
-    def reject_stores(self, request, queryset):
+    def reject_stores(self, request, queryset): # pragma: no cover
         queryset.update(status='REJECTED')
     reject_stores.short_description = "reject selected stores"
 

@@ -1,61 +1,87 @@
 {% extends "base.html" %}
-{% block title %}{{ post.title }}{% endblock %}
+
+{% block title %}{{ post.title }} - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto bg-surface dark:bg-darksurface p-8 rounded-2xl shadow-xl border border-border dark:border-darkborder mt-10">
+<div class="max-w-3xl mx-auto">
+  <div class="mb-4">
+        <button onclick="history.back()" class="flex items-center space-x-2 text-gray-500 dark:text-gray-400 hover:text-accent dark:hover:text-accent transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <span>Back</span>
+        </button>
+    </div>
+    <div class="bg-surface dark:bg-darksurface rounded-lg shadow-md border border-border dark:border-darkborder overflow-hidden">
 
-  <!-- Title -->
-  <h1 class="text-4xl font-extrabold mb-3 text-text dark:text-darktext">
-    {{ post.title }}
-  </h1>
+        <!-- post detail -->
+        <div class="p-4">
+            <h1 class="text-3xl font-bold text-text dark:text-darktext mb-2">{{ post.title }}</h1>
+            
+            {% if post.image %}
+                <img src="{{ post.image.url }}" alt="Post image" class="mt-4 rounded-lg w-full max-h-[600px] object-cover">
+            {% endif %}
 
-  <!-- Author -->
-  <p class="text-gray-500 dark:text-gray-400 mb-6">
-    By <span class="font-semibold">{{ post.author.username }}</span>
-    • {{ post.created_at|date:"M d, Y" }}
-  </p>
+            <p class="text-gray-700 dark:text-gray-300 mt-4 whitespace-pre-wrap">{{ post.content }}</p>
+        </div>
 
-  <!-- Image -->
-  {% if post.image %}
-  <img src="{{ post.image.url }}"
-       alt="Post image"
-       class="rounded-xl mb-6 shadow-md max-h-96 object-cover w-full">
-  {% endif %}
+        <!-- ================================================== -->
+        <!-- ** Interaction (Like, Comment, Bookmark)**     -->
+        <!-- ================================================== -->
+        <div class="px-4 py-3 border-t border-border dark:border-darkborder flex justify-between items-center">
+            <!-- Like -->
+            <div class="flex items-center space-x-2">
+                <a href="{% url 'like_post' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors">
+                    <svg class="w-6 h-6 {% if is_liked %}text-red-500 fill-current{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
+                    <span>{{ post.total_likes }}</span>
+                </a>
+                <!-- Comment-->
+                <span class="flex items-center space-x-1 text-gray-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    <span>{{ comments.count }}</span>
+                </span>
+            </div>
+            <!-- Bookmark -->
+            <a href="{% url 'bookmark_post' post.id %}" class="text-gray-500 hover:text-accent transition-colors">
+                <svg class="w-6 h-6 {% if is_bookmarked %}text-accent fill-current{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+            </a>
+        </div>
+    </div>
 
-  <!-- Content -->
-  <p class="text-lg leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-line">
-    {{ post.content }}
-  </p>
+    <!-- ================================================== -->
+    <!-- **Comment**                                    -->
+    <!-- ================================================== -->
+    <div class="mt-8 bg-surface dark:bg-darksurface p-6 rounded-lg shadow-md border border-border dark:border-darkborder">
+        <h2 class="text-xl font-bold text-text dark:text-darktext mb-4">Comments ({{ comments.count }})</h2>
+        
+        <!-- form for Comment -->
+        {% if user.is_authenticated %}
+            <form method="POST" class="mb-6">
+                {% csrf_token %}
+                {{ comment_form }}
+                <div class="text-right mt-2">
+                    <button type="submit" class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Post Comment</button>
+                </div>
+            </form>
+        {% else %}
+            <p class="text-gray-500 mb-6">Please <a href="{% url 'login' %}" class="text-accent hover:underline">login</a> to add a comment.</p>
+        {% endif %}
 
-  <!-- Buttons -->
-  {% if user == post.author or user.is_superuser %}
-  <div class="mt-8 flex space-x-4">
-    {% if user == post.author%}
-    <!-- Edit Button -->
-    <a href="{% url 'edit_post' post.id %}"
-       class="px-5 py-2.5 rounded-xl font-semibold bg-yellow-400 text-black
-              hover:bg-yellow-500 active:scale-95 transition-all duration-200 shadow">
-      ✏️ Edit
-    </a>
-    {% endif %}
-
-    <!-- Delete Button -->
-    <a href="{% url 'delete_post' post.id %}"
-       class="px-5 py-2.5 rounded-xl font-semibold bg-red-500 text-white
-              hover:bg-red-600 active:scale-95 transition-all duration-200 shadow">
-      🗑 Delete
-    </a>
-
-  </div>
-  {% endif %}
-
-  <!-- Back -->
-  <div class="mt-10">
-    <a href="{% url 'posts' %}"
-       class="text-accent font-semibold hover:underline">
-      ← Back to Posts
-    </a>
-  </div>
-
+        <!-- list of Comments -->
+        <div class="space-y-4">
+            {% for comment in comments %}
+                <div class="flex space-x-3">
+                    <a href="{% url 'user_profile' username=comment.author.username %}">
+                        <img src="{{ comment.author.profile.image.url }}" alt="{{ comment.author.username }}" class="w-10 h-10 rounded-full object-cover">
+                    </a>
+                    <div class="flex-grow bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+                        <a href="{% url 'user_profile' username=comment.author.username %}" class="font-semibold text-text dark:text-darktext hover:underline">{{ comment.author.username }}</a>
+                        <p class="text-gray-700 dark:text-gray-300">{{ comment.content }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ comment.created_at|timesince }} ago</p>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-gray-500">No comments yet.</p>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 {% endblock %}

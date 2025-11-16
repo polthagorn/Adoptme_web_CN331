@@ -1,40 +1,59 @@
 {% extends "base.html" %}
 
-{% block title %}Store Update - {{ block.super }}{% endblock %}
+{% block title %}Edit Profile - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto bg-surface dark:bg-darksurface p-8 rounded-lg shadow-md border border-border dark:border-darkborder">
     
-    <form method="POST" id="profile-edit-form" enctype="multipart/form-data">
+    <form  id="profile-edit-form" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <fieldset>
-            <legend class="text-2xl font-bold text-text dark:text-darktext border-b border-border dark:border-darkborder pb-4 mb-6">Update Store information</legend>
-            
-            <!-- loop -->
-            {% for field in form %}
-                <div class="mb-5">
-                    <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <div class="text-red-500 text-sm mt-1">
-                            {% for error in field.errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+            <legend class="text-2xl font-bold text-text dark:text-darktext border-b border-border dark:border-darkborder pb-4 mb-6">Edit Profile</legend>
+
+
+            <!-- username edit form -->
+            <div class="mb-5">
+                <label for="{{ u_form.username.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">{{ u_form.username.label }}</label>
+                {{ u_form.username }}
+                {% if u_form.username.errors %}
+                    <div class="text-red-500 text-sm mt-1">
+                        {% for error in u_form.username.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- profile pic edit form -->
+            <div class="mb-5">
+                <label class="block mb-2 text-sm font-medium text-text dark:text-darktext">Profile Picture</label>
+                <div class="flex items-center space-x-4">
+                    <img src="{{ user.profile.image.url }}" alt="Current Profile Picture" class="w-24 h-24 rounded-full object-cover">
+                    <div class="flex-grow">
+                        <label for="{{ p_form.image.id_for_label }}" class="block mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">Change Picture</label>
+                        {{ p_form.image }}
+                        
+                        <!-- Delete profile pic -->
+                        {% if user.profile.image.url != '/media/default.jpg' %}
+                        <button type="submit" name="remove_image" class="mt-2 text-xs text-red-600 hover:underline">
+                            Remove Picture
+                        </button>
+                        {% endif %}
+                    </div>
                 </div>
-            {% endfor %}
+            </div>
 
         </fieldset>
 
-        <div class="mt-6">
+         <div class="mt-6 space-y-3">
+            <!-- save changes -->
             <button type="button" id="save-changes-btn" class="w-full text-white bg-accent hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
                 Save Changes
             </button>
             
             <!-- discard -->
-            <a href="{% url 'store_manage' pk=store.pk %}" class="block w-full text-center text-text dark:text-darktext bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors">
-                Back to Store (Discard Changes)
+            <a href="{% url 'profile' %}" class="block w-full text-center text-text dark:text-darktext bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors">
+                Back to Profile (Discard Changes)
             </a>
         </div>
     </form>
@@ -47,7 +66,7 @@
 <div id="confirmation-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
     <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow-xl max-w-sm mx-auto border border-border dark:border-darkborder">
         <h3 class="text-lg font-bold text-text dark:text-darktext">Confirm Changes</h3>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Are you sure you want to save these changes to your Store?</p>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Are you sure you want to save these changes to your profile?</p>
         <div class="mt-6 flex justify-end space-x-3">
             <button type="button" id="cancel-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 rounded-md">
                 Cancel
@@ -94,4 +113,3 @@
 </script>
 
 {% endblock content %}
-
