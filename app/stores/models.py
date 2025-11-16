@@ -1,7 +1,9 @@
+# app/stores/models.py
 from django.db import models
 from django.contrib.auth.models import User
 
 class Store(models.Model):
+    # --- ย้ายโค้ดทั้งหมดนี้เข้ามาในคลาส Store ---
     STATUS_CHOICES = [
         ('PENDING', 'pending'),
         ('APPROVED', 'approved'),
@@ -21,6 +23,10 @@ class Store(models.Model):
 
     profile_image = models.ImageField(upload_to='store_profiles/', null=True, blank=True, verbose_name="profile image")
     cover_image = models.ImageField(upload_to='store_covers/', null=True, blank=True, verbose_name="cover image")
+
+    # --- เพิ่มฟิลด์สำหรับ Verification ---
+    verification_document = models.FileField(upload_to='store_verification_docs/', null=True, blank=True, verbose_name="Verification Document")
+    verification_statement = models.TextField(null=True, blank=True, verbose_name="Verification Statement")
 
     def __str__(self):
         return self.name

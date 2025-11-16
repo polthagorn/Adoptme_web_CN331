@@ -4,7 +4,7 @@ from .models import Store, Product
 class StoreRequestForm(forms.ModelForm):
     class Meta:
         model = Store
-        fields = ['name', 'description', 'store_type', 'profile_image', 'cover_image']
+        fields = ['name', 'description', 'store_type', 'profile_image', 'cover_image', 'verification_document', 'verification_statement']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -16,6 +16,19 @@ class StoreRequestForm(forms.ModelForm):
         self.fields['store_type'].widget.attrs.update({'class': common_classes})
         self.fields['profile_image'].widget.attrs.update({'class': image_classes})
         self.fields['cover_image'].widget.attrs.update({'class': image_classes})
+        self.fields['verification_document'].widget.attrs.update({'class': image_classes})
+        self.fields['verification_statement'].widget.attrs.update({'class': common_classes, 'rows': 4})
+
+    def clean(self):
+        cleaned_data = super().clean()
+        document = cleaned_data.get('verification_document')
+        statement = cleaned_data.get('verification_statement')
+
+        if not document and not statement:
+            raise forms.ValidationError(
+                "Please provide either a verification document or a statement. You must submit at least one."
+            )
+        return cleaned_data
 
 class StoreUpdateForm(forms.ModelForm):
     class Meta:
