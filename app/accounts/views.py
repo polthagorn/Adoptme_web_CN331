@@ -3,8 +3,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Profile
 from django.contrib.auth import logout
+from .models import Profile
+
 
 def login_page(request):
     if request.method == "POST":
@@ -43,20 +44,41 @@ def register_page(request):
         country = request.POST.get('country')
         city = request.POST.get('city')
 
-        # Password match check
+        # Save user inputs for re-rendering if error
+        context = {
+            "username": username,
+            "email": email,
+            "phone": phone,
+            "first_name": first_name,
+            "last_name": last_name,
+            "country": country,
+            "city": city,
+        }
+
+        # ----------------------
+        # PHONE VALIDATION (NEW)
+        # ----------------------
+        import re
+        phone_pattern = r'^(\+66|0)\d{8,9}$'
+
+        if not re.match(phone_pattern, phone):
+            messages.error(request, "Invalid phone number. Please use a valid Thai phone number.")
+            return render(request, 'accounts/register_page.html', context)
+
+        # Password match
         if password != confirm_password:
             messages.error(request, "Passwords do not match")
-            return redirect('register')
+            return render(request, 'accounts/register_page.html', context)
 
-        # Username already exists
+        # Username exists
         if User.objects.filter(username=username).exists():
             messages.error(request, "Username already taken")
-            return redirect('register')
+            return render(request, 'accounts/register_page.html', context)
 
-        # Email already exists
+        # Email exists
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already registered")
-            return redirect('register')
+            return render(request, 'accounts/register_page.html', context)
 
         # Create user
         user = User.objects.create_user(
@@ -80,12 +102,14 @@ def register_page(request):
 
     return render(request, 'accounts/register_page.html')
 
+
 def logout_page(request):
     logout(request)
     messages.success(request, "You have successfully logged out.")
     return redirect('home')
 
+
 @login_required
 def profile_page(request):
-    profile = request.user.profile  # get profile of logged in user
+    profile = request.user.profile
     return render(request, 'accounts/profile_page.html', {'profile': profile})
