@@ -1,32 +1,28 @@
 {% extends "base.html" %}
 
-{% block title %}Posts Feed - {{ block.super }}{% endblock %}
+{% block title %}My Bookmarks - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto">
-    <!-- header -->
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-text dark:text-darktext">Community Feed</h1>
-        {% if user.is_authenticated %}
-            <a href="{% url 'create_post' %}" class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                Create Post
-            </a>
-        {% endif %}
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-text dark:text-darktext">My Bookmarked Posts</h1>
+        <p class="text-gray-500 dark:text-gray-400">All the posts you've saved for later.</p>
     </div>
+    <!-- back to profile -->
+    <a href="{% url 'profile' %}" class="inline-flex items-center space-x-2 text-gray-500 dark:text-gray-400 hover:text-accent dark:hover:text-accent transition-colors font-semibold">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        <span>Back to Profile</span>
+    </a>
 
-    <!-- post feed -->
+    <!-- bookmarks feed -->
     <div class="space-y-8">
         {% for post in posts %}
             <div class="bg-surface dark:bg-darksurface rounded-lg shadow-md border border-border dark:border-darkborder overflow-hidden">
                 
-                <!-- header of poster -->
+                <!-- Hearder of poster -->
                 <div class="p-4 flex items-center space-x-4 border-b border-border dark:border-darkborder">
-                    
-                    <!-- check if shelter -->
                     {% if post.shelter %}
-                        <!-- ================== -->
-                        <!-- shelter case -->
-                        <!-- ================== -->
                         <a href="{% url 'public_shelter_profile' pk=post.shelter.pk %}">
                             {% if post.shelter.profile_image %}
                                 <img src="{{ post.shelter.profile_image.url }}" alt="{{ post.shelter.name }}" class="w-12 h-12 rounded-full object-cover">
@@ -39,11 +35,7 @@
                             <p class="text-sm text-gray-500 dark:text-gray-400">Posted on {{ post.created_at|date:"M d, Y" }}</p>
                         </div>
                         <span class="ml-auto text-xs font-medium bg-blue-100 text-accent py-1 px-2 rounded-full">SHELTER</span>
-
                     {% else %}
-                        <!-- ================== -->
-                        <!-- User case -->
-                        <!-- ================== -->
                         <a href="{% url 'user_profile' username=post.author.username %}">
                             {% if post.author.profile.image %}
                                 <img src="{{ post.author.profile.image.url }}" alt="{{ post.author.username }}" class="w-12 h-12 rounded-full object-cover">
@@ -65,21 +57,13 @@
                             {{ post.title }}
                         </a>
                     </h2>
-                    
-                    {% if post.image %}
-                        <a href="{% url 'post_detail' post.id %}">
-                            <img src="{{ post.image.url }}" alt="Post image" class="mt-2 rounded-lg w-full max-h-[500px] object-cover">
-                        </a>
-                    {% endif %}
-
-                    <p class="text-gray-700 dark:text-gray-300 mt-4">{{ post.content|truncatewords:50 }}</p>
+                    <p class="text-gray-700 dark:text-gray-300 mt-2">{{ post.content|truncatewords:50 }}</p>
                 </div>
-
-                <!-- **interaction** -->
-                <div class="px-4 py-2 border-t border-border dark:border-darkborder flex justify-between items-center bg-gray-50 dark:bg-gray-700/50">
+                
+                <!-- Interact bar -->
+                 <div class="px-4 py-2 border-t border-border dark:border-darkborder flex justify-between items-center bg-gray-50 dark:bg-gray-700/50">
                   <div class="flex items-center space-x-4">
                     <a href="{% url 'like_post' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-red-500">
-                      <!-- like status -->
                       {% if user in post.likes.all %}
                         <svg class="w-5 h-5 text-red-500 fill-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
                       {% else %}
@@ -101,19 +85,12 @@
                   </a>
                 </div>
 
-                <!-- edit delete -->
-                {% if user == post.author %}
-                    <div class="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 flex justify-end space-x-2">
-                        <a href="{% url 'edit_post' post.id %}" class="text-sm bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-1 px-3 rounded-md">Edit</a>
-                        <a href="{% url 'delete_post' post.id %}" class="text-sm bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-md">Delete</a>
-                    </div>
-                {% endif %}
             </div>
         {% empty %}
             <div class="text-center bg-surface dark:bg-darksurface p-10 rounded-lg shadow-md">
-                <p class="text-gray-500 dark:text-gray-400">No posts yet. Be the first to create one!</p>
+                <p class="text-gray-500 dark:text-gray-400">You haven't bookmarked any posts yet.</p>
             </div>
         {% endfor %}
     </div>
 </div>
-{% endblock %}
+{% endblock %}```

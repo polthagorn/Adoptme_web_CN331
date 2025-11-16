@@ -5,10 +5,10 @@
 {% block content %}
 <div class="container mx-auto px-4 max-w-4xl">
     
-    <!-- ส่วนโปรไฟล์หลัก -->
+    <!-- main profile -->
     <div class="bg-surface dark:bg-darksurface p-8 rounded-lg shadow-md mb-8 border border-border dark:border-darkborder">
         <div class="flex flex-col sm:flex-row items-center sm:items-start">
-            <!-- รูปโปรไฟล์ -->
+            <!-- profile pic -->
             {% if profile_user.profile.image %}
                 <img src="{{ profile_user.profile.image.url }}" alt="{{ profile_user.username }}'s Profile Picture" class="w-32 h-32 rounded-full object-cover flex-shrink-0">
             {% else %}
@@ -21,13 +21,13 @@
                 <h1 class="text-3xl font-bold text-text dark:text-darktext">{{ profile_user.get_full_name }}</h1>
                 <p class="text-lg text-gray-500 dark:text-gray-400">@{{ profile_user.username }}</p>
                 
-                <!-- ข้อมูลติดต่อ (แสดงเฉพาะบางส่วนเพื่อความเป็นส่วนตัว) -->
+                <!-- contact detail -->
                 <div class="mt-4 flex flex-col sm:flex-row sm:space-x-6 text-gray-600 dark:text-gray-400">
                     <span>📍 {{ profile_user.profile.city }}, {{ profile_user.profile.country }}</span>
                 </div>
             </div>
 
-            <!-- ส่วนคะแนน -->
+            <!-- score -->
             <div class="mt-4 sm:mt-0 sm:ml-auto text-center">
                 <p class="text-sm text-gray-500 dark:text-gray-400">Reputation Score</p>
                 <p class="text-4xl font-bold text-accent">{{ profile_user.profile.score }}</p>
@@ -36,7 +36,7 @@
         </div>
     </div>
 
-    <!-- ส่วนประวัติการโพสต์ -->
+    <!-- post history -->
     <div>
         <h2 class="text-2xl font-bold text-text dark:text-darktext mb-4">Posts by {{ profile_user.username }}</h2>
         <div class="space-y-6">
