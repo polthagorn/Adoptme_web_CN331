@@ -11,23 +11,32 @@
             <legend class="text-2xl font-bold text-text dark:text-darktext border-b border-border dark:border-darkborder pb-4 mb-6">Ask for new store</legend>
             <p class="text-gray-600 dark:text-gray-400 mb-6">Your store information will be sent to the administrator for review and approval.</p>
 
-            <!-- Name -->
-            <div class="mb-5">
-                <label for="{{ form.name.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">{{ form.name.label }}</label>
-                {{ form.name }}
-            </div>
+            <!-- แสดง Non-field errors (สำหรับ Validation ที่เราสร้างเอง) -->
+            {% if form.non_field_errors %}
+                <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-100 dark:bg-red-200 dark:text-red-900" role="alert">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
-            <!-- Description -->
-            <div class="mb-5">
-                <label for="{{ form.description.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">{{ form.description.label }}</label>
-                {{ form.description }}
-            </div>
-
-            <!-- Store Type -->
-            <div class="mb-5">
-                <label for="{{ form.store_type.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">{{ form.store_type.label }}</label>
-                {{ form.store_type }}
-            </div>
+            <!-- --- เปลี่ยนมาใช้ For Loop --- -->
+            {% for field in form %}
+                <div class="mb-5">
+                    <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">{{ field.label_tag }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% if field.errors %}
+                        <div class="text-red-500 text-sm mt-1">
+                            {% for error in field.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
 
         </fieldset>
 

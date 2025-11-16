@@ -1,29 +1,86 @@
 {% extends "base.html" %}
-{% load static %}
 
-{% block title %}My Profile{% endblock %}
+{% block title %}My Profile - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="max-w-lg mx-auto mt-10 p-6 bg-white dark:bg-[#1f1f1f] shadow-lg rounded-lg">
+<div class="container mx-auto px-4 max-w-4xl">
+    
+    <!-- Profile -->
+    <div class="bg-surface dark:bg-darksurface p-8 rounded-lg shadow-md mb-8 border border-border dark:border-darkborder">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start">
+            <!-- Profile Pic -->
+            <img src="{{ user.profile.image.url }}" alt="Profile Picture" class="w-32 h-32 rounded-full object-cover flex-shrink-0">
+            
+            <div class="mt-4 sm:mt-0 sm:ml-6 text-center sm:text-left flex-grow">
+                <h1 class="text-3xl font-bold text-text dark:text-darktext">{{ user.get_full_name }}</h1>
+                <p class="text-lg text-gray-500 dark:text-gray-400">@{{ user.username }}</p>
+                
+                <!-- User contact -->
+                <div class="mt-4 flex flex-col sm:flex-row sm:space-x-6 text-gray-600 dark:text-gray-400">
+                    <span>📍 {{ profile.city }}, {{ profile.country }}</span>
+                    <span>📞 {{ profile.phone }}</span>
+                    <span>✉️ {{ user.email }}</span>
+                </div>
 
-  <h2 class="text-3xl font-bold text-center mb-6 text-black dark:text-white">My Profile</h2>
+                <!-- --- edit and logout --- -->
+                <div class="mt-4 flex space-x-4 justify-center sm:justify-start">
+                    <a href="{% url 'profile_edit' %}" class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Edit Profile
+                    </a>
+                    <a href="{% url 'my_bookmarks' %}" class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text dark:text-darktext font-bold py-2 px-4 rounded-lg transition-colors">
+                        My Bookmarks
+                    </a>
+                    <a href="{% url 'logout' %}" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Logout
+                    </a>
+                </div>
+            </div>
 
-  <div class="space-y-3 text-lg text-black dark:text-gray-200">
-      <p><strong>Username:</strong> {{ request.user.username }}</p>
-      <p><strong>Email:</strong> {{ request.user.email }}</p>
-      <p><strong>First Name:</strong> {{ request.user.first_name }}</p>
-      <p><strong>Last Name:</strong> {{ request.user.last_name }}</p>
-      <p><strong>Phone:</strong> {{ profile.phone }}</p>
-      <p><strong>Country:</strong> {{ profile.country }}</p>
-      <p><strong>City:</strong> {{ profile.city }}</p>
-  </div>
+            <!-- Score -->
+            <div class="mt-4 sm:mt-0 sm:ml-auto text-center">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Reputation Score</p>
+                <p class="text-4xl font-bold text-accent">{{ profile.score }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">/ 100</p>
+            </div>
+        </div>
+    </div>
 
-  <div class="text-center mt-6">
-      <a href="{% url 'logout' %}" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-          Logout
-      </a>
-  </div>
+    
 
+    <!-- Post history -->
+    <div>
+        <h2 class="text-2xl font-bold text-text dark:text-darktext mb-4">My Posts</h2>
+        <div class="space-y-6">
+            {% for post in posts %}
+                <div class="bg-surface dark:bg-darksurface p-4 rounded-lg shadow-md border border-border dark:border-darkborder flex space-x-4">
+                    {% if post.image %}
+                        <img src="{{ post.image.url }}" alt="{{ post.title }}" class="w-32 h-32 object-cover rounded-md flex-shrink-0 hidden sm:block">
+                    {% else %}
+                        <div class="w-32 h-32 bg-gray-200 dark:bg-gray-700 rounded-md flex-shrink-0 hidden sm:block"></div>
+                    {% endif %}
+                    <div>
+                        <h3 class="text-xl font-semibold">
+                            <a href="{% url 'post_detail' post.id %}" class="text-accent hover:underline">
+                                {{ post.title }}
+                            </a>
+                        </h3>
+                        <p class="text-gray-600 dark:text-gray-400 mt-1">{{ post.content|truncatewords:25 }}</p>
+                        <p class="text-sm text-gray-400 mt-2">
+                            Posted on {{ post.created_at|date:"M d, Y" }}
+                        </p>
+                        <!-- Edit and Delete (Post) -->
+                        <div class="mt-3 flex space-x-2">
+                            <a href="{% url 'edit_post' post.id %}" class="text-sm bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-1 px-3 rounded-md">Edit</a>
+                            <a href="{% url 'delete_post' post.id %}" class="text-sm bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-md">Delete</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="bg-surface dark:bg-darksurface p-10 rounded-lg shadow-md border border-border dark:border-darkborder text-center">
+                    <p class="text-gray-500 dark:text-gray-400">You haven't made any posts yet.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 </div>
-
-{% endblock %}
+{% endblock content %}

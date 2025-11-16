@@ -1,10 +1,10 @@
 from django import forms
-from .models import Store, Product
+from .models import Store, Product, StoreReview, ProductReview
 
 class StoreRequestForm(forms.ModelForm):
     class Meta:
         model = Store
-        fields = ['name', 'description', 'store_type', 'profile_image', 'cover_image']
+        fields = ['name', 'description', 'store_type', 'profile_image', 'cover_image', 'verification_document', 'verification_statement']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -16,16 +16,29 @@ class StoreRequestForm(forms.ModelForm):
         self.fields['store_type'].widget.attrs.update({'class': common_classes})
         self.fields['profile_image'].widget.attrs.update({'class': image_classes})
         self.fields['cover_image'].widget.attrs.update({'class': image_classes})
+        self.fields['verification_document'].widget.attrs.update({'class': image_classes})
+        self.fields['verification_statement'].widget.attrs.update({'class': common_classes, 'rows': 4})
+
+    def clean(self):
+        cleaned_data = super().clean()
+        document = cleaned_data.get('verification_document')
+        statement = cleaned_data.get('verification_statement')
+
+        if not document and not statement:
+            raise forms.ValidationError(
+                "Please provide either a verification document or a statement. You must submit at least one."
+            )
+        return cleaned_data
 
 class StoreUpdateForm(forms.ModelForm):
     class Meta:
         model = Store
-        # อนุญาตให้แก้ไขได้แค่ชื่อ, คำอธิบาย, รูปโปรไฟล์, และรูปหน้าปก
+        # only allow updating name, description, profile_image, and cover_image
         fields = ['name', 'description', 'profile_image', 'cover_image']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # กำหนดคลาส Tailwind ให้กับฟอร์ม
+        # tailwindcss classes
         common_classes = "w-full p-2 border border-border dark:border-darkborder rounded-md bg-background dark:bg-darkbg text-text dark:text-darktext focus:ring-accent focus:border-accent"
         image_classes = "w-full text-sm text-text dark:text-darktext border border-border dark:border-darkborder rounded-lg cursor-pointer bg-background dark:bg-darkbg"
 
@@ -48,3 +61,21 @@ class ProductForm(forms.ModelForm):
         self.fields['price'].widget.attrs.update({'class': common_classes, 'type': 'number', 'step': '0.01'})
         self.fields['image'].widget.attrs.update({'class': 'w-full text-sm text-text dark:text-darktext border border-border dark:border-darkborder rounded-lg cursor-pointer bg-background dark:bg-darkbg'})
         self.fields['stock'].widget.attrs.update({'class': common_classes, 'type': 'number'})
+
+class StoreReviewForm(forms.ModelForm):
+    class Meta:
+        model = StoreReview
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.Select(attrs={'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
+            'comment': forms.Textarea(attrs={'rows': 4, 'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
+        }
+
+class ProductReviewForm(forms.ModelForm):
+    class Meta:
+        model = ProductReview
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.Select(attrs={'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
+            'comment': forms.Textarea(attrs={'rows': 4, 'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
+        }
