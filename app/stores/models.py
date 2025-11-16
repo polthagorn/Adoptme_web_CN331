@@ -42,3 +42,33 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+    
+class StoreReview(models.Model):
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='reviews')
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 6)]) # 1-5 ดาว
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        # บังคับให้ 1 user รีวิว 1 ร้านค้าได้แค่ครั้งเดียว
+        unique_together = ('store', 'author')
+
+    def __str__(self):
+        return f'{self.rating} stars for {self.store.name} by {self.author.username}'
+
+class ProductReview(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 6)]) # 1-5 ดาว
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        # บังคับให้ 1 user รีวิว 1 สินค้าได้แค่ครั้งเดียว
+        unique_together = ('product', 'author')
+
+    def __str__(self):
+        return f'{self.rating} stars for {self.product.name} by {self.author.username}'

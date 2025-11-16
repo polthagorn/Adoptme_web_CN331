@@ -10,6 +10,10 @@ from .views import (
     StoreUpdateView,
     ProductUpdateView,
     ProductDeleteView,
+    StoreReviewListView,
+    StoreReviewCreateView,
+    ProductReviewListView,
+    ProductReviewCreateView,
 
 )
 
@@ -24,4 +28,8 @@ urlpatterns = [
     path('<int:pk>/edit/', StoreUpdateView.as_view(), name='store_update'),
     path('product/<int:pk>/edit/', ProductUpdateView.as_view(), name='product_update'),
     path('product/<int:pk>/delete/', ProductDeleteView.as_view(), name='product_delete'),
+    path('store/<int:pk>/reviews/', StoreReviewListView.as_view(), name='store_review_list'),
+    path('store/<int:pk>/add-review/', StoreReviewCreateView.as_view(), name='store_review_create'),
+    path('product/<int:pk>/reviews/', ProductReviewListView.as_view(), name='product_review_list'),
+    path('product/<int:pk>/add-review/', ProductReviewCreateView.as_view(), name='product_review_create'),
 ]

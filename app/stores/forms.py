@@ -1,5 +1,5 @@
 from django import forms
-from .models import Store, Product
+from .models import Store, Product, StoreReview, ProductReview
 
 class StoreRequestForm(forms.ModelForm):
     class Meta:
@@ -61,3 +61,21 @@ class ProductForm(forms.ModelForm):
         self.fields['price'].widget.attrs.update({'class': common_classes, 'type': 'number', 'step': '0.01'})
         self.fields['image'].widget.attrs.update({'class': 'w-full text-sm text-text dark:text-darktext border border-border dark:border-darkborder rounded-lg cursor-pointer bg-background dark:bg-darkbg'})
         self.fields['stock'].widget.attrs.update({'class': common_classes, 'type': 'number'})
+
+class StoreReviewForm(forms.ModelForm):
+    class Meta:
+        model = StoreReview
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.Select(attrs={'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
+            'comment': forms.Textarea(attrs={'rows': 4, 'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
+        }
+
+class ProductReviewForm(forms.ModelForm):
+    class Meta:
+        model = ProductReview
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.Select(attrs={'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
+            'comment': forms.Textarea(attrs={'rows': 4, 'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
+        }
