@@ -13,20 +13,7 @@ class ShelterViewsTest(TestCase):
             password='password123'
         )
         self.client.login(username='testuser', password='password123')
-    '''
-    def test_shelter_register_view_creates_profile(self):
-        #User without shelter should be able to register a shelter.
-        response = self.client.post(reverse('shelter_register'), {
-            'name': 'Happy Pets Shelter',
-            'address': '123 Road',
-            'phone': '0999999999',
-            'description': 'We take care of cute animals.'
-        })
     
-        # Check shelter created
-        self.assertTrue(ShelterProfile.objects.filter(user=self.user).exists())
-        self.assertRedirects(response, reverse('shelter_profile'))
-    '''
     def test_shelter_register_redirect_if_profile_exists(self):
         """User with existing shelter should be redirected."""
         ShelterProfile.objects.create(
@@ -78,3 +65,5 @@ class ShelterViewsTest(TestCase):
         shelter.refresh_from_db()
         self.assertEqual(shelter.name, 'New Name')
         self.assertRedirects(response, reverse('shelter_profile'))
+
+    

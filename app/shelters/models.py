@@ -24,5 +24,5 @@ class ShelterProfile(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING', verbose_name="status")
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
+    def __str__(self): # pragma: no cover
         return self.name

@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from .models import Profile
+import re
 
 
 def login_page(request):
@@ -58,7 +59,7 @@ def register_page(request):
         # ----------------------
         # PHONE VALIDATION (NEW)
         # ----------------------
-        import re
+        
         phone_pattern = r'^(\+66|0)\d{8,9}$'
 
         if not re.match(phone_pattern, phone):

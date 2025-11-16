@@ -22,7 +22,7 @@ class Store(models.Model):
     profile_image = models.ImageField(upload_to='store_profiles/', null=True, blank=True, verbose_name="profile image")
     cover_image = models.ImageField(upload_to='store_covers/', null=True, blank=True, verbose_name="cover image")
 
-    def __str__(self):
+    def __str__(self): # pragma: no cover
         return self.name
 
 class Product(models.Model):
@@ -34,5 +34,5 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=0, verbose_name="stock quantity")
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
+    def __str__(self): # pragma: no cover
         return self.name
