@@ -8,3 +8,4 @@ venv/
 media/
 htmlcov/
 .pytest_cache/
+.coverage
