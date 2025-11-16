@@ -1,27 +1,61 @@
 {% extends "base.html" %}
 {% block title %}{{ post.title }}{% endblock %}
+
 {% block content %}
-<div class="max-w-3xl mx-auto bg-surface dark:bg-darksurface p-6 rounded-lg shadow">
-  <h1 class="text-3xl font-bold mb-2">{{ post.title }}</h1>
-  <p class="text-gray-500 mb-4">
-    By {{ post.author.username }} on {{ post.created_at|date:"M d, Y" }}
+<div class="max-w-3xl mx-auto bg-surface dark:bg-darksurface p-8 rounded-2xl shadow-xl border border-border dark:border-darkborder mt-10">
+
+  <!-- Title -->
+  <h1 class="text-4xl font-extrabold mb-3 text-text dark:text-darktext">
+    {{ post.title }}
+  </h1>
+
+  <!-- Author -->
+  <p class="text-gray-500 dark:text-gray-400 mb-6">
+    By <span class="font-semibold">{{ post.author.username }}</span>
+    • {{ post.created_at|date:"M d, Y" }}
   </p>
 
+  <!-- Image -->
   {% if post.image %}
-  <img src="{{ post.image.url }}" alt="Post image" class="rounded-lg mb-4">
+  <img src="{{ post.image.url }}"
+       alt="Post image"
+       class="rounded-xl mb-6 shadow-md max-h-96 object-cover w-full">
   {% endif %}
 
-  <p class="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-line">{{ post.content }}</p>
+  <!-- Content -->
+  <p class="text-lg leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-line">
+    {{ post.content }}
+  </p>
 
-  {% if user == post.author %}
-  <div class="mt-6 flex space-x-3">
-    <a href="{% url 'edit_post' post.id %}" class="bg-yellow-400 text-black px-3 py-2 rounded hover:bg-yellow-500">Edit</a>
-    <a href="{% url 'delete_post' post.id %}" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">Delete</a>
+  <!-- Buttons -->
+  {% if user == post.author or user.is_superuser %}
+  <div class="mt-8 flex space-x-4">
+    {% if user == post.author%}
+    <!-- Edit Button -->
+    <a href="{% url 'edit_post' post.id %}"
+       class="px-5 py-2.5 rounded-xl font-semibold bg-yellow-400 text-black
+              hover:bg-yellow-500 active:scale-95 transition-all duration-200 shadow">
+      ✏️ Edit
+    </a>
+    {% endif %}
+
+    <!-- Delete Button -->
+    <a href="{% url 'delete_post' post.id %}"
+       class="px-5 py-2.5 rounded-xl font-semibold bg-red-500 text-white
+              hover:bg-red-600 active:scale-95 transition-all duration-200 shadow">
+      🗑 Delete
+    </a>
+
   </div>
   {% endif %}
 
-  <div class="mt-6">
-    <a href="{% url 'posts' %}" class="text-accent hover:underline">← Back to posts</a>
+  <!-- Back -->
+  <div class="mt-10">
+    <a href="{% url 'posts' %}"
+       class="text-accent font-semibold hover:underline">
+      ← Back to Posts
+    </a>
   </div>
+
 </div>
 {% endblock %}
