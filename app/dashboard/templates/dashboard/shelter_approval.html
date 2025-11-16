@@ -1,0 +1,45 @@
+{% extends "dashboard/layout.html" %}
+{% block dashboard_content %}
+
+<h1 class="text-2xl font-bold mb-6">Pending Shelter Approvals</h1>
+
+{% if shelters %}
+<table class="w-full bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded shadow">
+    <thead class="bg-gray-200 dark:bg-gray-700">
+        <tr>
+            <th class="p-3 text-left">Shelter</th>
+            <th class="p-3 text-left">User</th>
+            <th class="p-3 text-left">Contact</th>
+            <th class="p-3 text-left">Document</th>
+            <th class="p-3 text-center">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in shelters %}
+        <tr class="border-t border-border dark:border-darkborder">
+            <td class="p-3">{{ s.name }}</td>
+            <td class="p-3">{{ s.user.username }}</td>
+            <td class="p-3">{{ s.email }}<br>{{ s.phone }}</td>
+            <td class="p-3">
+                <a href="{{ s.verification_document.url }}" target="_blank" class="text-blue-500 underline">
+                    View Document
+                </a>
+            </td>
+            <td class="p-3 text-center space-x-3">
+                <a href="{% url 'approve_shelter' s.id %}" class="text-green-600 font-semibold hover:underline">
+                    Approve
+                </a>
+                <a href="{% url 'reject_shelter' s.id %}" class="text-red-600 font-semibold hover:underline">
+                    Reject
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% else %}
+<p class="text-gray-600 dark:text-gray-400">No shelters currently awaiting approval.</p>
+{% endif %}
+
+{% endblock %}
