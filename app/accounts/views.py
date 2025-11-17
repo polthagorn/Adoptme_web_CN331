@@ -132,7 +132,7 @@ def profile_page(request):
         'posts': user_posts,
     }
 
-    return render(request, 'accounts/profile_page.html', {'profile': profile})
+    return render(request, 'accounts/profile_page.html', context)
 
 
 @login_required
