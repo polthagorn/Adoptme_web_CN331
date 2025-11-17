@@ -122,7 +122,15 @@ def profile_page(request):
             "country": "N/A",
             "city": "N/A",
         }
+    
     )
+    user_posts = Post.objects.filter(author=user).order_by('-created_at')
+
+    context = {
+        'profile_user': user,
+        'profile': profile,
+        'posts': user_posts,
+    }
 
     return render(request, 'accounts/profile_page.html', {'profile': profile})
 
