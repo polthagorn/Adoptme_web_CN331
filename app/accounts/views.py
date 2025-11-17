@@ -111,35 +111,21 @@ def logout_page(request):
     messages.success(request, "You have successfully logged out.")
     return redirect('home')
 
-
 @login_required
 def profile_page(request):
-
-    # pull user posts from Post model
-    user_posts = Post.objects.filter(author=request.user).order_by('-created_at')
-    
-    # create context
-    context = {
-        'profile': request.user.profile,
-        'posts': user_posts,
-    }
-    
-    return render(request, 'accounts/profile_page.html', context)
-
-def user_profile_page(request, username):
     user = request.user
 
-    try:
-        profile = user.profile
-    except Profile.DoesNotExist:
-        profile = Profile.objects.create(
-            user=user,
-            phone="N/A",
-            country="N/A",
-            city="N/A"
-        )
+    profile, created = Profile.objects.get_or_create(
+        user=user,
+        defaults={
+            "phone": "N/A",
+            "country": "N/A",
+            "city": "N/A",
+        }
+    )
 
     return render(request, 'accounts/profile_page.html', {'profile': profile})
+
 
 @login_required
 def profile_edit_page(request):
@@ -176,6 +162,26 @@ def profile_edit_page(request):
     }
     return render(request, 'accounts/profile_edit_page.html', context)
 
+def user_profile_page(request, username):
+    user_obj = get_object_or_404(User, username=username)
+
+    profile, created = Profile.objects.get_or_create(
+        user=user_obj,
+        defaults={
+            "phone": "N/A",
+            "country": "N/A",
+            "city": "N/A",
+        }
+    )
+
+    user_posts = Post.objects.filter(author=user_obj).order_by('-created_at')
+
+    context = {
+        'profile_user': user_obj,
+        'profile': profile,
+        'posts': user_posts,
+    }
+    return render(request, 'accounts/user_profile_page.html', context)
 
 
 @login_required
