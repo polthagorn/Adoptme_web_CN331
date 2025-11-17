@@ -45,6 +45,27 @@
             </a>
         </div>
     </div>
+    {% if user == post.author or user.is_superuser %}
+        <div class="mt-8 flex space-x-4">
+            {% if user == post.author%}
+            <!-- Edit Button -->
+            <a href="{% url 'edit_post' post.id %}"
+            class="px-5 py-2.5 rounded-xl font-semibold bg-yellow-400 text-black
+                    hover:bg-yellow-500 active:scale-95 transition-all duration-200 shadow">
+            ✏️ Edit
+            </a>
+            {% endif %}
+
+            <!-- Delete Button -->
+            <a href="{% url 'delete_post' post.id %}"
+            class="px-5 py-2.5 rounded-xl font-semibold bg-red-500 text-white
+                    hover:bg-red-600 active:scale-95 transition-all duration-200 shadow">
+            🗑 Delete
+            </a>
+
+        </div>
+    {% endif %}
+
 
     <!-- ================================================== -->
     <!-- **Comment**                                    -->

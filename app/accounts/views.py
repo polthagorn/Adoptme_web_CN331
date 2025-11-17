@@ -114,16 +114,19 @@ def logout_page(request):
 
 @login_required
 def profile_page(request):
-    # pull user posts from Post model
-    user_posts = Post.objects.filter(author=request.user).order_by('-created_at')
-    
-    # create context
-    context = {
-        'profile': request.user.profile,
-        'posts': user_posts,
-    }
-    
-    return render(request, 'accounts/profile_page.html', context)
+    user = request.user
+
+    try:
+        profile = user.profile
+    except Profile.DoesNotExist:
+        profile = Profile.objects.create(
+            user=user,
+            phone="N/A",
+            country="N/A",
+            city="N/A"
+        )
+
+    return render(request, 'accounts/profile_page.html', {'profile': profile})
 
 @login_required
 def profile_edit_page(request):
