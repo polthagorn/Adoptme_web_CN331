@@ -29,6 +29,7 @@ urlpatterns = [
     path('accounts/', include('app.accounts.urls')),
     path('stores/', include('app.stores.urls')),
     path('shelters/', include('app.shelters.urls')),
-    
+    path('dashboard/', include('app.dashboard.urls')),
 ]
+
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -61,6 +61,9 @@
           {% else %}
               <a href="{% url 'shelter_register' %}" class="hover:text-accent transition-colors">Become a Shelter</a>
           {% endif %}
+          {% if user.is_superuser %}
+          <a href="{% url 'dashboard_home' %}" class="hover:text-accent font-semibold">Dashboard</a>
+          {% endif %}
         {% endif %}
 
     

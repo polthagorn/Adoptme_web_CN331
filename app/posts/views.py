@@ -1,8 +1,11 @@
-from django.shortcuts import render, redirect, get_object_or_404, reverse
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponseRedirect
-from django.contrib.auth.decorators import login_required
-from .models import Post, Comment
-from .forms import PostForm, CommentForm
+from django.shortcuts import get_object_or_404, redirect, render, reverse
+
+from .forms import CommentForm, PostForm
+from .models import Comment, Post
+
 
 
 # ----------------------------------------
@@ -41,24 +44,25 @@ def post(request):
 # CREATE POST (USER + SHELTER SUPPORT)
 # ----------------------------------------
 @login_required
-def create_post(request): # pragma: no cover
+def create_post(request):
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
-
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
 
-            # Shelter auto-assign
+            # If shelter and approved, attach shelter
             if hasattr(request.user, 'shelter_profile') and request.user.shelter_profile.status == 'APPROVED':
                 post.shelter = request.user.shelter_profile
 
             post.save()
+            messages.success(request, "Post created successfully!")
             return redirect('posts')
     else:
         form = PostForm()
 
     return render(request, 'posts/create_post.html', {'form': form})
+
 
 
 # ----------------------------------------
@@ -70,18 +74,15 @@ def edit_post(request, post_id):
 
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES, instance=post)
-
         if form.is_valid():
             form.save()
+            messages.success(request, "Post updated successfully!")
             return redirect('posts')
-
     else:
         form = PostForm(instance=post)
 
-    return render(request, 'posts/edit_post.html', {
-        'form': form,
-        'post': post
-    })
+    return render(request, 'posts/edit_post.html', {'form': form, 'post': post})
+
 
 
 # ----------------------------------------
@@ -129,10 +130,15 @@ def post_detail(request, post_id):
 # ----------------------------------------
 @login_required
 def delete_post(request, post_id):
-    post = get_object_or_404(Post, id=post_id, author=request.user)
+    post = get_object_or_404(Post, id=post_id)
+
+    if request.user != post.author and not request.user.is_superuser:
+        messages.error(request, "You do not have permission to delete this post.")
+        return redirect('posts')
 
     if request.method == 'POST':
         post.delete()
+        messages.success(request, "Post deleted successfully!")
         return redirect('posts')
 
     return render(request, 'posts/delete_post.html', {'post': post})

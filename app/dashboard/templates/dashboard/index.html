@@ -1,0 +1,22 @@
+{% extends "dashboard/layout.html" %}
+{% block dashboard_content %}
+
+<h1 class="text-3xl font-bold mb-6">Dashboard Overview</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow border border-border dark:border-darkborder">
+        <h2 class="text-xl font-semibold mb-4">Total Users</h2>
+        <p class="text-4xl font-bold text-accent">{{ total_users }}</p>
+    </div>
+    <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow border border-border dark:border-darkborder">
+        <h2 class="text-xl font-semibold mb-4">Total Shelters</h2>
+        <p class="text-4xl font-bold text-accent">{{ total_shelters }}</p>
+    </div>
+    <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow border border-border dark:border-darkborder">
+        <h2 class="text-xl font-semibold mb-4">Pending Shelter Approvals</h2>
+        <p class="text-4xl font-bold text-accent">{{ pending_shelter_approvals }}</p>
+    </div>
+
+</div>
+
+{% endblock %}
