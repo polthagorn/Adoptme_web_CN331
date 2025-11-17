@@ -1,43 +1,27 @@
 {% extends "base.html" %}
 
-    {% block title %}Home{% endblock %}
+{% block title %}Home{% endblock %}
 
-    {% block content %}
-    <div class="text-center py-10">
-    <h2 class="text-3xl font-bold text-accent mb-8">Home</h2>
+{% block content %}
+<div class="text-center">
+  <h2 class="text-3xl font-bold text-accent">Home</h2>
 
-    <div class="flex flex-col gap-4 w-64 mx-auto">
+<div class="flex flex-col gap-3 w-60 mx-auto">
 
-        <!-- Marketplace -->
-        <a href="{% url 'marketplace' %}"
-        class="py-3 bg-green-500 hover:bg-green-600 text-white rounded block">
+    <button class="py-3 bg-gray-400 text-white rounded cursor-not-allowed">
+        Adopt a Pet (Not Available)
+    </button>
+   
+   <a href="{% url 'marketplace' %}" class="w-full" rel="noopener noreferrer">
+        <button class="py-3 bg-green-500 hover:bg-green-600 text-white w-full rounded">
             Marketplace
-        </a>
+        </button>
+    </a>
 
-        <!-- Posts -->
-        <a href="{% url 'posts' %}"
-        class="py-3 bg-blue-500 hover:bg-blue-600 text-white rounded block">
-            Posts
-        </a>
+    <button class="py-3 bg-gray-400 text-white rounded cursor-not-allowed">
+        Missing Pet (Not Available)
+    </button>
 
-        <!-- Missing Pet -->
-        <a href="{% url 'posts' %}?tag=missing"
-        class="py-3 bg-red-500 hover:bg-red-600 text-white rounded block">
-            Missing Pet
-        </a>
-
-        <!-- Found Pet -->
-        <a href="{% url 'posts' %}?tag=found"
-        class="py-3 bg-yellow-500 hover:bg-yellow-600 text-black rounded block">
-            Found Pet
-        </a>
-
-        <!-- Adopt a Pet (Marketplace filtered by PET) -->
-        <a href="{% url 'marketplace' %}?type=PET"
-        class="py-3 bg-purple-500 hover:bg-purple-600 text-white rounded block">
-            Adopt a Pet
-        </a>
-
-    </div>
-    </div>
-    {% endblock %}
+</div>
+</div>
+{% endblock %}

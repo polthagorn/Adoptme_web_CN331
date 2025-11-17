@@ -1,298 +1,44 @@
 {% extends "base.html" %}
-
-{% block title %}Posts Feed - {{ block.super }}{% endblock %}
-
+{% block title %}Posts{% endblock %}
 {% block content %}
-<div class="max-w-3xl mx-auto">
+<div class="max-w-3xl mx-auto space-y-6">
+  <h1 class="text-3xl font-bold mb-4">Make your post</h1>
+  <a href="{% url 'create_post' %}" class="bg-accent text-white px-4 py-2 rounded">Create Post</a>
 
-    <!-- header -->
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-text dark:text-darktext">Community Feed</h1>
+  {% for post in posts %}
+  <div class="border-b border-gray-300 py-4">
+    <h2 class="text-2xl font-semibold">
+      <a href="{% url 'post_detail' post.id %}" class="text-accent hover:underline">
+        {{ post.title }}
+      </a>
+    </h2>
 
-        {% if user.is_authenticated %}
-            <a href="{% url 'create_post' %}"
-               class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                Create Post
-            </a>
+    <p class="text-white-600">{{ post.content|truncatechars:200 }}</p>
+
+    {% if post.image %}
+      <img src="{{ post.image.url }}" alt="Post image" class="mt-2 rounded-lg">
+    {% endif %}
+
+    <p class="text-sm text-gray-400 mt-2">
+      By {{ post.author.username }} on {{ post.created_at|date:"M d, Y" }}
+    </p>
+
+    {% if post.shelter %}
+            <span class="text-xs font-medium bg-blue-100 text-accent py-1 px-2 rounded-full">
+                From: {{ post.shelter.name }}
+            </span>
         {% endif %}
     </div>
 
-    <!-- TAG FILTER BAR -->
-    <div class="flex flex-wrap gap-2 mb-6">
-
-        <a href="?tag=none"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'none' or not selected_tag %}
-                      bg-gray-600 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            ทั้งหมด
-        </a>
-
-        <a href="?tag=missing"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'missing' %}
-                      bg-red-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            สัตว์หาย
-        </a>
-
-        <a href="?tag=found"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'found' %}
-                      bg-green-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            พบสัตว์หลง
-        </a>
-
-        <a href="?tag=adoption_update"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'adoption_update' %}
-                      bg-blue-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            อัปเดตการรับเลี้ยง
-        </a>
-
-        <a href="?tag=qa"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'qa' %}
-                      bg-yellow-500 text-black border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            Q&A
-        </a>
-
-        <a href="?tag=care"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'care' %}
-                      bg-purple-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            เคล็ดลับ
-        </a>
-
-        <a href="?tag=health"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'health' %}
-                      bg-pink-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            สุขภาพ/หมอ
-        </a>
-
-        <a href="?tag=event"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'event' %}
-                      bg-indigo-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            กิจกรรม
-        </a>
-
-        <a href="?tag=success"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'success' %}
-                      bg-teal-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            ความสำเร็จ
-        </a>
-
-        <a href="?tag=other"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'other' %}
-                      bg-gray-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            อื่นๆ
-        </a>
-
+    {% if user == post.author %}
+    <div class="mt-3 flex space-x-2">
+      <a href="{% url 'edit_post' post.id %}" class="bg-yellow-400 text-black px-3 py-1 rounded hover:bg-yellow-500">Edit</a>
+      <a href="{% url 'delete_post' post.id %}" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Delete</a>
     </div>
-    <!-- END FILTER BAR -->
-
-
-
-    <!-- POST FEED -->
-    <div class="space-y-8">
-        {% for post in posts %}
-            <div class="bg-surface dark:bg-darksurface rounded-lg shadow-md border border-border dark:border-darkborder overflow-hidden">
-
-                <!-- header -->
-                <div class="p-4 flex items-center space-x-4 border-b border-border dark:border-darkborder">
-
-                    {% if post.shelter %}
-                        <a href="{% url 'public_shelter_profile' pk=post.shelter.pk %}">
-                            {% if post.shelter.profile_image %}
-                                <img src="{{ post.shelter.profile_image.url }}"
-                                     class="w-12 h-12 rounded-full object-cover">
-                            {% else %}
-                                <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                            {% endif %}
-                        </a>
-
-                        <div>
-                            <a href="{% url 'public_shelter_profile' pk=post.shelter.pk %}"
-                               class="font-bold text-text dark:text-darktext hover:underline">
-                                {{ post.shelter.name }}
-                            </a>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                Posted on {{ post.created_at|date:"M d, Y" }}
-                            </p>
-                        </div>
-
-                        <span class="ml-auto text-xs font-medium bg-blue-100 text-accent py-1 px-2 rounded-full">
-                            SHELTER
-                        </span>
-
-                    {% else %}
-                        <a href="{% url 'user_profile' username=post.author.username %}">
-                            {% if post.author.profile.image %}
-                                <img src="{{ post.author.profile.image.url }}"
-                                     class="w-12 h-12 rounded-full object-cover">
-                            {% else %}
-                                <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                            {% endif %}
-                        </a>
-
-                        <div>
-                            <a href="{% url 'user_profile' username=post.author.username %}"
-                               class="font-bold text-text dark:text-darktext hover:underline">
-                                {{ post.author.username }}
-                            </a>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                Posted on {{ post.created_at|date:"M d, Y" }}
-                            </p>
-                        </div>
-                    {% endif %}
-                </div>
-
-
-                <!-- POST DETAILS -->
-                <div class="p-4">
-                    <h2 class="text-2xl font-semibold mb-2">
-                        <a href="{% url 'post_detail' post.id %}"
-                           class="text-text dark:text-darktext hover:text-accent transition-colors">
-                            {{ post.title }}
-                        </a>
-                    </h2>
-
-                    <!-- TAG + LOCATION -->
-                    <div class="flex items-center gap-3 mb-3">
-
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full 
-                            {% if post.tag == 'missing' %}bg-red-500 text-white{% endif %}
-                            {% if post.tag == 'found' %}bg-green-500 text-white{% endif %}
-                            {% if post.tag == 'adoption_update' %}bg-blue-500 text-white{% endif %}
-                            {% if post.tag == 'qa' %}bg-yellow-500 text-black{% endif %}
-                            {% if post.tag == 'care' %}bg-purple-500 text-white{% endif %}
-                            {% if post.tag == 'health' %}bg-pink-500 text-white{% endif %}
-                            {% if post.tag == 'event' %}bg-indigo-500 text-white{% endif %}
-                            {% if post.tag == 'success' %}bg-teal-500 text-white{% endif %}
-                            {% if post.tag == 'other' %}bg-gray-400 text-black{% endif %}
-                        ">
-                            {% if post.tag == 'missing' %}สัตว์หาย{% endif %}
-                            {% if post.tag == 'found' %}พบสัตว์หลง{% endif %}
-                            {% if post.tag == 'adoption_update' %}อัปเดตการรับเลี้ยง{% endif %}
-                            {% if post.tag == 'qa' %}Q&A{% endif %}
-                            {% if post.tag == 'care' %}เคล็ดลับ{% endif %}
-                            {% if post.tag == 'health' %}สุขภาพ/หมอ{% endif %}
-                            {% if post.tag == 'event' %}กิจกรรม{% endif %}
-                            {% if post.tag == 'success' %}ความสำเร็จ{% endif %}
-                            {% if post.tag == 'other' or post.tag == 'none' %}อื่นๆ{% endif %}
-                        </span>
-
-                        {% if post.location %}
-                            <span class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-gray-700 dark:text-gray-300">
-                                📍 {{ post.location }}
-                            </span>
-                        {% endif %}
-                    </div>
-
-
-                    {% if post.image %}
-                        <a href="{% url 'post_detail' post.id %}">
-                            <img src="{{ post.image.url }}"
-                                 class="mt-2 rounded-lg w-full max-h-[500px] object-cover">
-                        </a>
-                    {% endif %}
-
-                    <p class="text-gray-700 dark:text-gray-300 mt-4">
-                        {{ post.content|truncatewords:50 }}
-                    </p>
-                </div>
-
-                <!-- **interaction** -->
-                <div class="px-4 py-2 border-t border-border dark:border-darkborder flex justify-between items-center bg-gray-50 dark:bg-gray-700/50">
-                  <div class="flex items-center space-x-4">
-                    <a href="{% url 'like_post' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-red-500">
-                      <!-- like status -->
-                      {% if user in post.likes.all %}
-                        <svg class="w-5 h-5 text-red-500 fill-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
-                      {% else %}
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
-                      {% endif %}
-                      <span>{{ post.total_likes }}</span>
-                    </a>
-                    <a href="{% url 'post_detail' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-accent">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                      <span span>{{ post.comments.count }}</span>
-                    </a>
-                  </div>
-                  <a href="{% url 'bookmark_post' post.id %}" class="text-gray-500 hover:text-accent">
-                    {% if user in post.bookmarks.all %}
-                      <svg class="w-5 h-5 text-accent fill-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-                    {% else %}
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-                    {% endif %}
-                  </a>
-                </div>
-
-
-                <!-- ⭐ EDIT & DELETE BUTTONS (OWNER ONLY!) ⭐ -->
-                {% if user == post.author %}
-                    <div class="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 flex justify-end space-x-2">
-                        <a href="{% url 'edit_post' post.id %}"
-                           class="text-sm bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-1 px-3 rounded-md">
-                            Edit
-                        </a>
-
-                        <a href="{% url 'delete_post' post.id %}"
-                           class="text-sm bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-md">
-                            Delete
-                        </a>
-                    </div>
-                {% endif %}
-
-            </div>
-        {% empty %}
-            <p class="text-center text-gray-500 dark:text-gray-400 mt-10">
-                No posts found.
-            </p>
-        {% endfor %}
-    </div>
-
+    {% endif %}
+  </div>
+  {% empty %}
+  <p>No posts yet.</p>
+  {% endfor %}
 </div>
 {% endblock %}
