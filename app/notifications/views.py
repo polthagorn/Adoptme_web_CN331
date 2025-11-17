@@ -1,3 +1,3 @@
-from django.shortcuts import render # pragma: no cover
+from django.shortcuts import render
 
 # Create your views here.

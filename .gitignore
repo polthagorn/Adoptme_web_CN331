@@ -3,9 +3,5 @@ __pycache__/
 *.so
 *.sqlite3
 venv/
-.venv/
 .env
 media/
-htmlcov/
-.pytest_cache/
-.coverage

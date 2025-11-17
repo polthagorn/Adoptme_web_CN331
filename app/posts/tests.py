@@ -2,7 +2,6 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from app.posts.models import Post
-from app.posts.forms import PostForm
 
 class PostViewsTest(TestCase):
     def setUp(self):
@@ -30,19 +29,13 @@ class PostViewsTest(TestCase):
     # -------------------------
     # Create Post
     # -------------------------
-    def test_create_post_get(self):
-        self.client.login(username='john', password='12345')
-        response = self.client.get(reverse('create_post'))
-        self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.context['form'], PostForm)
-
     def test_create_post_happy_path(self):
         self.client.login(username="john", password="12345")
         response = self.client.post(reverse('create_post'), {
             'title': 'New Post',
             'content': 'This is new!'
         })
-        self.assertTrue(Post.objects.filter(title='New Post').exists())
+        self.assertEqual(Post.objects.count(), 2)  # new post created
         self.assertRedirects(response, reverse('posts'))
 
     def test_create_post_sad_path_not_logged_in(self):
@@ -52,13 +45,6 @@ class PostViewsTest(TestCase):
     # -------------------------
     # Edit Post
     # -------------------------
-    def test_edit_post_get(self):
-        self.client.login(username='john', password='12345')
-        response = self.client.get(reverse('edit_post', args=[self.post.id]))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'posts/edit_post.html')
-        self.assertEqual(response.context['form'].instance, self.post)
-    
     def test_edit_post_happy_path(self):
         self.client.login(username="john", password="12345")
         response = self.client.post(reverse('edit_post', args=[self.post.id]), {
@@ -99,15 +85,3 @@ class PostViewsTest(TestCase):
         self.client.login(username="kate", password="12345")
         response = self.client.post(reverse('delete_post', args=[self.post.id]))
         self.assertEqual(response.status_code, 404)  # blocked by author filter
-
-    def test_welcome_page(self):
-        response = self.client.get(reverse('welcome'))
-        self.assertEqual(response.status_code, 200)
-
-    def test_home_page(self):
-        response = self.client.get(reverse('home'))
-        self.assertEqual(response.status_code, 200)
-
-    def test_about_page(self):
-        response = self.client.get(reverse('about'))
-        self.assertEqual(response.status_code, 200)

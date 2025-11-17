@@ -1,9 +1,7 @@
-# app/stores/models.py
 from django.db import models
 from django.contrib.auth.models import User
 
 class Store(models.Model):
-    # --- ย้ายโค้ดทั้งหมดนี้เข้ามาในคลาส Store ---
     STATUS_CHOICES = [
         ('PENDING', 'pending'),
         ('APPROVED', 'approved'),
@@ -24,15 +22,7 @@ class Store(models.Model):
     profile_image = models.ImageField(upload_to='store_profiles/', null=True, blank=True, verbose_name="profile image")
     cover_image = models.ImageField(upload_to='store_covers/', null=True, blank=True, verbose_name="cover image")
 
-    # --- เพิ่มฟิลด์สำหรับ Verification ---
-    verification_document = models.FileField(upload_to='store_verification_docs/', null=True, blank=True, verbose_name="Verification Document")
-    verification_statement = models.TextField(null=True, blank=True, verbose_name="Verification Statement")
-
-    # --- เพิ่มฟิลด์สำหรับ Verification ---
-    verification_document = models.FileField(upload_to='store_verification_docs/', null=True, blank=True, verbose_name="Verification Document")
-    verification_statement = models.TextField(null=True, blank=True, verbose_name="Verification Statement")
-
-    def __str__(self): # pragma: no cover
+    def __str__(self):
         return self.name
 
 class Product(models.Model):
@@ -44,35 +34,5 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=0, verbose_name="stock quantity")
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self): # pragma: no cover
+    def __str__(self):
         return self.name
-    
-class StoreReview(models.Model):
-    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='reviews')
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    rating = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 6)]) # 1-5 ดาว
-    comment = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        # บังคับให้ 1 user รีวิว 1 ร้านค้าได้แค่ครั้งเดียว
-        unique_together = ('store', 'author')
-
-    def __str__(self):
-        return f'{self.rating} stars for {self.store.name} by {self.author.username}'
-
-class ProductReview(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    rating = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 6)]) # 1-5 ดาว
-    comment = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        # บังคับให้ 1 user รีวิว 1 สินค้าได้แค่ครั้งเดียว
-        unique_together = ('product', 'author')
-
-    def __str__(self):
-        return f'{self.rating} stars for {self.product.name} by {self.author.username}'

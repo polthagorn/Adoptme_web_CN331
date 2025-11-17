@@ -7,11 +7,11 @@
 
   <form method="POST" enctype="multipart/form-data" class="space-y-5">
     {% csrf_token %}
-
+    
     <!-- Title -->
     <div>
       <label for="id_title" class="block text-sm font-semibold mb-2">Title</label>
-      <input type="text" name="title" id="id_title"
+      <input type="text" name="title" id="id_title" 
              class="w-full p-3 border border-border dark:border-darkborder rounded-lg bg-white dark:bg-darksurface text-text dark:text-darktext focus:ring-2 focus:ring-accent focus:outline-none"
              value="{{ form.title.value|default_if_none:'' }}">
       {% if form.title.errors %}
@@ -42,31 +42,12 @@
       {% endif %}
     </div>
 
-    <!-- ⭐ TAG FIELD (DROPDOWN) -->
-    <div>
-      <label for="id_tag" class="block text-sm font-semibold mb-2">หมวดหมู่โพสต์</label>
-      {{ form.tag }}
-      {% if form.tag.errors %}
-        <p class="text-red-500 text-sm mt-1">{{ form.tag.errors.0 }}</p>
-      {% endif %}
-    </div>
-
-    <!-- ⭐ LOCATION FIELD -->
-    <div>
-      <label for="id_location" class="block text-sm font-semibold mb-2">สถานที่</label>
-      {{ form.location }}
-      {% if form.location.errors %}
-        <p class="text-red-500 text-sm mt-1">{{ form.location.errors.0 }}</p>
-      {% endif %}
-    </div>
-
     <!-- Submit -->
     <div class="text-center">
       <button type="submit" class="bg-accent hover:bg-accent/90 text-white font-semibold px-6 py-2 rounded-lg shadow transition duration-200">
         Save Changes
       </button>
     </div>
-
   </form>
 </div>
 {% endblock %}
