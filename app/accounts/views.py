@@ -114,6 +114,19 @@ def logout_page(request):
 
 @login_required
 def profile_page(request):
+
+    # pull user posts from Post model
+    user_posts = Post.objects.filter(author=request.user).order_by('-created_at')
+    
+    # create context
+    context = {
+        'profile': request.user.profile,
+        'posts': user_posts,
+    }
+    
+    return render(request, 'accounts/profile_page.html', context)
+
+def user_profile_page(request, username):
     user = request.user
 
     try:
@@ -163,15 +176,7 @@ def profile_edit_page(request):
     }
     return render(request, 'accounts/profile_edit_page.html', context)
 
-def user_profile_page(request, username):
-    user_obj = get_object_or_404(User, username=username)
-    user_posts = Post.objects.filter(author=user_obj).order_by('-created_at')
-    
-    context = {
-        'profile_user': user_obj, 
-        'posts': user_posts,
-    }
-    return render(request, 'accounts/user_profile_page.html', context)
+
 
 @login_required
 def my_bookmarks_page(request):
