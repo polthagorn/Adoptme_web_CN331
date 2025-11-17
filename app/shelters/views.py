@@ -20,7 +20,7 @@ class ShelterRegisterView(LoginRequiredMixin, CreateView):
         if hasattr(request.user, 'shelter_profile'):
             # if yes, redirect to the profile view
             return redirect('shelter_profile')
-        return super().dispatch(request, *args, **kwargs) # pragma: no cover
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         form.instance.user = self.request.user
@@ -58,13 +58,6 @@ class ShelterUpdateView(LoginRequiredMixin, UpdateView):
     def get_object(self, queryset=None):
         return get_object_or_404(ShelterProfile, user=self.request.user)
     
-    def form_valid(self, form):
-        shelter_profile = form.save(commit=False)
-        shelter_profile.status = 'PENDING'
-        shelter_profile.save()
-        messages.success(self.request, 'Your application has been re-submitted and is pending review.')
-        return redirect(self.get_success_url())
-
 class PublicShelterProfileView(DetailView):
     model = ShelterProfile
     template_name = 'shelters/public_shelter_profile.html' # สร้าง template ใหม่
