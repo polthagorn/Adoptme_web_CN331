@@ -5,6 +5,31 @@
 {% block content %}
 {% load static %}
 
+<!-- ✦✦ REVEAL ANIMATION STYLE ✦✦ -->
+<style>
+  /* Hidden base state */
+  .reveal {
+    opacity: 0;
+    transition: all 0.9s ease-out;
+  }
+
+  /* Start from left side */
+  .slide-left {
+    transform: translateX(-60px);
+  }
+
+  /* Start from right side */
+  .slide-right {
+    transform: translateX(60px);
+  }
+
+  /* Final visible state (centered at original position) */
+  .reveal.show {
+    opacity: 1;
+    transform: translateX(0);
+  }
+</style>
+
 <!-- ✦✦ FULLSCREEN VIDEO SECTION ✦✦ -->
 <div class="relative w-full h-screen overflow-hidden">
 
@@ -27,7 +52,7 @@
 
     {% if user.is_authenticated %}
       <a href="{% url 'home' %}">
-        <img src="{% static 'img/getstart_button.png' %}" 
+        <img src="{% static 'img/getstart_button.png' %}"" 
              alt="Get Started"
              class="cursor-pointer transform transition-all duration-200 hover:scale-105 active:scale-90 w-64 md:w-72">
       </a>
@@ -47,7 +72,7 @@
 
 
 
-<!-- ✦✦ HOT SPRING SECTION ✦✦ -->
+<!-- ✦✦ HOT SPRING SECTION (MODERN HOUSE) ✦✦ -->
 <div class="w-full overflow-hidden relative">
 
   <!-- Background Image -->
@@ -63,8 +88,8 @@
                   flex flex-col md:flex-row 
                   items-center justify-center gap-12">
 
-          <!-- TEXT LEFT -->
-          <div class="w-full md:w-1/2 text-white text-center md:text-left space-y-4">
+          <!-- TEXT LEFT (SLIDE FROM LEFT) -->
+          <div class="w-full md:w-1/2 text-white text-center md:text-left space-y-4 reveal slide-left">
               <h2 class="text-3xl md:text-4xl font-bold drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
                   Find your perfect companion.
               </h2>
@@ -76,8 +101,8 @@
               </p>
           </div>
 
-          <!-- IMAGE RIGHT -->
-          <div class="flex justify-center md:justify-start w-full md:w-1/2">
+          <!-- IMAGE RIGHT (SLIDE FROM RIGHT) -->
+          <div class="flex justify-center md:justify-start w-full md:w-1/2 reveal slide-right">
               <img 
                   src="{% static 'img/modern_house.webp' %}"
                   class="w-96 md:w-[500px] drop-shadow-2xl scale-125"
@@ -107,7 +132,7 @@
 
 
 
-<!-- ✦✦ FOREST SECTION ✦✦ -->
+<!-- ✦✦ FOREST SECTION (SHOP) ✦✦ -->
 <div class="w-full overflow-hidden relative">
 
   <!-- Background -->
@@ -118,37 +143,35 @@
   >
 
   <!-- ✦ NEW OVERLAY (IMAGE LEFT + TEXT RIGHT) ✦ -->
-<div class="absolute inset-0 z-30 flex items-center justify-center">
-    <div class="max-w-6xl w-full px-6 
-                flex flex-col md:flex-row 
-                items-center justify-center gap-12">
+  <div class="absolute inset-0 z-30 flex items-center justify-center">
+      <div class="max-w-6xl w-full px-6 
+                  flex flex-col md:flex-row 
+                  items-center justify-center gap-12">
 
-        <!-- IMAGE LEFT -->
-        <div class="flex justify-center md:justify-start w-full md:w-1/2">
-            <img 
-                src="{% static 'img/Shop.png' %}" 
-                class="w-80 md:w-[450px] drop-shadow-2xl"
-                alt="Shop Image"
-            >
-        </div>
+          <!-- IMAGE LEFT (SLIDE FROM LEFT) -->
+          <div class="flex justify-center md:justify-start w-full md:w-1/2 reveal slide-left">
+              <img 
+                  src="{% static 'img/Shop.png' %}" 
+                  class="w-80 md:w-[450px] drop-shadow-2xl"
+                  alt="Shop Image"
+              >
+          </div>
 
-        <!-- TEXT RIGHT -->
-        <div class="w-full md:w-1/2 text-white text-center md:text-left space-y-4">
-            <h2 class="text-3xl md:text-4xl font-bold drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
-                Join a community that loves pets like family.
-            </h2>
-            <p class="text-lg md:text-xl drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
-                Everything your pet needs in one marketplace.
-            </p>
-            <p class="text-lg md:text-xl drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
-                We watch each other's backs — especially for lost pets.
-            </p>
-        </div>
+          <!-- TEXT RIGHT (SLIDE FROM RIGHT) -->
+          <div class="w-full md:w-1/2 text-white text-center md:text-left space-y-4 reveal slide-right">
+              <h2 class="text-3xl md:text-4xl font-bold drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
+                  Join a community that loves pets like family.
+              </h2>
+              <p class="text-lg md:text-xl drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
+                  Everything your pet needs in one marketplace.
+              </p>
+              <p class="text-lg md:text-xl drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
+                  We watch each other's backs — especially for lost pets.
+              </p>
+          </div>
 
-    </div>
-</div>
-
-
+      </div>
+  </div>
 
   <!-- Gradient R→L -->
   <div id="forest-gradient"
@@ -170,7 +193,7 @@
 
 
 
-<!-- ⭐ SCROLL SCRIPT ⭐ -->
+<!-- ⭐ GRADIENT SCROLL SCRIPT ⭐ -->
 <script>
 document.addEventListener("scroll", function () {
 
@@ -198,4 +221,25 @@ document.addEventListener("scroll", function () {
 });
 </script>
 
+<!-- ⭐ TEXT / IMAGE REVEAL ON SCROLL ⭐ -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const options = {
+        threshold: 0.25
+    };
+
+    const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("show");
+                obs.unobserve(entry.target); // animate once
+            }
+        });
+    }, options);
+
+    document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+});
+</script>
+
 {% endblock %}
+  
