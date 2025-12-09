@@ -30,7 +30,7 @@
     }
   </script>
 
-  <!-- Prevent flash -->
+  <!-- Prevent theme flash -->
   <script>
     (function() {
       if(localStorage.getItem('theme') === 'dark') {
@@ -42,9 +42,14 @@
 
 <body class="bg-background text-text dark:bg-darkbg dark:text-darktext font-sans min-h-screen flex flex-col transition-colors duration-500">
 
-  <!-- Header -->
+  <!-- ⭐ HEADER ⭐ -->
   <header class="bg-surface dark:bg-darksurface border-b border-border dark:border-darkborder p-4 md:px-10 flex justify-between items-center shadow-sm transition-colors duration-500">
-    <h1 class="text-xl font-bold text-accent">Adopt Me</h1>
+
+    <!-- ⭐ CLICKABLE ADOPT ME LOGO ⭐ -->
+    <a href="{% url 'welcome' %}" 
+       class="text-3xl md:text-4xl font-extrabold text-accent tracking-wide hover:scale-105 transition-transform duration-300">
+      Adopt Me
+    </a>
 
     <!-- Navigation -->
     <nav class="relative flex items-center space-x-4">
@@ -63,12 +68,10 @@
           {% endif %}
         {% endif %}
 
-    
-
         {% if user.is_authenticated %}
-        <a href="{% url 'profile' %}">Profile</a>
+        <a href="{% url 'profile' %}" class="hover:text-accent transition-colors">Profile</a>
         {% else %}
-        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'login' %}" class="hover:text-accent transition-colors">Login</a>
         {% endif %}
 
         <!-- Desktop Theme Toggle -->
@@ -77,7 +80,7 @@
         </button>
       </div>
 
-      <!-- Mobile Menu & Theme -->
+      <!-- Mobile -->
       <div class="md:hidden flex items-center space-x-2">
         <button id="mobile-menu-toggle" aria-label="Open Menu" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">☰</button>
         <button id="theme-toggle-mobile" aria-label="Toggle Dark Mode" class="w-10 h-10 rounded-full overflow-hidden hover:scale-105 transition-transform duration-300">
@@ -115,7 +118,6 @@
   <script>
     const root = document.documentElement;
 
-    // Theme icons
     const moonIcon = "{% static 'img/moon.png' %}";
     const sunIcon = "{% static 'img/sun.png' %}";
 
@@ -124,30 +126,30 @@
     const themeMobile = document.getElementById('theme-toggle-mobile');
     const iconMobile = document.getElementById('theme-icon-mobile');
 
-    // Set theme icons
+    // Load correct icon
     if(localStorage.getItem('theme') === 'dark') {
-      if(iconDesktop) iconDesktop.src = moonIcon;
-      if(iconMobile) iconMobile.src = moonIcon;
+      iconDesktop.src = moonIcon;
+      iconMobile.src = moonIcon;
     } else {
-      if(iconDesktop) iconDesktop.src = sunIcon;
-      if(iconMobile) iconMobile.src = sunIcon;
+      iconDesktop.src = sunIcon;
+      iconMobile.src = sunIcon;
     }
 
-    // Toggle function
     function toggleTheme() {
       root.classList.toggle('dark');
-      const isDark = root.classList.contains('dark');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      if(iconDesktop) iconDesktop.src = isDark ? moonIcon : sunIcon;
-      if(iconMobile) iconMobile.src = isDark ? moonIcon : sunIcon;
+      const dark = root.classList.contains('dark');
+      localStorage.setItem('theme', dark ? 'dark' : 'light');
+      iconDesktop.src = dark ? moonIcon : sunIcon;
+      iconMobile.src = dark ? moonIcon : sunIcon;
     }
 
-    if(themeDesktop) themeDesktop.addEventListener('click', toggleTheme);
-    if(themeMobile) themeMobile.addEventListener('click', toggleTheme);
+    themeDesktop.addEventListener('click', toggleTheme);
+    themeMobile.addEventListener('click', toggleTheme);
 
     // Mobile menu
     const mobileMenuBtn = document.getElementById('mobile-menu-toggle');
     const mobileMenu = document.getElementById('mobile-menu');
+
     mobileMenuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
 
     document.addEventListener('click', (e) => {
@@ -156,5 +158,6 @@
       }
     });
   </script>
+
 </body>
 </html>

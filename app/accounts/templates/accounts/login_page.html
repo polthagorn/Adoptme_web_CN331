@@ -5,28 +5,32 @@
 {% block content %}
 {% load static %}
 
-<!-- 🌟 FULLSCREEN BACKGROUND WITH LIGHT/DARK IMAGE -->
+<!-- 🌟 FULLSCREEN BACKGROUND WITH LIGHT/DARK IMAGE + TINT -->
 <div class="
   w-full min-h-screen
+
   bg-[url('{% static "img/Login-Background-light.jpg" %}')]
   dark:bg-[url('{% static "img/Login-Background-dark.jpg" %}')]
   bg-cover bg-center bg-no-repeat
+
+  bg-white/40
+  dark:bg-black/50
+  bg-blend-overlay
+
   flex items-center justify-center
   px-4
 ">
 
   <!-- ✨ LOGIN BOX ✨ -->
   <div class="relative z-10 max-w-md w-full mx-auto 
-              bg-surface dark:bg-darksurface 
-              bg-opacity-90 dark:bg-opacity-95
+              bg-white/90 dark:bg-slate-900/90
               p-8 rounded-2xl 
-              shadow-[0_0_35px_rgba(0,0,0,0.8)]          <!-- Light mode black glow -->
-              dark:shadow-[0_0_25px_rgba(255,255,255,0.6)] <!-- Dark mode white glow -->
+              shadow-[0_0_35px_rgba(0,0,0,0.8)]
+              dark:shadow-[0_0_25px_rgba(255,255,255,0.6)]
               transition-all duration-500">
 
     <h2 class="text-3xl font-bold text-accent text-center mb-6">Login</h2>
 
-    <!-- 🔥 ERROR & SUCCESS MESSAGES -->
     {% if messages %}
       <div class="space-y-2 mb-4">
         {% for message in messages %}
@@ -51,7 +55,6 @@
     <form method="POST" class="space-y-4">
       {% csrf_token %}
 
-      <!-- Username / Email -->
       <div>
         <input 
           type="text" 
@@ -66,7 +69,6 @@
         >
       </div>
 
-      <!-- Password -->
       <div>
         <input 
           type="password" 
@@ -102,9 +104,9 @@
       <a href="{% url 'register' %}" class="text-accent hover:underline">Register</a>
     </p>
 
-  </div> <!-- end login panel -->
+  </div>
 
-</div> <!-- end background -->
+</div>
 
 <script>
 function togglePassword() {

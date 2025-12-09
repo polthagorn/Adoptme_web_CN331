@@ -42,15 +42,29 @@
     <div class="flex flex-col gap-4 w-full max-w-xs">
 
       <!-- Marketplace -->
-      <a href="{% url 'marketplace' %}"
-        class="relative inline-flex items-center justify-center px-6 py-3 rounded-full
+        <a href="{% url 'marketplace' %}"
+          class="relative inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full
                 border-[3px] border-emerald-500 text-emerald-600 font-bold tracking-wide
                 bg-white/70 dark:bg-slate-900/70 btn-glow
                 hover:bg-emerald-500 hover:text-white
                 hover:shadow-xl hover:-translate-y-1
-                transition-all duration-200 ease-out ">
-        Marketplace
-      </a>
+                transition-all duration-200 ease-out">
+
+          <!-- Shopping Cart Icon -->
+          <svg xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              class="w-5 h-5">
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.3 5.3A1 1 0 007 20h10a1 1 0 001-.7L20 13M7 13h10"/>
+          </svg>
+
+          Marketplace
+        </a>
+
 
       <!-- Posts -->
       <a href="{% url 'posts' %}"

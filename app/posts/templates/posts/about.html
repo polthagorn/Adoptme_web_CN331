@@ -3,27 +3,57 @@
 {% block title %}About Us — Adopt Me{% endblock %}
 
 {% block content %}
-<div class="text-center">
-  <h2 class="text-3xl font-bold text-accent mb-6">About Us</h2>
+{% load static %}
 
-  <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-8">
-    จัดทำโดย <br>
-    กิตติเชษฐ์ สินเธาว์สถาพร — 6610685106<br>
-    เนตรชนก ยินดี — 6610685221<br>
-    ปัณณวัฒน์ น้ำคำ — 6610685247<br>
-    พนธกร อ่อนทอง — 6610685262
-  </p>
+<!-- ⭐ FULLSCREEN BACKGROUND THAT CHANGES IN LIGHT/DARK MODE ⭐ -->
+<div class="
+  w-full min-h-screen
+  bg-[url('{% static "img/town_full_light.jpg" %}')]
+  dark:bg-[url('{% static "img/town_full_dark.jpg" %}')]
+  bg-cover bg-center bg-no-repeat
+  flex items-center justify-center
+  relative
+">
 
-  <div class="flex flex-col space-y-2 items-center">
-    <a href="https://docs.google.com/document/d/1KXiQimpIrHYRubbWWqW2p5OMfN1OLodA6AbToAq39VI/edit?usp=sharing" target="_blank" class="text-accent hover:underline">
-      Document File
-    </a>
-    <a href="https://github.com/polthagorn/Adoptme_web_CN331.git" target="_blank" class="text-accent hover:underline">
-      GitHub Repository
-    </a>
-    <a href="https://github.com/polthagorn/Adoptme_web_CN331.git" target="_blank" class="text-accent hover:underline">
-      Presentation Video
-    </a>
+  <!-- subtle overlay to improve text readability -->
+  <div class="absolute inset-0 bg-white/40 dark:bg-black/40"></div>
+
+  <!-- MAIN CONTENT -->
+  <div class="relative z-10 text-center max-w-2xl px-6 py-10 
+              bg-white/60 dark:bg-black/50 
+              backdrop-blur-md rounded-2xl shadow-xl">
+
+    <h2 class="text-3xl font-extrabold text-accent mb-6">About Us</h2>
+
+    <p class="text-gray-800 dark:text-gray-200 leading-relaxed mb-8">
+      จัดทำโดย <br>
+      กิตติเชษฐ์ สินเธาว์สถาพร — 6610685106<br>
+      เนตรชนก ยินดี — 6610685221<br>
+      ปัณณวัฒน์ น้ำคำ — 6610685247<br>
+      พนธกร อ่อนทอง — 6610685262
+    </p>
+
+    <div class="flex flex-col space-y-2 items-center">
+      <a href="https://docs.google.com/document/d/1KXiQimpIrHYRubbWWqW2p5OMfN1OLodA6AbToAq39VI/edit?usp=sharing"
+         target="_blank"
+         class="text-accent font-semibold hover:underline">
+        Document File
+      </a>
+
+      <a href="https://github.com/polthagorn/Adoptme_web_CN331.git"
+         target="_blank"
+         class="text-accent font-semibold hover:underline">
+        GitHub Repository
+      </a>
+
+      <a href="https://github.com/polthagorn/Adoptme_web_CN331.git"
+         target="_blank"
+         class="text-accent font-semibold hover:underline">
+        Presentation Video
+      </a>
+    </div>
+
   </div>
 </div>
+
 {% endblock %}
