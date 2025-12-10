@@ -1,3 +1,4 @@
+import math
 from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
@@ -26,15 +27,65 @@ def about(request):
 def post(request):
     tag_filter = request.GET.get('tag', None)
 
-    if tag_filter and tag_filter != "none":
-        posts = Post.objects.filter(tag=tag_filter).order_by('-created_at')
-    else:
-        posts = Post.objects.all().order_by('-created_at')
+    # base queryset
+    posts_qs = Post.objects.all()
 
-    return render(request, 'posts/list_posts.html', {
+    if tag_filter and tag_filter != "none":
+        posts_qs = posts_qs.filter(tag=tag_filter)
+
+    # -------- location filter inputs --------
+    center_lat = request.GET.get('center_lat')
+    center_lng = request.GET.get('center_lng')
+    radius_km = request.GET.get('radius_km')
+    location_active = False
+
+    posts = list(posts_qs.order_by('-created_at'))
+
+    if center_lat and center_lng and radius_km:
+        try:
+            center_lat = float(center_lat)
+            center_lng = float(center_lng)
+            radius_km = float(radius_km)
+            location_active = radius_km > 0
+        except ValueError:
+            location_active = False
+
+    if location_active:
+        def haversine(lat1, lon1, lat2, lon2):
+            # distance in km
+            R = 6371.0
+            phi1 = math.radians(lat1)
+            phi2 = math.radians(lat2)
+            dphi = math.radians(lat2 - lat1)
+            dlambda = math.radians(lon2 - lon1)
+
+            a = (math.sin(dphi / 2) ** 2 +
+                 math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2)
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+            return R * c
+
+        filtered = []
+        for p in posts:
+            if p.latitude is not None and p.longitude is not None:
+                d = haversine(center_lat, center_lng, p.latitude, p.longitude)
+                if d <= radius_km:
+                    # attach distance for display
+                    p.distance_km = round(d, 1)
+                    filtered.append(p)
+
+        # sort by distance
+        posts = sorted(filtered, key=lambda x: x.distance_km)
+
+    context = {
         'posts': posts,
-        'selected_tag': tag_filter
-    })
+        'selected_tag': tag_filter,
+        'center_lat': center_lat if location_active else '',
+        'center_lng': center_lng if location_active else '',
+        'radius_km': radius_km if location_active else '',
+        'location_active': location_active,
+    }
+
+    return render(request, 'posts/list_posts.html', context)
 
 
 # ----------------------------------------

@@ -42,17 +42,18 @@ class Post(models.Model):
     image = models.ImageField(upload_to='post_images/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    #  TAG FIELD (fixed choices)
     tag = models.CharField(max_length=50, choices=TAG_CHOICES, default='none')
 
-    # Location
     location = models.CharField(max_length=255, blank=True, null=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
 
     likes = models.ManyToManyField(User, related_name='liked_posts', blank=True)
     bookmarks = models.ManyToManyField(User, related_name='bookmarked_posts', blank=True)
 
     def __str__(self):
         return self.title
+
 
 
 # ================================

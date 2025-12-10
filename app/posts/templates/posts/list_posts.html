@@ -5,294 +5,521 @@
 {% block content %}
 <div class="max-w-3xl mx-auto">
 
-    <!-- header -->
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-text dark:text-darktext">Community Feed</h1>
+  <!-- header -->
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-3xl font-bold text-text dark:text-darktext">Community Feed</h1>
 
-        {% if user.is_authenticated %}
-            <a href="{% url 'create_post' %}"
-               class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                Create Post
-            </a>
-        {% endif %}
+    <div class="flex items-center gap-3">
+      <!-- 🔽 FILTER TOGGLE BUTTON -->
+      <button
+        type="button"
+        id="toggle-filters"
+        class="flex items-center gap-1 px-3 py-2 rounded-full border border-border dark:border-darkborder text-sm text-text dark:text-darktext bg-background dark:bg-darkbg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+      >
+        <!-- funnel icon -->
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+             xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 4h18l-7 8v6l-4 2v-8L3 4z" />
+        </svg>
+        <span>Filters</span>
+      </button>
+
+      {% if user.is_authenticated %}
+        <a href="{% url 'create_post' %}"
+           class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+          Create Post
+        </a>
+      {% endif %}
     </div>
+  </div>
 
-    <!-- TAG FILTER BAR -->
-    <div class="flex flex-wrap gap-2 mb-6">
+  <!-- WRAPPER: ALL FILTERS (map + tags) -->
+  <div id="filters-container" class="space-y-4 mb-6 hidden">
 
-        <a href="?tag=none"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'none' or not selected_tag %}
-                      bg-gray-600 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            ทั้งหมด
-        </a>
-
-        <a href="?tag=missing"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'missing' %}
-                      bg-red-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            สัตว์หาย
-        </a>
-
-        <a href="?tag=found"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'found' %}
-                      bg-green-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            พบสัตว์หลง
-        </a>
-
-        <a href="?tag=adoption_update"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'adoption_update' %}
-                      bg-blue-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            อัปเดตการรับเลี้ยง
-        </a>
-
-        <a href="?tag=qa"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'qa' %}
-                      bg-yellow-500 text-black border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            Q&A
-        </a>
-
-        <a href="?tag=care"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'care' %}
-                      bg-purple-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            เคล็ดลับ
-        </a>
-
-        <a href="?tag=health"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'health' %}
-                      bg-pink-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            สุขภาพ/หมอ
-        </a>
-
-        <a href="?tag=event"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'event' %}
-                      bg-indigo-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            กิจกรรม
-        </a>
-
-        <a href="?tag=success"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'success' %}
-                      bg-teal-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            ความสำเร็จ
-        </a>
-
-        <a href="?tag=other"
-           class="px-3 py-1 rounded-full text-sm font-medium border
-                  {% if selected_tag == 'other' %}
-                      bg-gray-500 text-white border-transparent
-                  {% else %}
-                      text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
-                      hover:bg-gray-200 dark:hover:bg-gray-700
-                  {% endif %}">
-            อื่นๆ
-        </a>
-
-    </div>
-    <!-- END FILTER BAR -->
-
-
-
-    <!-- POST FEED -->
-    <div class="space-y-8">
-        {% for post in posts %}
-            <div class="bg-surface dark:bg-darksurface rounded-lg shadow-md border border-border dark:border-darkborder overflow-hidden">
-
-                <!-- header -->
-                <div class="p-4 flex items-center space-x-4 border-b border-border dark:border-darkborder">
-
-                    {% if post.shelter %}
-                        <a href="{% url 'public_shelter_profile' pk=post.shelter.pk %}">
-                            {% if post.shelter.profile_image %}
-                                <img src="{{ post.shelter.profile_image.url }}"
-                                     class="w-12 h-12 rounded-full object-cover">
-                            {% else %}
-                                <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                            {% endif %}
-                        </a>
-
-                        <div>
-                            <a href="{% url 'public_shelter_profile' pk=post.shelter.pk %}"
-                               class="font-bold text-text dark:text-darktext hover:underline">
-                                {{ post.shelter.name }}
-                            </a>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                Posted on {{ post.created_at|date:"M d, Y" }}
-                            </p>
-                        </div>
-
-                        <span class="ml-auto text-xs font-medium bg-blue-100 text-accent py-1 px-2 rounded-full">
-                            SHELTER
-                        </span>
-
-                    {% else %}
-                        <a href="{% url 'user_profile' username=post.author.username %}">
-                            {% if post.author.profile.image %}
-                                <img src="{{ post.author.profile.image.url }}"
-                                     class="w-12 h-12 rounded-full object-cover">
-                            {% else %}
-                                <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                            {% endif %}
-                        </a>
-
-                        <div>
-                            <a href="{% url 'user_profile' username=post.author.username %}"
-                               class="font-bold text-text dark:text-darktext hover:underline">
-                                {{ post.author.username }}
-                            </a>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                Posted on {{ post.created_at|date:"M d, Y" }}
-                            </p>
-                        </div>
-                    {% endif %}
-                </div>
-
-
-                <!-- POST DETAILS -->
-                <div class="p-4">
-                    <h2 class="text-2xl font-semibold mb-2">
-                        <a href="{% url 'post_detail' post.id %}"
-                           class="text-text dark:text-darktext hover:text-accent transition-colors">
-                            {{ post.title }}
-                        </a>
-                    </h2>
-
-                    <!-- TAG + LOCATION -->
-                    <div class="flex items-center gap-3 mb-3">
-
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full 
-                            {% if post.tag == 'missing' %}bg-red-500 text-white{% endif %}
-                            {% if post.tag == 'found' %}bg-green-500 text-white{% endif %}
-                            {% if post.tag == 'adoption_update' %}bg-blue-500 text-white{% endif %}
-                            {% if post.tag == 'qa' %}bg-yellow-500 text-black{% endif %}
-                            {% if post.tag == 'care' %}bg-purple-500 text-white{% endif %}
-                            {% if post.tag == 'health' %}bg-pink-500 text-white{% endif %}
-                            {% if post.tag == 'event' %}bg-indigo-500 text-white{% endif %}
-                            {% if post.tag == 'success' %}bg-teal-500 text-white{% endif %}
-                            {% if post.tag == 'other' %}bg-gray-400 text-black{% endif %}
-                        ">
-                            {% if post.tag == 'missing' %}สัตว์หาย{% endif %}
-                            {% if post.tag == 'found' %}พบสัตว์หลง{% endif %}
-                            {% if post.tag == 'adoption_update' %}อัปเดตการรับเลี้ยง{% endif %}
-                            {% if post.tag == 'qa' %}Q&A{% endif %}
-                            {% if post.tag == 'care' %}เคล็ดลับ{% endif %}
-                            {% if post.tag == 'health' %}สุขภาพ/หมอ{% endif %}
-                            {% if post.tag == 'event' %}กิจกรรม{% endif %}
-                            {% if post.tag == 'success' %}ความสำเร็จ{% endif %}
-                            {% if post.tag == 'other' or post.tag == 'none' %}อื่นๆ{% endif %}
-                        </span>
-
-                        {% if post.location %}
-                            <span class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-gray-700 dark:text-gray-300">
-                                📍 {{ post.location }}
-                            </span>
-                        {% endif %}
-                    </div>
-
-
-                    {% if post.image %}
-                        <a href="{% url 'post_detail' post.id %}">
-                            <img src="{{ post.image.url }}"
-                                 class="mt-2 rounded-lg w-full max-h-[500px] object-cover">
-                        </a>
-                    {% endif %}
-
-                    <p class="text-gray-700 dark:text-gray-300 mt-4">
-                        {{ post.content|truncatewords:50 }}
-                    </p>
-                </div>
-
-                <!-- **interaction** -->
-                <div class="px-4 py-2 border-t border-border dark:border-darkborder flex justify-between items-center bg-gray-50 dark:bg-gray-700/50">
-                  <div class="flex items-center space-x-4">
-                    <a href="{% url 'like_post' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-red-500">
-                      <!-- like status -->
-                      {% if user in post.likes.all %}
-                        <svg class="w-5 h-5 text-red-500 fill-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
-                      {% else %}
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
-                      {% endif %}
-                      <span>{{ post.total_likes }}</span>
-                    </a>
-                    <a href="{% url 'post_detail' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-accent">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                      <span span>{{ post.comments.count }}</span>
-                    </a>
-                  </div>
-                  <a href="{% url 'bookmark_post' post.id %}" class="text-gray-500 hover:text-accent">
-                    {% if user in post.bookmarks.all %}
-                      <svg class="w-5 h-5 text-accent fill-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-                    {% else %}
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-                    {% endif %}
-                  </a>
-                </div>
-
-
-                <!-- ⭐ EDIT & DELETE BUTTONS (OWNER ONLY!) ⭐ -->
-                {% if user == post.author %}
-                    <div class="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 flex justify-end space-x-2">
-                        <a href="{% url 'edit_post' post.id %}"
-                           class="text-sm bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-1 px-3 rounded-md">
-                            Edit
-                        </a>
-
-                        <a href="{% url 'delete_post' post.id %}"
-                           class="text-sm bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-md">
-                            Delete
-                        </a>
-                    </div>
-                {% endif %}
-
-            </div>
-        {% empty %}
-            <p class="text-center text-gray-500 dark:text-gray-400 mt-10">
-                No posts found.
+    <!-- ========================= -->
+    <!-- LOCATION FILTER PANEL -->
+    <!-- ========================= -->
+    <div class="bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded-xl p-4 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-semibold text-text dark:text-darktext">Filter by location</h2>
+          {% if location_active and radius_km %}
+            <p class="text-xs text-emerald-600 dark:text-emerald-300 mt-1">
+              Showing posts within {{ radius_km }} km of selected point.
             </p>
-        {% endfor %}
+          {% else %}
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Optional: choose a point on map and radius to see nearby posts.
+            </p>
+          {% endif %}
+        </div>
+        <button type="button"
+                id="toggle-location-filter"
+                class="text-xs px-3 py-1 rounded-full border border-border dark:border-darkborder text-text dark:text-darktext hover:bg-gray-100 dark:hover:bg-gray-700">
+          {% if location_active %}Change location{% else %}Show map{% endif %}
+        </button>
+      </div>
+
+      <form id="location-filter-form" method="get"
+            class="mt-3 space-y-3 {% if not location_active %}hidden{% endif %}">
+
+        <!-- keep current tag filter -->
+        {% if selected_tag %}
+          <input type="hidden" name="tag" value="{{ selected_tag }}">
+        {% endif %}
+
+        <!-- Map -->
+        <div id="filter-map"
+             class="w-full h-64 rounded-lg border border-border dark:border-darkborder overflow-hidden"></div>
+
+        <div class="flex items-center gap-3">
+          <label for="id_radius_km" class="text-sm font-medium text-text dark:text-darktext">
+            Radius (km)
+          </label>
+          <input type="number" min="1" step="0.5"
+                 name="radius_km" id="id_radius_km"
+                 value="{{ radius_km|default_if_none:'' }}"
+                 class="w-28 px-2 py-1 rounded-md border border-border dark:border-darkborder bg-background dark:bg-darkbg text-text dark:text-darktext text-sm">
+        </div>
+
+        <!-- Hidden center position -->
+        <input type="hidden" name="center_lat" id="id_center_lat"
+               value="{{ center_lat|default_if_none:'' }}">
+        <input type="hidden" name="center_lng" id="id_center_lng"
+               value="{{ center_lng|default_if_none:'' }}">
+
+        <div class="flex justify-between text-[11px] text-gray-500 dark:text-gray-400">
+          <span>Lat: <span id="filter-lat-display">–</span></span>
+          <span>Lng: <span id="filter-lng-display">–</span></span>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-1">
+          {% if location_active %}
+            <a href="{% if selected_tag %}?tag={{ selected_tag }}{% else %}{% url 'posts' %}{% endif %}"
+               class="px-3 py-1 rounded-md text-xs border border-border dark:border-darkborder text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              Clear
+            </a>
+          {% endif %}
+          <button type="submit"
+                  class="px-4 py-1.5 rounded-md text-xs font-semibold bg-accent text-white hover:bg-accent/90">
+            Apply filter
+          </button>
+        </div>
+      </form>
     </div>
+
+    <!-- ========================= -->
+    <!-- TAG FILTER BAR -->
+    <!-- ========================= -->
+    <div class="flex flex-wrap gap-2">
+
+      <a href="?tag=none"
+         class="px-3 py-1 rounded-full text-sm font-medium border
+                {% if selected_tag == 'none' or not selected_tag %}
+                    bg-gray-600 text-white border-transparent
+                {% else %}
+                    text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
+                    hover:bg-gray-200 dark:hover:bg-gray-700
+                {% endif %}">
+        ทั้งหมด
+      </a>
+
+      <a href="?tag=missing" class="px-3 py-1 rounded-full text-sm font-medium border
+         {% if selected_tag == 'missing' %}
+           bg-red-500 text-white border-transparent
+         {% else %}
+           text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
+           hover:bg-gray-200 dark:hover:bg-gray-700
+         {% endif %}">
+        สัตว์หาย
+      </a>
+
+      <a href="?tag=found" class="px-3 py-1 rounded-full text-sm font-medium border
+         {% if selected_tag == 'found' %}
+           bg-green-500 text-white border-transparent
+         {% else %}
+           text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
+           hover:bg-gray-200 dark:hover:bg-gray-700
+         {% endif %}">
+        พบสัตว์หลง
+      </a>
+
+      <!-- keep all your other tag buttons the same as before -->
+      <a href="?tag=adoption_update" class="px-3 py-1 rounded-full text-sm font-medium border
+         {% if selected_tag == 'adoption_update' %}
+           bg-blue-500 text-white border-transparent
+         {% else %}
+           text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
+           hover:bg-gray-200 dark:hover:bg-gray-700
+         {% endif %}">
+        อัปเดตการรับเลี้ยง
+      </a>
+
+      <a href="?tag=qa" class="px-3 py-1 rounded-full text-sm font-medium border
+         {% if selected_tag == 'qa' %}
+           bg-yellow-500 text-black border-transparent
+         {% else %}
+           text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
+           hover:bg-gray-200 dark:hover:bg-gray-700
+         {% endif %}">
+        Q&A
+      </a>
+
+      <a href="?tag=care" class="px-3 py-1 rounded-full text-sm font-medium border
+         {% if selected_tag == 'care' %}
+           bg-purple-500 text-white border-transparent
+         {% else %}
+           text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600
+           hover:bg-gray-200 dark:hover:bg-gray-700
+         {% endif %}">
+        เคล็ดลับ
+      </a>
+
+      <a href="?tag=health" class="px-3 py-1 rounded-full text-sm font-medium border
+         {% if selected_tag == 'health' %}
+           bg-pink-500 text-white border-transparent
+         {% else %}
+           text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
+           hover:bg-gray-200 dark:hover:bg-gray-700
+         {% endif %}">
+        สุขภาพ/หมอ
+      </a>
+
+      <a href="?tag=event" class="px-3 py-1 rounded-full text-sm font-medium border
+         {% if selected_tag == 'event' %}
+           bg-indigo-500 text-white border-transparent
+         {% else %}
+           text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
+           hover:bg-gray-200 dark:hover:bg-gray-700
+         {% endif %}">
+        กิจกรรม
+      </a>
+
+      <a href="?tag=success" class="px-3 py-1 rounded-full text-sm font-medium border
+         {% if selected_tag == 'success' %}
+           bg-teal-500 text-white border-transparent
+         {% else %}
+           text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
+           hover:bg-gray-200 dark:hover:bg-gray-700
+         {% endif %}">
+        ความสำเร็จ
+      </a>
+
+      <a href="?tag=other" class="px-3 py-1 rounded-full text-sm font-medium border
+         {% if selected_tag == 'other' %}
+           bg-gray-500 text-white border-transparent
+         {% else %}
+           text-gray-700 dark:text-gray-300 border-gray-300 dark:border-darkborder
+           hover:bg-gray-200 dark:hover:bg-gray-700
+         {% endif %}">
+        อื่นๆ
+      </a>
+
+    </div>
+  </div>
+  <!-- END FILTER WRAPPER -->
+
+  <!-- POST FEED -->
+  <div class="space-y-8">
+    {% for post in posts %}
+      <div class="bg-surface dark:bg-darksurface rounded-lg shadow-md border border-border dark:border-darkborder overflow-hidden">
+
+        <!-- header (unchanged) -->
+        <div class="p-4 flex items-center space-x-4 border-b border-border dark:border-darkborder">
+          {% if post.shelter %}
+            <a href="{% url 'public_shelter_profile' pk=post.shelter.pk %}">
+              {% if post.shelter.profile_image %}
+                <img src="{{ post.shelter.profile_image.url }}" class="w-12 h-12 rounded-full object-cover">
+              {% else %}
+                <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+              {% endif %}
+            </a>
+
+            <div>
+              <a href="{% url 'public_shelter_profile' pk=post.shelter.pk %}"
+                 class="font-bold text-text dark:text-darktext hover:underline">
+                {{ post.shelter.name }}
+              </a>
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                Posted on {{ post.created_at|date:"M d, Y" }}
+              </p>
+            </div>
+
+            <span class="ml-auto text-xs font-medium bg-blue-100 text-accent py-1 px-2 rounded-full">
+              SHELTER
+            </span>
+
+          {% else %}
+            <a href="{% url 'user_profile' username=post.author.username %}">
+              {% if post.author.profile.image %}
+                <img src="{{ post.author.profile.image.url }}"
+                     class="w-12 h-12 rounded-full object-cover">
+              {% else %}
+                <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+              {% endif %}
+            </a>
+
+            <div>
+              <a href="{% url 'user_profile' username=post.author.username %}"
+                 class="font-bold text-text dark:text-darktext hover:underline">
+                {{ post.author.username }}
+              </a>
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                Posted on {{ post.created_at|date:"M d, Y" }}
+              </p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- POST DETAILS -->
+        <div class="p-4">
+          <h2 class="text-2xl font-semibold mb-2">
+            <a href="{% url 'post_detail' post.id %}"
+               class="text-text dark:text-darktext hover:text-accent transition-colors">
+              {{ post.title }}
+            </a>
+          </h2>
+
+          <!-- TAG + LOCATION -->
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+
+            <!-- tag badge (unchanged) -->
+            <span class="text-xs font-semibold px-2 py-1 rounded-full 
+              {% if post.tag == 'missing' %}bg-red-500 text-white{% endif %}
+              {% if post.tag == 'found' %}bg-green-500 text-white{% endif %}
+              {% if post.tag == 'adoption_update' %}bg-blue-500 text-white{% endif %}
+              {% if post.tag == 'qa' %}bg-yellow-500 text-black{% endif %}
+              {% if post.tag == 'care' %}bg-purple-500 text-white{% endif %}
+              {% if post.tag == 'health' %}bg-pink-500 text-white{% endif %}
+              {% if post.tag == 'event' %}bg-indigo-500 text-white{% endif %}
+              {% if post.tag == 'success' %}bg-teal-500 text-white{% endif %}
+              {% if post.tag == 'other' %}bg-gray-400 text-black{% endif %}
+            ">
+              {% if post.tag == 'missing' %}สัตว์หาย{% endif %}
+              {% if post.tag == 'found' %}พบสัตว์หลง{% endif %}
+              {% if post.tag == 'adoption_update' %}อัปเดตการรับเลี้ยง{% endif %}
+              {% if post.tag == 'qa' %}Q&A{% endif %}
+              {% if post.tag == 'care' %}เคล็ดลับ{% endif %}
+              {% if post.tag == 'health' %}สุขภาพ/หมอ{% endif %}
+              {% if post.tag == 'event' %}กิจกรรม{% endif %}
+              {% if post.tag == 'success' %}ความสำเร็จ{% endif %}
+              {% if post.tag == 'other' or post.tag == 'none' %}อื่นๆ{% endif %}
+            </span>
+
+            {% if post.location %}
+              <span class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-gray-700 dark:text-gray-300">
+                📍 {{ post.location|truncatechars:25 }}
+              </span>
+            {% endif %}
+
+            {% if post.distance_km %}
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">
+                ~{{ post.distance_km }} km away
+              </span>
+            {% endif %}
+          </div>
+
+          {% if post.image %}
+            <a href="{% url 'post_detail' post.id %}">
+              <img src="{{ post.image.url }}"
+                   class="mt-2 rounded-lg w-full max-h-[500px] object-cover">
+            </a>
+          {% endif %}
+
+          <p class="text-gray-700 dark:text-gray-300 mt-4">
+            {{ post.content|truncatewords:50 }}
+          </p>
+        </div>
+
+        <!-- interaction (unchanged) -->
+        <div class="px-4 py-2 border-t border-border dark:border-darkborder flex justify-between items-center bg-gray-50 dark:bg-gray-700/50">
+          <div class="flex items-center space-x-4">
+            <a href="{% url 'like_post' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-red-500">
+              {% if user in post.likes.all %}
+                <svg class="w-5 h-5 text-red-500 fill-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
+              {% else %}
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
+              {% endif %}
+              <span>{{ post.total_likes }}</span>
+            </a>
+            <a href="{% url 'post_detail' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-accent">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              <span>{{ post.comments.count }}</span>
+            </a>
+          </div>
+          <a href="{% url 'bookmark_post' post.id %}" class="text-gray-500 hover:text-accent">
+            {% if user in post.bookmarks.all %}
+              <svg class="w-5 h-5 text-accent fill-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+            {% else %}
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+            {% endif %}
+          </a>
+        </div>
+
+        {% if user == post.author %}
+          <div class="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 flex justify-end space-x-2">
+            <a href="{% url 'edit_post' post.id %}"
+               class="text-sm bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-1 px-3 rounded-md">
+              Edit
+            </a>
+            <a href="{% url 'delete_post' post.id %}"
+               class="text-sm bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-md">
+              Delete
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="text-center text-gray-500 dark:text-gray-400 mt-10">
+        No posts found.
+      </p>
+    {% endfor %}
+  </div>
 
 </div>
+
+<!-- ========== Leaflet for filter map ========== -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin="">
+</script>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+/>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const filtersToggle = document.getElementById("toggle-filters");
+  const filtersContainer = document.getElementById("filters-container");
+
+  const toggleBtn = document.getElementById("toggle-location-filter");
+  const formEl = document.getElementById("location-filter-form");
+
+  let mapInitialized = false;
+  let filterMap = null;   // keep reference so we can invalidateSize()
+
+  // Top-level "Filters" button: show/hide whole filter area
+  if (filtersToggle && filtersContainer) {
+    filtersToggle.addEventListener("click", function () {
+      const nowHidden = filtersContainer.classList.toggle("hidden");
+
+      // if we just opened and form is visible -> init map
+      if (!nowHidden && formEl && !formEl.classList.contains("hidden")) {
+        initFilterMap();
+      }
+    });
+  }
+
+  // Inner "Show map / Change location" button: show/hide only the map+radius
+  if (toggleBtn && formEl) {
+    toggleBtn.addEventListener("click", function () {
+      const nowHidden = formEl.classList.toggle("hidden");
+
+      // if we just opened the map panel -> init map
+      if (!nowHidden) {
+        // make sure whole filters container is visible too
+        if (filtersContainer && filtersContainer.classList.contains("hidden")) {
+          filtersContainer.classList.remove("hidden");
+        }
+        initFilterMap();
+      }
+    });
+  }
+
+  function initFilterMap() {
+    const mapEl = document.getElementById("filter-map");
+    if (!mapEl) return;
+
+    // if map already exists, just fix its size and recenter
+    if (filterMap) {
+      setTimeout(function () {
+        filterMap.invalidateSize();
+      }, 100);
+      return;
+    }
+
+    const latInput = document.getElementById("id_center_lat");
+    const lngInput = document.getElementById("id_center_lng");
+    const latDisplay = document.getElementById("filter-lat-display");
+    const lngDisplay = document.getElementById("filter-lng-display");
+
+    const defaultPos = [13.7563, 100.5018]; // Bangkok default
+
+    const startLat = parseFloat(latInput.value) || defaultPos[0];
+    const startLng = parseFloat(lngInput.value) || defaultPos[1];
+
+    filterMap = L.map("filter-map").setView([startLat, startLng], 10);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(filterMap);
+
+    let marker = L.marker([startLat, startLng], { draggable: true }).addTo(filterMap);
+    updateInputs(startLat, startLng);
+
+    filterMap.on("click", function (e) {
+      const { lat, lng } = e.latlng;
+      marker.setLatLng(e.latlng);
+      updateInputs(lat, lng);
+    });
+
+    marker.on("dragend", function (e) {
+      const { lat, lng } = e.target.getLatLng();
+      updateInputs(lat, lng);
+    });
+
+    // search bar
+    L.Control.geocoder({
+      collapsed: false,
+      placeholder: "Search place...",
+      defaultMarkGeocode: false
+    })
+      .on("markgeocode", function (e) {
+        const latlng = e.geocode.center;
+        marker.setLatLng(latlng);
+        filterMap.setView(latlng, 13);
+        updateInputs(latlng.lat, latlng.lng);
+      })
+      .addTo(filterMap);
+
+    function updateInputs(lat, lng) {
+      latInput.value = lat;
+      lngInput.value = lng;
+      if (latDisplay) latDisplay.textContent = lat.toFixed(4);
+      if (lngDisplay) lngDisplay.textContent = lng.toFixed(4);
+    }
+
+    // slight delay then invalidate size (helps first render)
+    setTimeout(function () {
+      filterMap.invalidateSize();
+    }, 100);
+
+    mapInitialized = true;
+  }
+
+  // auto-open filters + map when location filter already active
+  {% if location_active %}
+    if (filtersContainer) {
+      filtersContainer.classList.remove("hidden");
+    }
+    if (formEl) {
+      formEl.classList.remove("hidden");
+    }
+    initFilterMap();
+  {% endif %}
+});
+</script>
+
 {% endblock %}

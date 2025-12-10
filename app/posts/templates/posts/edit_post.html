@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Edit Post{% endblock %}
+{% load static %}
+{% block title %}Create Post{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto mt-10 bg-surface dark:bg-darksurface p-8 rounded-2xl shadow-lg transition-colors duration-500">
-  <h2 class="text-3xl font-bold mb-6 text-accent text-center">Edit Post</h2>
+  <h2 class="text-3xl font-bold mb-6 text-accent text-center">Create New Post</h2>
 
   <form method="POST" enctype="multipart/form-data" class="space-y-5">
     {% csrf_token %}
@@ -22,9 +23,6 @@
     <!-- Image -->
     <div>
       <label for="id_image" class="block text-sm font-semibold mb-2">Image</label>
-      {% if form.instance.image %}
-        <img src="{{ form.instance.image.url }}" alt="Current image" class="mb-2 w-48 h-auto rounded-lg">
-      {% endif %}
       <input type="file" name="image" id="id_image"
              class="w-full border border-border dark:border-darkborder rounded-lg p-2 bg-white dark:bg-darksurface text-text dark:text-darktext">
       {% if form.image.errors %}
@@ -51,22 +49,214 @@
       {% endif %}
     </div>
 
-    <!-- ⭐ LOCATION FIELD -->
+    <!-- ⭐ LOCATION TEXT FIELD -->
     <div>
-      <label for="id_location" class="block text-sm font-semibold mb-2">สถานที่</label>
+      <label for="id_location" class="block text-sm font-semibold mb-2">สถานที่ (ตัวหนังสือ)</label>
       {{ form.location }}
       {% if form.location.errors %}
         <p class="text-red-500 text-sm mt-1">{{ form.location.errors.0 }}</p>
       {% endif %}
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        เช่น “เซเว่นหน้ามหาวิทยาลัย”, “อาคาร A ห้อง 1002”, หรือชื่อหมู่บ้าน
+      </p>
+    </div>
+
+    <!-- 📍 MAP + SEARCH + CONFIRM -->
+    <div class="space-y-2">
+      <label class="block text-sm font-semibold mb-2">เลือกตำแหน่งบนแผนที่</label>
+
+      <!-- Map container -->
+      <div id="map" class="w-full h-80 rounded-xl border border-border dark:border-darkborder overflow-hidden"></div>
+
+      <p class="text-xs text-gray-500 dark:text-gray-400">
+        พิมพ์ชื่อสถานที่ในช่องค้นหา หรือแตะบนแผนที่/ลากหมุดไปยังจุดที่ต้องการ 🧭
+      </p>
+
+      <!-- Hidden latitude / longitude fields -->
+      {{ form.latitude }}
+      {{ form.longitude }}
+
+      <div class="flex gap-4 text-xs text-gray-600 dark:text-gray-300 mt-1">
+        <span>Lat: <span id="lat-display">–</span></span>
+        <span>Lng: <span id="lng-display">–</span></span>
+      </div>
+
+      <!-- Confirm location button -->
+      <button type="button"
+              id="confirm-location-btn"
+              class="mt-2 px-4 py-2 bg-accent text-white rounded-lg shadow hover:bg-accent/90 transition">
+        Confirm Location
+      </button>
+
+      <!-- Loading / status text -->
+      <p id="location-status" class="text-sm mt-1 hidden">
+        <!-- text filled by JS -->
+      </p>
     </div>
 
     <!-- Submit -->
     <div class="text-center">
       <button type="submit" class="bg-accent hover:bg-accent/90 text-white font-semibold px-6 py-2 rounded-lg shadow transition duration-200">
-        Save Changes
+        Post
       </button>
     </div>
 
   </form>
 </div>
+
+<!-- ==========================
+     LEAFLET CSS & JS
+     ========================== -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin="">
+</script>
+
+<!-- 🔍 Leaflet Geocoder plugin (search bar using OpenStreetMap Nominatim) -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+/>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const defaultPos = [13.7563, 100.5018]; // Bangkok
+
+  const latInput = document.getElementById("id_latitude");
+  const lngInput = document.getElementById("id_longitude");
+  const locationInput = document.getElementById("id_location");
+  const confirmBtn = document.getElementById("confirm-location-btn");
+  const statusEl = document.getElementById("location-status");
+  const latDisplay = document.getElementById("lat-display");
+  const lngDisplay = document.getElementById("lng-display");
+
+  const startLat = parseFloat(latInput?.value) || defaultPos[0];
+  const startLng = parseFloat(lngInput?.value) || defaultPos[1];
+
+  const map = L.map("map").setView([startLat, startLng], 14);
+
+  // Base map tiles
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Marker
+  let marker = L.marker([startLat, startLng], { draggable: true }).addTo(map);
+
+  updateInputs(startLat, startLng);
+
+  // Click map to move marker
+  map.on("click", function (e) {
+    const { lat, lng } = e.latlng;
+    marker.setLatLng(e.latlng);
+    updateInputs(lat, lng);
+  });
+
+  // Drag marker to change position
+  marker.on("dragend", function (e) {
+    const { lat, lng } = e.target.getLatLng();
+    updateInputs(lat, lng);
+  });
+
+  // 🔍 Search control (Nominatim)
+  const geocoderControl = L.Control.geocoder({
+    collapsed: false,
+    placeholder: "Search place...",
+    defaultMarkGeocode: false
+  })
+  .on("markgeocode", function (e) {
+    const latlng = e.geocode.center;
+    marker.setLatLng(latlng);
+    map.setView(latlng, 16);
+    updateInputs(latlng.lat, latlng.lng);
+  })
+  .addTo(map);
+
+  // Debounce for confirm to avoid spamming Nominatim
+  let reverseTimeout = null;
+
+  // Confirm button: fetch name for current pin
+  confirmBtn.addEventListener("click", function () {
+    const lat = parseFloat(latInput.value);
+    const lng = parseFloat(lngInput.value);
+
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    showLoadingStatus();
+
+    clearTimeout(reverseTimeout);
+    reverseTimeout = setTimeout(() => {
+      reverseGeocode(lat, lng);
+    }, 400); // slight delay to avoid multiple rapid requests
+  });
+
+  function showLoadingStatus() {
+    statusEl.textContent = "Loading location…";
+    statusEl.classList.remove("hidden");
+    statusEl.classList.remove("text-green-500", "text-red-500");
+    statusEl.classList.add("text-gray-500");
+  }
+
+  function showSuccessStatus() {
+    statusEl.textContent = "Location updated!";
+    statusEl.classList.remove("hidden");
+    statusEl.classList.remove("text-gray-500", "text-red-500");
+    statusEl.classList.add("text-green-500");
+
+    setTimeout(() => {
+      statusEl.classList.add("hidden");
+    }, 1200);
+  }
+
+  function showErrorStatus() {
+    statusEl.textContent = "Failed to load location";
+    statusEl.classList.remove("hidden");
+    statusEl.classList.remove("text-gray-500", "text-green-500");
+    statusEl.classList.add("text-red-500");
+  }
+
+  // Reverse geocoding using Nominatim
+  function reverseGeocode(lat, lng) {
+    const url =
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+
+    fetch(url, {
+      headers: {
+        // Nominatim requires an identifying User-Agent
+        "User-Agent": "AdoptMe-LocPicker/1.0 (example@example.com)"
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        let name = data.display_name || "Unknown location";
+
+        locationInput.value = name;
+        marker.bindPopup(name).openPopup();
+
+        showSuccessStatus();
+      })
+      .catch(err => {
+        console.error("Reverse geocode error:", err);
+        showErrorStatus();
+      });
+  }
+
+  // Update hidden inputs + display
+  function updateInputs(lat, lng) {
+    if (latInput) latInput.value = lat;
+    if (lngInput) lngInput.value = lng;
+    if (latDisplay) latDisplay.textContent = lat.toFixed(6);
+    if (lngDisplay) lngDisplay.textContent = lng.toFixed(6);
+  }
+});
+</script>
 {% endblock %}

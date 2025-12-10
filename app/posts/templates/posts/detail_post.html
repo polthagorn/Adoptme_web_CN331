@@ -4,84 +4,214 @@
 
 {% block content %}
 <div class="max-w-3xl mx-auto">
+
+  <!-- Back button -->
   <div class="mb-4">
-        <button onclick="history.back()" class="flex items-center space-x-2 text-gray-500 dark:text-gray-400 hover:text-accent dark:hover:text-accent transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            <span>Back</span>
-        </button>
-    </div>
-    <div class="bg-surface dark:bg-darksurface rounded-lg shadow-md border border-border dark:border-darkborder overflow-hidden">
+    <button onclick="history.back()" class="flex items-center space-x-2 text-gray-500 dark:text-gray-400 hover:text-accent dark:hover:text-accent transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      <span>Back</span>
+    </button>
+  </div>
 
-        <!-- post detail -->
-        <div class="p-4">
-            <h1 class="text-3xl font-bold text-text dark:text-darktext mb-2">{{ post.title }}</h1>
-            
-            {% if post.image %}
-                <img src="{{ post.image.url }}" alt="Post image" class="mt-4 rounded-lg w-full max-h-[600px] object-cover">
-            {% endif %}
+  <div class="bg-surface dark:bg-darksurface rounded-lg shadow-md border border-border dark:border-darkborder overflow-hidden">
 
-            <p class="text-gray-700 dark:text-gray-300 mt-4 whitespace-pre-wrap">{{ post.content }}</p>
-        </div>
+    <!-- ============================= -->
+    <!-- Post detail -->
+    <!-- ============================= -->
+    <div class="p-4">
+      <h1 class="text-3xl font-bold text-text dark:text-darktext mb-2">
+        {{ post.title }}
+      </h1>
 
-        <!-- ================================================== -->
-        <!-- ** Interaction (Like, Comment, Bookmark)**     -->
-        <!-- ================================================== -->
-        <div class="px-4 py-3 border-t border-border dark:border-darkborder flex justify-between items-center">
-            <!-- Like -->
-            <div class="flex items-center space-x-2">
-                <a href="{% url 'like_post' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors">
-                    <svg class="w-6 h-6 {% if is_liked %}text-red-500 fill-current{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
-                    <span>{{ post.total_likes }}</span>
-                </a>
-                <!-- Comment-->
-                <span class="flex items-center space-x-1 text-gray-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                    <span>{{ comments.count }}</span>
-                </span>
-            </div>
-            <!-- Bookmark -->
-            <a href="{% url 'bookmark_post' post.id %}" class="text-gray-500 hover:text-accent transition-colors">
-                <svg class="w-6 h-6 {% if is_bookmarked %}text-accent fill-current{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-            </a>
-        </div>
-    </div>
-
-    <!-- ================================================== -->
-    <!-- **Comment**                                    -->
-    <!-- ================================================== -->
-    <div class="mt-8 bg-surface dark:bg-darksurface p-6 rounded-lg shadow-md border border-border dark:border-darkborder">
-        <h2 class="text-xl font-bold text-text dark:text-darktext mb-4">Comments ({{ comments.count }})</h2>
-        
-        <!-- form for Comment -->
-        {% if user.is_authenticated %}
-            <form method="POST" class="mb-6">
-                {% csrf_token %}
-                {{ comment_form }}
-                <div class="text-right mt-2">
-                    <button type="submit" class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Post Comment</button>
-                </div>
-            </form>
-        {% else %}
-            <p class="text-gray-500 mb-6">Please <a href="{% url 'login' %}" class="text-accent hover:underline">login</a> to add a comment.</p>
+      <!-- Tag & location pills -->
+      <div class="flex flex-wrap items-center gap-2 mb-3 text-sm">
+        {% if post.tag and post.tag != 'none' %}
+          <span class="inline-flex items-center px-3 py-1 rounded-full bg-accent/10 text-accent font-semibold">
+            #{{ post.get_tag_display }}
+          </span>
         {% endif %}
 
-        <!-- list of Comments -->
-        <div class="space-y-4">
-            {% for comment in comments %}
-                <div class="flex space-x-3">
-                    <a href="{% url 'user_profile' username=comment.author.username %}">
-                        <img src="{{ comment.author.profile.image.url }}" alt="{{ comment.author.username }}" class="w-10 h-10 rounded-full object-cover">
-                    </a>
-                    <div class="flex-grow bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
-                        <a href="{% url 'user_profile' username=comment.author.username %}" class="font-semibold text-text dark:text-darktext hover:underline">{{ comment.author.username }}</a>
-                        <p class="text-gray-700 dark:text-gray-300">{{ comment.content }}</p>
-                        <p class="text-xs text-gray-400 mt-1">{{ comment.created_at|timesince }} ago</p>
-                    </div>
-                </div>
-            {% empty %}
-                <p class="text-gray-500">No comments yet.</p>
-            {% endfor %}
-        </div>
+        {% if post.location %}
+          <span class="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                 xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 11c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 22s7-4.686 7-11a7 7 0 10-14 0c0 6.314 7 11 7 11z"></path>
+            </svg>
+            {{ post.location }}
+          </span>
+        {% endif %}
+      </div>
+
+      {% if post.image %}
+        <img src="{{ post.image.url }}" alt="Post image" class="mt-2 rounded-lg w-full max-h-[600px] object-cover">
+      {% endif %}
+
+      <p class="text-gray-700 dark:text-gray-300 mt-4 whitespace-pre-wrap">
+        {{ post.content }}
+      </p>
     </div>
+
+    <!-- ============================= -->
+    <!-- Map section (if we have coords) -->
+    <!-- ============================= -->
+    {% if post.latitude and post.longitude %}
+      <div class="px-4 pb-4">
+        <div class="mt-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-text dark:text-darktext">
+              Location on map
+            </h2>
+            <a href="https://www.google.com/maps?q={{ post.latitude }},{{ post.longitude }}"
+               target="_blank"
+               class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-accent text-white hover:bg-accent/90 transition">
+              Open in Maps
+            </a>
+          </div>
+
+          <div id="post-map"
+               data-lat="{{ post.latitude }}"
+               data-lng="{{ post.longitude }}"
+               class="w-full h-64 rounded-xl border border-border dark:border-darkborder overflow-hidden">
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- ============================= -->
+    <!-- Interaction (Like, Comment, Bookmark) -->
+    <!-- ============================= -->
+    <div class="px-4 py-3 border-t border-border dark:border-darkborder flex justify-between items-center">
+      <!-- Like -->
+      <div class="flex items-center space-x-2">
+        <a href="{% url 'like_post' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors">
+          <svg class="w-6 h-6 {% if is_liked %}text-red-500 fill-current{% endif %}"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path>
+          </svg>
+          <span>{{ post.total_likes }}</span>
+        </a>
+
+        <!-- Comment count -->
+        <span class="flex items-center space-x-1 text-gray-500">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+          </svg>
+          <span>{{ comments.count }}</span>
+        </span>
+      </div>
+
+      <!-- Bookmark -->
+      <a href="{% url 'bookmark_post' post.id %}" class="text-gray-500 hover:text-accent transition-colors">
+        <svg class="w-6 h-6 {% if is_bookmarked %}text-accent fill-current{% endif %}"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24"
+             xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============================= -->
+  <!-- Comments -->
+  <!-- ============================= -->
+  <div class="mt-8 bg-surface dark:bg-darksurface p-6 rounded-lg shadow-md border border-border dark:border-darkborder">
+    <h2 class="text-xl font-bold text-text dark:text-darktext mb-4">
+      Comments ({{ comments.count }})
+    </h2>
+
+    <!-- Comment form -->
+    {% if user.is_authenticated %}
+      <form method="POST" class="mb-6">
+        {% csrf_token %}
+        {{ comment_form }}
+        <div class="text-right mt-2">
+          <button type="submit"
+                  class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
+            Post Comment
+          </button>
+        </div>
+      </form>
+    {% else %}
+      <p class="text-gray-500 mb-6">
+        Please <a href="{% url 'login' %}" class="text-accent hover:underline">login</a> to add a comment.
+      </p>
+    {% endif %}
+
+    <!-- Comment list -->
+    <div class="space-y-4">
+      {% for comment in comments %}
+        <div class="flex space-x-3">
+          <a href="{% url 'user_profile' username=comment.author.username %}">
+            <img src="{{ comment.author.profile.image.url }}"
+                 alt="{{ comment.author.username }}"
+                 class="w-10 h-10 rounded-full object-cover">
+          </a>
+          <div class="flex-grow bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+            <a href="{% url 'user_profile' username=comment.author.username %}"
+               class="font-semibold text-text dark:text-darktext hover:underline">
+              {{ comment.author.username }}
+            </a>
+            <p class="text-gray-700 dark:text-gray-300">
+              {{ comment.content }}
+            </p>
+            <p class="text-xs text-gray-400 mt-1">
+              {{ comment.created_at|timesince }} ago
+            </p>
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-gray-500">No comments yet.</p>
+      {% endfor %}
+    </div>
+  </div>
 </div>
+
+{% if post.latitude and post.longitude %}
+  <!-- Leaflet CSS & JS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin="">
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const mapEl = document.getElementById("post-map");
+      if (!mapEl) return;
+
+      const lat = parseFloat(mapEl.dataset.lat);
+      const lng = parseFloat(mapEl.dataset.lng);
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      // Popup text decided by Django, but as a single JS string:
+      const popupText = "{% if post.location %}{{ post.location|escapejs }}{% else %}Post location{% endif %}";
+
+      const map = L.map("post-map").setView([lat, lng], 15);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      const marker = L.marker([lat, lng]).addTo(map);
+      marker.bindPopup(popupText).openPopup();
+    });
+  </script>
+{% endif %}
 {% endblock %}

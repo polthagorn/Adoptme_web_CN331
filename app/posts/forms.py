@@ -5,15 +5,22 @@ from .models import Post, Comment
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['title', 'content', 'image', 'location', 'tag']
+        fields = ['title', 'content', 'image', 'location', 'latitude', 'longitude', 'tag']
+
         widgets = {
             'tag': forms.Select(attrs={
                 'class': 'w-full p-2 border border-border dark:border-darkborder rounded-md bg-background dark:bg-darkbg text-text dark:text-darktext'
             }),
+
+            # location text (optional: district, province, etc.)
             'location': forms.TextInput(attrs={
                 'class': 'w-full p-2 border border-border dark:border-darkborder rounded-md bg-background dark:bg-darkbg text-text dark:text-darktext',
-                'placeholder': 'สถานที่ (เช่น Bangkok)'
+                'placeholder': 'สถานที่ (เช่น Bangkok หรือ หมู่บ้าน...)'
             }),
+
+            'latitude': forms.HiddenInput(),
+
+            'longitude': forms.HiddenInput(),
         }
 
 

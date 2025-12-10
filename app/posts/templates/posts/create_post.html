@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Create Post{% endblock %}
 
 {% block content %}
@@ -39,7 +40,6 @@
       {% endif %}
     </div>
 
-
     <!-- ⭐ TAG FIELD (DROPDOWN) -->
     <div>
       <label for="id_tag" class="block text-sm font-semibold mb-2">หมวดหมู่โพสต์</label>
@@ -49,24 +49,171 @@
       {% endif %}
     </div>
 
-
-    <!-- ⭐ LOCATION FIELD -->
+    <!-- ⭐ LOCATION TEXT FIELD -->
     <div>
-      <label for="id_location" class="block text-sm font-semibold mb-2">สถานที่</label>
+      <label for="id_location" class="block text-sm font-semibold mb-2">สถานที่ (ตัวหนังสือ)</label>
       {{ form.location }}
       {% if form.location.errors %}
         <p class="text-red-500 text-sm mt-1">{{ form.location.errors.0 }}</p>
       {% endif %}
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        เช่น “เซเว่นหน้ามหาวิทยาลัย”, “สวนสาธารณะ xx”, หรือชื่อหมู่บ้าน
+      </p>
     </div>
 
+    <!-- 📍 MAP + SEARCH -->
+    <div class="space-y-2">
+      <label class="block text-sm font-semibold mb-2">เลือกตำแหน่งบนแผนที่</label>
+
+      <!-- Map container -->
+      <div id="map" class="w-full h-80 rounded-xl border border-border dark:border-darkborder overflow-hidden"></div>
+
+      <p class="text-xs text-gray-500 dark:text-gray-400">
+        พิมพ์ชื่อสถานที่ในช่องค้นหา หรือแตะบนแผนที่/ลากหมุดไปยังจุดที่ต้องการ ระบบจะบันทึกพิกัดเหมือนแอปเดลิเวอรี่ 📦
+      </p>
+
+      <!-- Hidden latitude / longitude fields -->
+      {{ form.latitude }}
+      {{ form.longitude }}
+
+      <div class="flex gap-4 text-xs text-gray-600 dark:text-gray-300 mt-1">
+        <span>Lat: <span id="lat-display">–</span></span>
+        <span>Lng: <span id="lng-display">–</span></span>
+      </div>
+    </div>
 
     <!-- Submit -->
     <div class="text-center">
-      <button type="submit" class="bg-accent hover:bg-accent/90 text-white font-semibold px-6 py-2 rounded-lg shadow transition duration-200">
+      <button type="submit"
+              class="bg-accent hover:bg-accent/90 text-white font-semibold px-6 py-2 rounded-lg shadow transition duration-200">
         Post
       </button>
     </div>
 
   </form>
 </div>
+
+<!-- ==========================
+     LEAFLET CSS & JS
+     ========================== -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin="">
+</script>
+
+<!-- 🔍 Leaflet Geocoder plugin (search bar using OpenStreetMap Nominatim) -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+/>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const defaultPos = [13.7563, 100.5018]; // Bangkok
+
+    const latInput = document.getElementById("id_latitude");
+    const lngInput = document.getElementById("id_longitude");
+    const latDisplay = document.getElementById("lat-display");
+    const lngDisplay = document.getElementById("lng-display");
+    const locationInput = document.getElementById("id_location");
+
+    const startLat = parseFloat(latInput?.value) || defaultPos[0];
+    const startLng = parseFloat(lngInput?.value) || defaultPos[1];
+
+    const map = L.map("map").setView([startLat, startLng], 14);
+
+    // OpenStreetMap tiles
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Draggable marker
+    let marker = L.marker([startLat, startLng], { draggable: true }).addTo(map);
+
+    updateInputs(startLat, startLng);
+    reverseGeocode(startLat, startLng);
+
+    // Click map to move marker
+    map.on("click", function (e) {
+      const { lat, lng } = e.latlng;
+      marker.setLatLng(e.latlng);
+      updateInputs(lat, lng);
+      reverseGeocode(lat, lng);
+    });
+
+    // Drag marker to change position
+    marker.on("dragend", function (e) {
+      const { lat, lng } = e.target.getLatLng();
+      updateInputs(lat, lng);
+      reverseGeocode(lat, lng);
+    });
+
+    // 🔍 Search bar
+    const geocoderControl = L.Control.geocoder({
+      collapsed: false,
+      placeholder: "Search place...",
+      defaultMarkGeocode: false
+    })
+    .on("markgeocode", function (e) {
+      const latlng = e.geocode.center;
+      const name = e.geocode.name;
+
+      marker.setLatLng(latlng);
+      map.setView(latlng, 16);
+
+      updateInputs(latlng.lat, latlng.lng);
+
+      // fill text box and show name
+      locationInput.value = name;
+      marker.bindPopup(name).openPopup();
+    })
+    .addTo(map);
+
+
+    // ---------------------------
+    // ⭐ REVERSE GEOCODING FUNCTION
+    // ---------------------------
+    function reverseGeocode(lat, lng) {
+      const url =
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          let name = "";
+
+          if (data.display_name) {
+            name = data.display_name; // the full readable address
+          }
+
+          // update text box
+          if (locationInput) locationInput.value = name;
+
+          // show popup text
+          marker.bindPopup(name).openPopup();
+        })
+        .catch(err => console.error("Reverse geocode error:", err));
+    }
+
+    // ---------------------------
+    // UTIL: update inputs
+    // ---------------------------
+    function updateInputs(lat, lng) {
+      if (latInput) latInput.value = lat;
+      if (lngInput) lngInput.value = lng;
+      if (latDisplay) latDisplay.textContent = lat.toFixed(6);
+      if (lngDisplay) lngDisplay.textContent = lng.toFixed(6);
+    }
+  });
+</script>
+
 {% endblock %}
