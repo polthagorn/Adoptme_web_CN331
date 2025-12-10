@@ -34,7 +34,7 @@
     </div>
   </div>
 
-  <!-- WRAPPER: ALL FILTERS (map + tags) -->
+  <!-- WRAPPER: ALL FILTERS (map + tags + animal) -->
   <div id="filters-container" class="space-y-4 mb-6 hidden">
 
     <!-- ========================= -->
@@ -64,9 +64,15 @@
       <form id="location-filter-form" method="get"
             class="mt-3 space-y-3 {% if not location_active %}hidden{% endif %}">
 
-        <!-- keep current tag filter -->
+        <!-- keep current tag & animal filters -->
         {% if selected_tag %}
           <input type="hidden" name="tag" value="{{ selected_tag }}">
+        {% endif %}
+        {% if selected_animal_type %}
+          <input type="hidden" name="animal_type" value="{{ selected_animal_type }}">
+        {% endif %}
+        {% if selected_animal_race %}
+          <input type="hidden" name="animal_race" value="{{ selected_animal_race }}">
         {% endif %}
 
         <!-- Map -->
@@ -94,27 +100,32 @@
           <span>Lng: <span id="filter-lng-display">–</span></span>
         </div>
 
-        <div class="flex justify-end gap-2 pt-1">
-          {% if location_active %}
-            <a href="{% if selected_tag %}?tag={{ selected_tag }}{% else %}{% url 'posts' %}{% endif %}"
-               class="px-3 py-1 rounded-md text-xs border border-border dark:border-darkborder text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-              Clear
-            </a>
-          {% endif %}
-          <button type="submit"
-                  class="px-4 py-1.5 rounded-md text-xs font-semibold bg-accent text-white hover:bg-accent/90">
-            Apply filter
-          </button>
+        <div class="flex justify-between items-center pt-1">
+          <div class="text-[11px] text-gray-500 dark:text-gray-400">
+            Location filter is optional – you can still filter by tag and animal only.
+          </div>
+          <div class="flex gap-2">
+            {% if location_active %}
+              <a href="{% url 'posts' %}?{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if selected_animal_type %}animal_type={{ selected_animal_type }}&{% endif %}{% if selected_animal_race %}animal_race={{ selected_animal_race }}&{% endif %}"
+                 class="px-3 py-1 rounded-md text-xs border border-border dark:border-darkborder text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                Clear
+              </a>
+            {% endif %}
+            <button type="submit"
+                    class="px-4 py-1.5 rounded-md text-xs font-semibold bg-accent text-white hover:bg-accent/90">
+              Apply filter
+            </button>
+          </div>
         </div>
       </form>
     </div>
 
     <!-- ========================= -->
-    <!-- TAG FILTER BAR -->
+    <!-- TAG FILTER BAR (CHIPS) -->
     <!-- ========================= -->
     <div class="flex flex-wrap gap-2">
 
-      <a href="?tag=none"
+      <a href="?tag=none{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}{% if selected_animal_race %}&animal_race={{ selected_animal_race }}{% endif %}"
          class="px-3 py-1 rounded-full text-sm font-medium border
                 {% if selected_tag == 'none' or not selected_tag %}
                     bg-gray-600 text-white border-transparent
@@ -125,7 +136,8 @@
         ทั้งหมด
       </a>
 
-      <a href="?tag=missing" class="px-3 py-1 rounded-full text-sm font-medium border
+      <a href="?tag=missing{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}{% if selected_animal_race %}&animal_race={{ selected_animal_race }}{% endif %}"
+         class="px-3 py-1 rounded-full text-sm font-medium border
          {% if selected_tag == 'missing' %}
            bg-red-500 text-white border-transparent
          {% else %}
@@ -135,7 +147,8 @@
         สัตว์หาย
       </a>
 
-      <a href="?tag=found" class="px-3 py-1 rounded-full text-sm font-medium border
+      <a href="?tag=found{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}{% if selected_animal_race %}&animal_race={{ selected_animal_race }}{% endif %}"
+         class="px-3 py-1 rounded-full text-sm font-medium border
          {% if selected_tag == 'found' %}
            bg-green-500 text-white border-transparent
          {% else %}
@@ -145,8 +158,8 @@
         พบสัตว์หลง
       </a>
 
-      <!-- keep all your other tag buttons the same as before -->
-      <a href="?tag=adoption_update" class="px-3 py-1 rounded-full text-sm font-medium border
+      <a href="?tag=adoption_update{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}{% if selected_animal_race %}&animal_race={{ selected_animal_race }}{% endif %}"
+         class="px-3 py-1 rounded-full text-sm font-medium border
          {% if selected_tag == 'adoption_update' %}
            bg-blue-500 text-white border-transparent
          {% else %}
@@ -156,7 +169,8 @@
         อัปเดตการรับเลี้ยง
       </a>
 
-      <a href="?tag=qa" class="px-3 py-1 rounded-full text-sm font-medium border
+      <a href="?tag=qa{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}{% if selected_animal_race %}&animal_race={{ selected_animal_race }}{% endif %}"
+         class="px-3 py-1 rounded-full text-sm font-medium border
          {% if selected_tag == 'qa' %}
            bg-yellow-500 text-black border-transparent
          {% else %}
@@ -166,7 +180,8 @@
         Q&A
       </a>
 
-      <a href="?tag=care" class="px-3 py-1 rounded-full text-sm font-medium border
+      <a href="?tag=care{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}{% if selected_animal_race %}&animal_race={{ selected_animal_race }}{% endif %}"
+         class="px-3 py-1 rounded-full text-sm font-medium border
          {% if selected_tag == 'care' %}
            bg-purple-500 text-white border-transparent
          {% else %}
@@ -176,7 +191,8 @@
         เคล็ดลับ
       </a>
 
-      <a href="?tag=health" class="px-3 py-1 rounded-full text-sm font-medium border
+      <a href="?tag=health{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}{% if selected_animal_race %}&animal_race={{ selected_animal_race }}{% endif %}"
+         class="px-3 py-1 rounded-full text-sm font-medium border
          {% if selected_tag == 'health' %}
            bg-pink-500 text-white border-transparent
          {% else %}
@@ -186,7 +202,8 @@
         สุขภาพ/หมอ
       </a>
 
-      <a href="?tag=event" class="px-3 py-1 rounded-full text-sm font-medium border
+      <a href="?tag=event{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}{% if selected_animal_race %}&animal_race={{ selected_animal_race }}{% endif %}"
+         class="px-3 py-1 rounded-full text-sm font-medium border
          {% if selected_tag == 'event' %}
            bg-indigo-500 text-white border-transparent
          {% else %}
@@ -196,7 +213,8 @@
         กิจกรรม
       </a>
 
-      <a href="?tag=success" class="px-3 py-1 rounded-full text-sm font-medium border
+      <a href="?tag=success{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}{% if selected_animal_race %}&animal_race={{ selected_animal_race }}{% endif %}"
+         class="px-3 py-1 rounded-full text-sm font-medium border
          {% if selected_tag == 'success' %}
            bg-teal-500 text-white border-transparent
          {% else %}
@@ -206,7 +224,8 @@
         ความสำเร็จ
       </a>
 
-      <a href="?tag=other" class="px-3 py-1 rounded-full text-sm font-medium border
+      <a href="?tag=other{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}{% if selected_animal_race %}&animal_race={{ selected_animal_race }}{% endif %}"
+         class="px-3 py-1 rounded-full text-sm font-medium border
          {% if selected_tag == 'other' %}
            bg-gray-500 text-white border-transparent
          {% else %}
@@ -215,8 +234,132 @@
          {% endif %}">
         อื่นๆ
       </a>
-
     </div>
+
+    <!-- ========================= -->
+    <!-- ANIMAL TYPE + RACE FILTER -->
+    <!-- ========================= -->
+    <form method="get" class="flex flex-wrap gap-3 items-end pt-1">
+
+      <!-- keep tag & location when changing animal filter -->
+      {% if selected_tag %}
+        <input type="hidden" name="tag" value="{{ selected_tag }}">
+      {% endif %}
+      {% if center_lat %}
+        <input type="hidden" name="center_lat" value="{{ center_lat }}">
+      {% endif %}
+      {% if center_lng %}
+        <input type="hidden" name="center_lng" value="{{ center_lng }}">
+      {% endif %}
+      {% if radius_km %}
+        <input type="hidden" name="radius_km" value="{{ radius_km }}">
+      {% endif %}
+
+      <!-- Animal type -->
+      <div>
+        <label class="block text-sm font-semibold mb-1">ประเภทสัตว์</label>
+        <select name="animal_type"
+                class="p-2 border rounded-lg dark:bg-darksurface text-sm">
+          <option value="">ทั้งหมด</option>
+          <option value="dog" {% if selected_animal_type == "dog" %}selected{% endif %}>สุนัข</option>
+          <option value="cat" {% if selected_animal_type == "cat" %}selected{% endif %}>แมว</option>
+          <option value="fox" {% if selected_animal_type == "fox" %}selected{% endif %}>สุนัขจิ้งจอก</option>
+          <option value="rabbit" {% if selected_animal_type == "rabbit" %}selected{% endif %}>กระต่าย</option>
+          <option value="hamster" {% if selected_animal_type == "hamster" %}selected{% endif %}>แฮมสเตอร์</option>
+          <option value="small_pet" {% if selected_animal_type == "small_pet" %}selected{% endif %}>สัตว์เล็กอื่น ๆ</option>
+          <option value="bird" {% if selected_animal_type == "bird" %}selected{% endif %}>นก</option>
+          <option value="reptile" {% if selected_animal_type == "reptile" %}selected{% endif %}>สัตว์เลื้อยคลาน</option>
+          <option value="fish" {% if selected_animal_type == "fish" %}selected{% endif %}>ปลา</option>
+          <option value="invertebrate" {% if selected_animal_type == "invertebrate" %}selected{% endif %}>สัตว์ไม่มีกระดูกสันหลัง</option>
+        </select>
+      </div>
+
+      <!-- Animal race -->
+      <div>
+        <label class="block text-sm font-semibold mb-1">สายพันธุ์ / สายเลือด</label>
+        <select name="animal_race"
+                class="p-2 border rounded-lg dark:bg-darksurface text-sm w-56">
+          <option value="">ทั้งหมด</option>
+
+          <!-- 🐶 ตัวอย่างสายพันธุ์ยอดฮิต -->
+          <optgroup label="Dog">
+            <option value="golden_retriever" {% if selected_animal_race == "golden_retriever" %}selected{% endif %}>Golden Retriever</option>
+            <option value="labrador_retriever" {% if selected_animal_race == "labrador_retriever" %}selected{% endif %}>Labrador Retriever</option>
+            <option value="german_shepherd" {% if selected_animal_race == "german_shepherd" %}selected{% endif %}>German Shepherd</option>
+            <option value="siberian_husky" {% if selected_animal_race == "siberian_husky" %}selected{% endif %}>Siberian Husky</option>
+            <option value="corgi" {% if selected_animal_race == "corgi" %}selected{% endif %}>Corgi</option>
+            <option value="chihuahua" {% if selected_animal_race == "chihuahua" %}selected{% endif %}>Chihuahua</option>
+            <option value="pomeranian" {% if selected_animal_race == "pomeranian" %}selected{% endif %}>Pomeranian</option>
+          </optgroup>
+
+          <!-- 🐱 Cat -->
+          <optgroup label="Cat">
+            <option value="persian" {% if selected_animal_race == "persian" %}selected{% endif %}>Persian</option>
+            <option value="siamese" {% if selected_animal_race == "siamese" %}selected{% endif %}>Siamese</option>
+            <option value="maine_coon" {% if selected_animal_race == "maine_coon" %}selected{% endif %}>Maine Coon</option>
+            <option value="british_shorthair" {% if selected_animal_race == "british_shorthair" %}selected{% endif %}>British Shorthair</option>
+            <option value="scottish_fold" {% if selected_animal_race == "scottish_fold" %}selected{% endif %}>Scottish Fold</option>
+            <option value="bengal" {% if selected_animal_race == "bengal" %}selected{% endif %}>Bengal</option>
+          </optgroup>
+
+          <!-- 🦊 Fox -->
+          <optgroup label="Fox">
+            <option value="fennec_fox" {% if selected_animal_race == "fennec_fox" %}selected{% endif %}>Fennec Fox</option>
+            <option value="red_fox" {% if selected_animal_race == "red_fox" %}selected{% endif %}>Red Fox</option>
+            <option value="silver_fox" {% if selected_animal_race == "silver_fox" %}selected{% endif %}>Silver Fox</option>
+            <option value="arctic_fox" {% if selected_animal_race == "arctic_fox" %}selected{% endif %}>Arctic Fox</option>
+          </optgroup>
+
+          <!-- 🐰 Rabbit -->
+          <optgroup label="Rabbit">
+            <option value="holland_lop" {% if selected_animal_race == "holland_lop" %}selected{% endif %}>Holland Lop</option>
+            <option value="netherland_dwarf" {% if selected_animal_race == "netherland_dwarf" %}selected{% endif %}>Netherland Dwarf</option>
+            <option value="lionhead" {% if selected_animal_race == "lionhead" %}selected{% endif %}>Lionhead</option>
+            <option value="mini_rex" {% if selected_animal_race == "mini_rex" %}selected{% endif %}>Mini Rex</option>
+          </optgroup>
+
+          <!-- 🦎 Reptile -->
+          <optgroup label="Reptile / Exotic">
+            <option value="leopard_gecko" {% if selected_animal_race == "leopard_gecko" %}selected{% endif %}>Leopard Gecko</option>
+            <option value="crested_gecko" {% if selected_animal_race == "crested_gecko" %}selected{% endif %}>Crested Gecko</option>
+            <option value="bearded_dragon" {% if selected_animal_race == "bearded_dragon" %}selected{% endif %}>Bearded Dragon</option>
+            <option value="corn_snake" {% if selected_animal_race == "corn_snake" %}selected{% endif %}>Corn Snake</option>
+            <option value="ball_python" {% if selected_animal_race == "ball_python" %}selected{% endif %}>Ball Python</option>
+            <option value="axolotl" {% if selected_animal_race == "axolotl" %}selected{% endif %}>Axolotl</option>
+          </optgroup>
+
+          <!-- 🦜 Bird -->
+          <optgroup label="Bird">
+            <option value="budgie" {% if selected_animal_race == "budgie" %}selected{% endif %}>Budgie</option>
+            <option value="cockatiel" {% if selected_animal_race == "cockatiel" %}selected{% endif %}>Cockatiel</option>
+            <option value="lovebird" {% if selected_animal_race == "lovebird" %}selected{% endif %}>Lovebird</option>
+            <option value="african_grey" {% if selected_animal_race == "african_grey" %}selected{% endif %}>African Grey</option>
+            <option value="macaw" {% if selected_animal_race == "macaw" %}selected{% endif %}>Macaw</option>
+          </optgroup>
+
+          <!-- ⭐ fallback -->
+          <optgroup label="Other / Mixed">
+            <option value="other" {% if selected_animal_race == "other" %}selected{% endif %}>Other / Mixed</option>
+          </optgroup>
+        </select>
+        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+          เลือกเฉพาะกลุ่มยอดนิยม ถ้าไม่ได้เลือก จะไม่จำกัดสายพันธุ์
+        </p>
+      </div>
+
+      <button type="submit"
+              class="h-[38px] px-4 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent/90">
+        Apply
+      </button>
+
+      {% if selected_animal_type or selected_animal_race %}
+        <a href="?{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if center_lat %}center_lat={{ center_lat }}&{% endif %}{% if center_lng %}center_lng={{ center_lng }}&{% endif %}{% if radius_km %}radius_km={{ radius_km }}&{% endif %}"
+           class="h-[38px] flex items-center px-3 rounded-lg border text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+          Clear animal filter
+        </a>
+      {% endif %}
+    </form>
+
   </div>
   <!-- END FILTER WRAPPER -->
 
@@ -225,7 +368,7 @@
     {% for post in posts %}
       <div class="bg-surface dark:bg-darksurface rounded-lg shadow-md border border-border dark:border-darkborder overflow-hidden">
 
-        <!-- header (unchanged) -->
+        <!-- header -->
         <div class="p-4 flex items-center space-x-4 border-b border-border dark:border-darkborder">
           {% if post.shelter %}
             <a href="{% url 'public_shelter_profile' pk=post.shelter.pk %}">
@@ -281,10 +424,10 @@
             </a>
           </h2>
 
-          <!-- TAG + LOCATION -->
+          <!-- TAG + LOCATION + ANIMAL LABELS -->
           <div class="flex flex-wrap items-center gap-3 mb-3">
 
-            <!-- tag badge (unchanged) -->
+            <!-- tag badge -->
             <span class="text-xs font-semibold px-2 py-1 rounded-full 
               {% if post.tag == 'missing' %}bg-red-500 text-white{% endif %}
               {% if post.tag == 'found' %}bg-green-500 text-white{% endif %}
@@ -294,7 +437,7 @@
               {% if post.tag == 'health' %}bg-pink-500 text-white{% endif %}
               {% if post.tag == 'event' %}bg-indigo-500 text-white{% endif %}
               {% if post.tag == 'success' %}bg-teal-500 text-white{% endif %}
-              {% if post.tag == 'other' %}bg-gray-400 text-black{% endif %}
+              {% if post.tag == 'other' or post.tag == 'none' %}bg-gray-400 text-black{% endif %}
             ">
               {% if post.tag == 'missing' %}สัตว์หาย{% endif %}
               {% if post.tag == 'found' %}พบสัตว์หลง{% endif %}
@@ -318,6 +461,18 @@
                 ~{{ post.distance_km }} km away
               </span>
             {% endif %}
+
+            {% if post.animal_type %}
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-200">
+                {{ post.get_animal_type_display }}
+              </span>
+            {% endif %}
+
+            {% if post.animal_race %}
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200">
+                {{ post.get_animal_race_display }}
+              </span>
+            {% endif %}
           </div>
 
           {% if post.image %}
@@ -332,7 +487,7 @@
           </p>
         </div>
 
-        <!-- interaction (unchanged) -->
+        <!-- interaction -->
         <div class="px-4 py-2 border-t border-border dark:border-darkborder flex justify-between items-center bg-gray-50 dark:bg-gray-700/50">
           <div class="flex items-center space-x-4">
             <a href="{% url 'like_post' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-red-500">
@@ -341,7 +496,7 @@
               {% else %}
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
               {% endif %}
-              <span>{{ post.total_likes }}</span>
+              <span>{{ post.likes.count }}</span>
             </a>
             <a href="{% url 'post_detail' post.id %}" class="flex items-center space-x-1 text-gray-500 hover:text-accent">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
@@ -406,7 +561,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const toggleBtn = document.getElementById("toggle-location-filter");
   const formEl = document.getElementById("location-filter-form");
 
-  let mapInitialized = false;
   let filterMap = null;   // keep reference so we can invalidateSize()
 
   // Top-level "Filters" button: show/hide whole filter area
@@ -505,8 +659,6 @@ document.addEventListener("DOMContentLoaded", function () {
     setTimeout(function () {
       filterMap.invalidateSize();
     }, 100);
-
-    mapInitialized = true;
   }
 
   // auto-open filters + map when location filter already active

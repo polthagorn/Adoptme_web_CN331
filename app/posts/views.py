@@ -1,7 +1,9 @@
 import math
+
 from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
+
 from .models import Post, Comment
 from .forms import PostForm, CommentForm
 
@@ -22,18 +24,30 @@ def about(request):
 
 
 # ----------------------------------------
-# POST LIST + TAG FILTER
+# POST LIST + TAG + ANIMAL FILTER + LOCATION FILTER
 # ----------------------------------------
 def post(request):
+    # ------- basic filters from query string -------
     tag_filter = request.GET.get('tag', None)
+    animal_type_filter = request.GET.get('animal_type', None)
+    animal_race_filter = request.GET.get('animal_race', None)
 
     # base queryset
     posts_qs = Post.objects.all()
 
+    # TAG FILTER
     if tag_filter and tag_filter != "none":
         posts_qs = posts_qs.filter(tag=tag_filter)
 
-    # -------- location filter inputs --------
+    # 🐾 ANIMAL TYPE FILTER
+    if animal_type_filter and animal_type_filter not in ["", "all", "None"]:
+        posts_qs = posts_qs.filter(animal_type=animal_type_filter)
+
+    # 🐾 ANIMAL RACE / BREED FILTER
+    if animal_race_filter and animal_race_filter not in ["", "all", "None"]:
+        posts_qs = posts_qs.filter(animal_race=animal_race_filter)
+
+    # -------- LOCATION FILTER INPUTS --------
     center_lat = request.GET.get('center_lat')
     center_lng = request.GET.get('center_lng')
     radius_km = request.GET.get('radius_km')
@@ -52,7 +66,7 @@ def post(request):
 
     if location_active:
         def haversine(lat1, lon1, lat2, lon2):
-            # distance in km
+            """Return distance in km between 2 lat/lng points."""
             R = 6371.0
             phi1 = math.radians(lat1)
             phi2 = math.radians(lat2)
@@ -78,7 +92,15 @@ def post(request):
 
     context = {
         'posts': posts,
+
+        # tag
         'selected_tag': tag_filter,
+
+        # 🐾 animal filters (for keeping dropdown state)
+        'selected_animal_type': animal_type_filter,
+        'selected_animal_race': animal_race_filter,
+
+        # location
         'center_lat': center_lat if location_active else '',
         'center_lng': center_lng if location_active else '',
         'radius_km': radius_km if location_active else '',
@@ -92,7 +114,7 @@ def post(request):
 # CREATE POST (USER + SHELTER SUPPORT)
 # ----------------------------------------
 @login_required
-def create_post(request): # pragma: no cover
+def create_post(request):  # pragma: no cover
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
 
@@ -125,7 +147,6 @@ def edit_post(request, post_id):
         if form.is_valid():
             form.save()
             return redirect('posts')
-
     else:
         form = PostForm(instance=post)
 
@@ -154,7 +175,6 @@ def post_detail(request, post_id):
             new_comment.author = request.user
             new_comment.save()
             return HttpResponseRedirect(request.path_info)
-
     else:
         comment_form = CommentForm()
 

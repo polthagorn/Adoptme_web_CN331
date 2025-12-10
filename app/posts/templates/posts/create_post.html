@@ -49,6 +49,33 @@
       {% endif %}
     </div>
 
+    <!-- 🐾 ANIMAL TYPE + RACE -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Animal Type -->
+      <div>
+        <label for="id_animal_type" class="block text-sm font-semibold mb-2">ประเภทสัตว์</label>
+        {{ form.animal_type }}
+        {% if form.animal_type.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ form.animal_type.errors.0 }}</p>
+        {% endif %}
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          เช่น สุนัข, แมว, สุนัขจิ้งจอก, กระต่าย, หนูแฮมสเตอร์, นก, สัตว์เลื้อยคลาน ฯลฯ
+        </p>
+      </div>
+
+      <!-- Animal Race/Breed -->
+      <div>
+        <label for="id_animal_race" class="block text-sm font-semibold mb-2">สายพันธุ์ / สายเลือด</label>
+        {{ form.animal_race }}
+        {% if form.animal_race.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ form.animal_race.errors.0 }}</p>
+        {% endif %}
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          เช่น Golden Retriever, Persian, Fennec Fox, Holland Lop, Leopard Gecko ฯลฯ
+        </p>
+      </div>
+    </div>
+
     <!-- ⭐ LOCATION TEXT FIELD -->
     <div>
       <label for="id_location" class="block text-sm font-semibold mb-2">สถานที่ (ตัวหนังสือ)</label>
@@ -179,9 +206,7 @@
     .addTo(map);
 
 
-    // ---------------------------
     // ⭐ REVERSE GEOCODING FUNCTION
-    // ---------------------------
     function reverseGeocode(lat, lng) {
       const url =
         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
@@ -204,9 +229,7 @@
         .catch(err => console.error("Reverse geocode error:", err));
     }
 
-    // ---------------------------
     // UTIL: update inputs
-    // ---------------------------
     function updateInputs(lat, lng) {
       if (latInput) latInput.value = lat;
       if (lngInput) lngInput.value = lng;

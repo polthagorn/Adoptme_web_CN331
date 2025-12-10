@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Create Post{% endblock %}
+{% block title %}Edit Post{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto mt-10 bg-surface dark:bg-darksurface p-8 rounded-2xl shadow-lg transition-colors duration-500">
-  <h2 class="text-3xl font-bold mb-6 text-accent text-center">Create New Post</h2>
+  <h2 class="text-3xl font-bold mb-6 text-accent text-center">Edit Post</h2>
 
   <form method="POST" enctype="multipart/form-data" class="space-y-5">
     {% csrf_token %}
@@ -20,11 +20,23 @@
       {% endif %}
     </div>
 
-    <!-- Image -->
+    <!-- Image (with current preview if exists) -->
     <div>
       <label for="id_image" class="block text-sm font-semibold mb-2">Image</label>
+
+      {% if form.instance.image %}
+        <div class="mb-2">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Current image:</p>
+          <img src="{{ form.instance.image.url }}" alt="Current image"
+               class="w-full max-h-64 object-cover rounded-lg border border-border dark:border-darkborder">
+        </div>
+      {% endif %}
+
       <input type="file" name="image" id="id_image"
              class="w-full border border-border dark:border-darkborder rounded-lg p-2 bg-white dark:bg-darksurface text-text dark:text-darktext">
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        If you don't choose a new image, the current one will stay.
+      </p>
       {% if form.image.errors %}
         <p class="text-red-500 text-sm mt-1">{{ form.image.errors.0 }}</p>
       {% endif %}
@@ -47,6 +59,33 @@
       {% if form.tag.errors %}
         <p class="text-red-500 text-sm mt-1">{{ form.tag.errors.0 }}</p>
       {% endif %}
+    </div>
+
+    <!-- 🐾 ANIMAL TYPE + RACE -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Animal Type -->
+      <div>
+        <label for="id_animal_type" class="block text-sm font-semibold mb-2">ประเภทสัตว์</label>
+        {{ form.animal_type }}
+        {% if form.animal_type.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ form.animal_type.errors.0 }}</p>
+        {% endif %}
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          เช่น สุนัข, แมว, สุนัขจิ้งจอก, กระต่าย, หนูแฮมสเตอร์, นก, สัตว์เลื้อยคลาน ฯลฯ
+        </p>
+      </div>
+
+      <!-- Animal Race/Breed -->
+      <div>
+        <label for="id_animal_race" class="block text-sm font-semibold mb-2">สายพันธุ์ / สายเลือด</label>
+        {{ form.animal_race }}
+        {% if form.animal_race.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ form.animal_race.errors.0 }}</p>
+        {% endif %}
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          เช่น Golden Retriever, Persian, Fennec Fox, Holland Lop, Leopard Gecko ฯลฯ
+        </p>
+      </div>
     </div>
 
     <!-- ⭐ LOCATION TEXT FIELD -->
@@ -96,8 +135,9 @@
 
     <!-- Submit -->
     <div class="text-center">
-      <button type="submit" class="bg-accent hover:bg-accent/90 text-white font-semibold px-6 py-2 rounded-lg shadow transition duration-200">
-        Post
+      <button type="submit"
+              class="bg-accent hover:bg-accent/90 text-white font-semibold px-6 py-2 rounded-lg shadow transition duration-200">
+        Save Changes
       </button>
     </div>
 

@@ -25,8 +25,9 @@
         {{ post.title }}
       </h1>
 
-      <!-- Tag & location pills -->
+      <!-- Tag, location, animal pills -->
       <div class="flex flex-wrap items-center gap-2 mb-3 text-sm">
+
         {% if post.tag and post.tag != 'none' %}
           <span class="inline-flex items-center px-3 py-1 rounded-full bg-accent/10 text-accent font-semibold">
             #{{ post.get_tag_display }}
@@ -43,6 +44,18 @@
                     d="M12 22s7-4.686 7-11a7 7 0 10-14 0c0 6.314 7 11 7 11z"></path>
             </svg>
             {{ post.location }}
+          </span>
+        {% endif %}
+
+        {% if post.animal_type %}
+          <span class="inline-flex items-center px-3 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-200">
+            {{ post.get_animal_type_display }}
+          </span>
+        {% endif %}
+
+        {% if post.animal_race %}
+          <span class="inline-flex items-center px-3 py-1 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200">
+            {{ post.get_animal_race_display }}
           </span>
         {% endif %}
       </div>
@@ -152,9 +165,13 @@
       {% for comment in comments %}
         <div class="flex space-x-3">
           <a href="{% url 'user_profile' username=comment.author.username %}">
-            <img src="{{ comment.author.profile.image.url }}"
-                 alt="{{ comment.author.username }}"
-                 class="w-10 h-10 rounded-full object-cover">
+            {% if comment.author.profile.image %}
+              <img src="{{ comment.author.profile.image.url }}"
+                   alt="{{ comment.author.username }}"
+                   class="w-10 h-10 rounded-full object-cover">
+            {% else %}
+              <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+            {% endif %}
           </a>
           <div class="flex-grow bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
             <a href="{% url 'user_profile' username=comment.author.username %}"

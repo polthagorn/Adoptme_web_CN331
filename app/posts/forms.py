@@ -5,10 +5,30 @@ from .models import Post, Comment
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['title', 'content', 'image', 'location', 'latitude', 'longitude', 'tag']
+        fields = [
+            'title',
+            'content',
+            'image',
+            'tag',          # หมวดหมู่โพสต์
+            'animal_type',  # 🐾 ประเภทสัตว์ (ใหม่)
+            'animal_race',  # 🐾 สายพันธุ์/สายเลือด (ใหม่)
+            'location',
+            'latitude',
+            'longitude',
+        ]
 
         widgets = {
             'tag': forms.Select(attrs={
+                'class': 'w-full p-2 border border-border dark:border-darkborder rounded-md bg-background dark:bg-darkbg text-text dark:text-darktext'
+            }),
+
+            # 🐾 ประเภทสัตว์ (dropdown)
+            'animal_type': forms.Select(attrs={
+                'class': 'w-full p-2 border border-border dark:border-darkborder rounded-md bg-background dark:bg-darkbg text-text dark:text-darktext'
+            }),
+
+            # 🐾 สายพันธุ์ / สายเลือด (dropdown)
+            'animal_race': forms.Select(attrs={
                 'class': 'w-full p-2 border border-border dark:border-darkborder rounded-md bg-background dark:bg-darkbg text-text dark:text-darktext'
             }),
 
@@ -19,7 +39,6 @@ class PostForm(forms.ModelForm):
             }),
 
             'latitude': forms.HiddenInput(),
-
             'longitude': forms.HiddenInput(),
         }
 
