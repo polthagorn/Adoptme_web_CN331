@@ -4,11 +4,21 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
-from .models import Profile
+from .models import Profile, Notification
 from app.posts.models import Post
 from .forms import UserUpdateForm, ProfileUpdateForm
 import re
 
+@login_required
+def notification_list(request):
+    notifications = Notification.objects.filter(user=request.user)
+
+    # mark all unread as read automatically when opening
+    notifications.filter(is_read=False).update(is_read=True)
+
+    return render(request, "accounts/notification.html", {
+        "notifications": notifications,
+    })
 
 def login_page(request):
     if request.method == "POST":

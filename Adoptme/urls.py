@@ -30,5 +30,6 @@ urlpatterns = [
     path('stores/', include('app.stores.urls')),
     path('shelters/', include('app.shelters.urls')),
     
+    
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

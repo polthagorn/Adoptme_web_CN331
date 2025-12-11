@@ -68,6 +68,37 @@
           {% endif %}
         {% endif %}
 
+        <!-- 🔔 DESKTOP NOTIFICATION BELL (only when logged in) -->
+        {% if user.is_authenticated %}
+        <a href="{% url 'notifications' %}"
+           class="relative inline-flex items-center justify-center w-9 h-9 rounded-full
+                  bg-surface dark:bg-darksurface
+                  border border-border dark:border-darkborder
+                  hover:bg-accent/10 hover:dark:bg-accent/20
+                  transition-colors">
+          <!-- Bell icon -->
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24"
+               fill="none"
+               stroke="currentColor"
+               class="w-5 h-5 text-text dark:text-darktext">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                  d="M14.25 18.75a2.25 2.25 0 01-4.5 0m9-6a6.75 6.75 0 10-13.5 0c0 2.273-.5 3.607-1.086 4.46-.435.64-.652.96-.642 1.184.01.246.166.46.43.587.237.114.643.114 1.454.114h14.688c.811 0 1.217 0 1.454-.114.264-.127.42-.341.43-.587.01-.224-.207-.544-.642-1.184-.586-.853-1.086-2.187-1.086-4.46z" />
+          </svg>
+
+          {% if unread_notifications_count > 0 %}
+          <!-- Unread badge -->
+          <span
+            class="absolute -top-1 -right-1 min-w-[1.1rem] h-4 px-1
+                   flex items-center justify-center
+                   rounded-full bg-red-500 text-white
+                   text-[0.6rem] font-bold">
+            {{ unread_notifications_count }}
+          </span>
+          {% endif %}
+        </a>
+        {% endif %}
+
         {% if user.is_authenticated %}
         <a href="{% url 'profile' %}" class="hover:text-accent transition-colors">Profile</a>
         {% else %}
@@ -95,6 +126,16 @@
         <a href="{% url 'posts' %}" class="hover:text-accent transition-colors">Posts</a>
 
         {% if request.user.is_authenticated %}
+          <!-- 🔔 MOBILE NOTIFICATIONS LINK -->
+          <a href="{% url 'notifications' %}" class="hover:text-accent transition-colors flex items-center justify-between">
+            <span>Notifications</span>
+            {% if unread_notifications_count > 0 %}
+              <span class="ml-2 inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-semibold">
+                {{ unread_notifications_count }}
+              </span>
+            {% endif %}
+          </a>
+
           <span class="text-sm dark:text-darktext">Hi, {{ request.user.first_name }}!</span>
           <a href="{% url 'logout' %}" class="hover:text-accent transition-colors">Logout</a>
         {% else %}

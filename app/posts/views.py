@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 
+from app.accounts.models import Notification
 from .models import Post, Comment
 from .forms import PostForm, CommentForm
 
@@ -174,6 +175,17 @@ def post_detail(request, post_id):
             new_comment.post = post
             new_comment.author = request.user
             new_comment.save()
+
+            # 🔔 NOTIFICATION FOR COMMENT (only if not commenting on own post)
+            if request.user != post.author:
+                Notification.objects.create(
+                    user=post.author,           # who receives the noti
+                    actor=request.user,         # who did the action
+                    notification_type="comment",
+                    message=f"{request.user.username} commented on your post.",
+                    post=post,
+                )
+
             return HttpResponseRedirect(request.path_info)
     else:
         comment_form = CommentForm()
@@ -210,16 +222,28 @@ def delete_post(request, post_id):
 
 
 # ----------------------------------------
-# LIKE POST
+# LIKE POST + NOTIFICATION
 # ----------------------------------------
 @login_required
 def like_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
 
     if post.likes.filter(id=request.user.id).exists():
+        # already liked → unlike
         post.likes.remove(request.user)
     else:
+        # not liked → add like
         post.likes.add(request.user)
+
+        # 🔔 NOTIFICATION FOR LIKE (only if not liking own post)
+        if request.user != post.author:
+            Notification.objects.create(
+                user=post.author,           # who receives the noti
+                actor=request.user,         # who did the action
+                notification_type="like",
+                message=f"{request.user.username} liked your post.",
+                post=post,
+            )
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('posts')))
 
