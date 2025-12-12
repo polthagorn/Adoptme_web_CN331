@@ -1,3 +1,5 @@
+# stores/views.py
+
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Avg
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
@@ -5,9 +7,17 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy, reverse
 from django.http import HttpResponseForbidden
 from django.db import models
-from .models import Store, Product, StoreReview, ProductReview
 from django.contrib import messages
-from .forms import StoreRequestForm, ProductForm, StoreUpdateForm, StoreReviewForm, ProductReviewForm
+
+from .models import Store, Product, StoreReview, ProductReview
+from .forms import (
+    StoreRequestForm,
+    ProductForm,
+    StoreUpdateForm,
+    StoreReviewForm,
+    ProductReviewForm,
+)
+
 
 class StoreRequestCreateView(LoginRequiredMixin, CreateView):
     model = Store
@@ -19,6 +29,7 @@ class StoreRequestCreateView(LoginRequiredMixin, CreateView):
         form.instance.owner = self.request.user
         return super().form_valid(form)
 
+
 class MyStoreListView(LoginRequiredMixin, ListView):
     model = Store
     template_name = 'stores/my_store_list.html'
@@ -26,6 +37,7 @@ class MyStoreListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Store.objects.filter(owner=self.request.user).order_by('-created_at')
+
 
 class StoreProfileView(DetailView):
     model = Store
@@ -36,10 +48,14 @@ class StoreProfileView(DetailView):
         context = super().get_context_data(**kwargs)
         store = self.get_object()
         reviews = store.reviews.all()
-        context['products'] = Product.objects.filter(store=store, store__status='APPROVED').order_by('-created_at')
+        context['products'] = Product.objects.filter(
+            store=store,
+            store__status='APPROVED'
+        ).order_by('-created_at')
         context['reviews'] = reviews
         context['average_rating'] = reviews.aggregate(Avg('rating'))['rating__avg']
         return context
+
 
 class MarketplaceView(ListView):
     model = Product
@@ -47,32 +63,80 @@ class MarketplaceView(ListView):
     context_object_name = 'products'
     paginate_by = 12
 
+    # ✅ allowed sort keys (safe whitelist)
+    SORT_OPTIONS = {
+        "new": "-created_at",
+        "old": "created_at",
+        "price_low": "price",
+        "price_high": "-price",
+        "name_az": "name",
+        "name_za": "-name",
+        "rating_high": "-avg_rating",
+    }
+
     def get_queryset(self):
-        queryset = Product.objects.filter(store__status='APPROVED').select_related('store').order_by('-created_at')
+        queryset = (
+            Product.objects
+            .filter(store__status='APPROVED')
+            .select_related('store')
+        )
+
         search_query = self.request.GET.get('q', None)
         store_type = self.request.GET.get('type', None)
+        sort_key = self.request.GET.get('sort', 'new')
 
+        # ✅ search
         if search_query:
             queryset = queryset.filter(
-                models.Q(name__icontains=search_query) | 
+                models.Q(name__icontains=search_query) |
                 models.Q(description__icontains=search_query) |
                 models.Q(store__name__icontains=search_query)
             )
+
+        # ✅ type filter
         if store_type in ['PET', 'SUPPLIES']:
             queryset = queryset.filter(store__store_type=store_type)
-        return queryset
+
+        # ✅ rating sort needs annotate
+        if sort_key == "rating_high":
+            queryset = queryset.annotate(avg_rating=Avg("reviews__rating"))
+
+        # ✅ apply sort (fallback to newest)
+        order_by = self.SORT_OPTIONS.get(sort_key, "-created_at")
+
+        # tie-breaker to keep stable ordering
+        if sort_key == "rating_high":
+            return queryset.order_by(order_by, "-created_at")
+        return queryset.order_by(order_by, "-created_at")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
         search_query = self.request.GET.get('q', '')
-        found_stores = None
-        if search_query:
-            found_stores = Store.objects.filter(status='APPROVED', name__icontains=search_query)
-        
-        context['found_stores'] = found_stores
         context['search_query'] = search_query
         context['selected_type'] = self.request.GET.get('type', '')
+        context['selected_sort'] = self.request.GET.get('sort', 'new')
+
+        found_stores = None
+        if search_query:
+            found_stores = Store.objects.filter(
+                status='APPROVED',
+                name__icontains=search_query
+            )
+        context['found_stores'] = found_stores
+
+        # optional: for dropdown in template
+        context['sort_options'] = [
+            ("new", "Newest"),
+            ("old", "Oldest"),
+            ("price_low", "Price: Low → High"),
+            ("price_high", "Price: High → Low"),
+            ("name_az", "Name: A → Z"),
+            ("name_za", "Name: Z → A"),
+            ("rating_high", "Top rated"),
+        ]
         return context
+
 
 class ProductDetailView(DetailView):
     model = Product
@@ -86,6 +150,7 @@ class ProductDetailView(DetailView):
         context['reviews'] = reviews
         context['average_rating'] = reviews.aggregate(Avg('rating'))['rating__avg']
         return context
+
 
 class StoreManageView(LoginRequiredMixin, DetailView):
     model = Store
@@ -106,15 +171,18 @@ class StoreManageView(LoginRequiredMixin, DetailView):
         store = self.get_object()
         search_query = self.request.GET.get('q', '')
         products_queryset = Product.objects.filter(store=store)
+
         if search_query:
-            products_queryset = products_queryset.filter(name__icontains=search_query) # pragma: no cover
-        
+            products_queryset = products_queryset.filter(name__icontains=search_query)  # pragma: no cover
+
         context['products'] = products_queryset.order_by('-created_at')
         context['search_query'] = search_query
+
         reviews = store.reviews.all()
         context['reviews'] = reviews
         context['average_rating'] = reviews.aggregate(Avg('rating'))['rating__avg']
         return context
+
 
 class ProductCreateView(LoginRequiredMixin, CreateView):
     model = Product
@@ -143,7 +211,8 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse('store_manage', kwargs={'pk': self.store.pk})
-    
+
+
 class StoreUpdateView(LoginRequiredMixin, UpdateView):
     model = Store
     form_class = StoreUpdateForm
@@ -154,7 +223,6 @@ class StoreUpdateView(LoginRequiredMixin, UpdateView):
         return reverse_lazy('store_manage', kwargs={'pk': self.object.pk})
 
     def dispatch(self, request, *args, **kwargs):
-        # ownership check
         store = self.get_object()
         handler = super().dispatch(request, *args, **kwargs)
         if getattr(handler, 'status_code', 200) in (301, 302):
@@ -163,6 +231,7 @@ class StoreUpdateView(LoginRequiredMixin, UpdateView):
             return HttpResponseForbidden("You do not have permission to edit this store.")
         return handler
 
+
 class ProductUpdateView(LoginRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
@@ -170,7 +239,6 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
     context_object_name = 'product'
 
     def get_queryset(self):
-        # only allow updating products that belong to the user's store
         return Product.objects.filter(store__owner=self.request.user)
 
     def get_context_data(self, **kwargs):
@@ -179,9 +247,9 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
     def get_success_url(self):
-        # when update is successful, redirect to store manage page
         product = self.get_object()
         return reverse_lazy('store_manage', kwargs={'pk': product.store.pk})
+
 
 class ProductDeleteView(LoginRequiredMixin, DeleteView):
     model = Product
@@ -189,14 +257,13 @@ class ProductDeleteView(LoginRequiredMixin, DeleteView):
     context_object_name = 'product'
 
     def get_queryset(self):
-        # only allow deleting products that belong to the user's store
         return Product.objects.filter(store__owner=self.request.user)
 
     def get_success_url(self):
-        # redirect to store manage page after deletion
         product = self.get_object()
         return reverse_lazy('store_manage', kwargs={'pk': product.store.pk})
-    
+
+
 class StoreReviewListView(DetailView):
     """แสดงรายการรีวิวทั้งหมดของร้านค้า"""
     model = Store
@@ -208,6 +275,7 @@ class StoreReviewListView(DetailView):
         context['reviews'] = self.get_object().reviews.all()
         return context
 
+
 class StoreReviewCreateView(LoginRequiredMixin, CreateView):
     """หน้าฟอร์มสำหรับเขียนรีวิวร้านค้า"""
     model = StoreReview
@@ -216,7 +284,6 @@ class StoreReviewCreateView(LoginRequiredMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.store = get_object_or_404(Store, pk=self.kwargs['pk'])
-        # ตรวจสอบว่าเคยรีวิวแล้วหรือยัง
         if StoreReview.objects.filter(store=self.store, author=request.user).exists():
             messages.error(request, 'You have already reviewed this store.')
             return redirect('store_profile', pk=self.store.pk)
@@ -230,14 +297,13 @@ class StoreReviewCreateView(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['target_object'] = self.store # ส่ง store object ไปให้ template
+        context['target_object'] = self.store
         context['review_type'] = 'Store'
         return context
 
     def get_success_url(self):
         return reverse('store_profile', kwargs={'pk': self.store.pk})
 
-# --- ทำซ้ำสำหรับ Product Reviews ---
 
 class ProductReviewListView(DetailView):
     model = Product
@@ -248,6 +314,7 @@ class ProductReviewListView(DetailView):
         context = super().get_context_data(**kwargs)
         context['reviews'] = self.get_object().reviews.all()
         return context
+
 
 class ProductReviewCreateView(LoginRequiredMixin, CreateView):
     model = ProductReview
