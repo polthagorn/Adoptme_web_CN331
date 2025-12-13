@@ -31,7 +31,6 @@
   </script>
 
   <script>
-    // Initialize dark mode based on localStorage
     (function () {
       if (localStorage.getItem('theme') === 'dark') {
         document.documentElement.classList.add('dark');
@@ -40,7 +39,8 @@
   </script>
 </head>
 
-<body class="bg-background text-text dark:bg-darkbg dark:text-darktext font-sans min-h-screen flex flex-col transition-colors duration-500">
+<body class="bg-background text-text dark:bg-darkbg dark:text-darktext font-sans min-h-screen flex flex-col transition-colors duration-500"
+      data-messages="{% for message in messages %}{{ message|escapejs }}|{{ message.tags }},{% endfor %}">
 
   <!-- Header -->
   <header class="bg-surface dark:bg-darksurface border-b border-border dark:border-darkborder p-4 px-10 flex justify-between items-center shadow-sm">
@@ -59,7 +59,6 @@
         {% else %}
           <a href="{% url 'shelter_register' %}" class="hover:text-accent font-semibold">Become a Shelter</a>
         {% endif %}
-
         {% if user.is_superuser %}
           <a href="{% url 'dashboard_home' %}" class="hover:text-accent font-semibold">Dashboard</a>
         {% endif %}
@@ -165,13 +164,15 @@
       setTimeout(() => toast.remove(), 5500);
     }
 
-    // Display Django messages as toasts
-    {% if messages %}
-      {% for message in messages %}
-        createToast("{{ message|escapejs }}", "{{ message.tags }}");
-      {% endfor %}
-    {% endif %}
+    // Display Django messages as toast (no VSCode error)
+    const messagesData = document.body.dataset.messages;
+    if (messagesData) {
+      messagesData.split(',').forEach(item => {
+        if (!item) return;
+        const [msg, type] = item.split('|');
+        createToast(msg, type);
+      });
+    }
   </script>
-
 </body>
 </html>
