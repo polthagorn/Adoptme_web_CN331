@@ -3,15 +3,22 @@ from django.contrib.auth.models import User
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    phone = models.CharField(max_length=20)
-    country = models.CharField(max_length=100)
-    city = models.CharField(max_length=100)
-    score = models.IntegerField(default=100, verbose_name="User Score")
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
+
+    phone = models.CharField(max_length=20, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+
+    score = models.IntegerField(default=100)
+
     image = models.ImageField(
-        default='default.jpg',
         upload_to='profile_pics',
-        verbose_name="Profile Image"
+        blank=True,
+        null=True
     )
 
     def __str__(self):
@@ -19,27 +26,18 @@ class Profile(models.Model):
 
 
 class Notification(models.Model):
-    """
-    Stores all updates for a user:
-    - like
-    - comment
-    - system message, etc.
-    """
-
     NOTIFICATION_TYPES = [
         ('like', 'Like'),
         ('comment', 'Comment'),
         ('system', 'System'),
     ]
 
-    # คนที่ได้รับการแจ้งเตือน
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='notifications'
     )
 
-    # คนที่ทำ action (เช่น คนที่มากดไลค์ / คอมเมนต์)
     actor = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -54,26 +52,21 @@ class Notification(models.Model):
         default='system'
     )
 
-    # ข้อความที่จะแสดงใน noti เช่น "Ploy liked your post"
     message = models.CharField(max_length=255)
 
-    # ถ้าจะผูกกับโพสต์ (optional)
     post = models.ForeignKey(
-        'posts.Post',                 # string app.Model ช่วยเลี่ยง import วนกัน
+        'posts.Post',
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name='notifications'
     )
 
-    #  สถานะอ่าน / ยังไม่อ่าน
     is_read = models.BooleanField(default=False)
-
-    # เวลาเกิด noti
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-created_at']   # อันใหม่อยู่บนสุด
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.user.username} - {self.notification_type} - {self.message}"
+        return f'{self.user.username} - {self.notification_type}'
