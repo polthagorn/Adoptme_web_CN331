@@ -1,19 +1,22 @@
 {% extends "base.html" %}
-
+{% load static %}
 {% block title %}Edit Profile - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto bg-surface dark:bg-darksurface p-8 rounded-lg shadow-md border border-border dark:border-darkborder">
-    
-    <form  id="profile-edit-form" method="POST" enctype="multipart/form-data">
+
+    <form id="profile-edit-form" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <fieldset>
-            <legend class="text-2xl font-bold text-text dark:text-darktext border-b border-border dark:border-darkborder pb-4 mb-6">Edit Profile</legend>
+            <legend class="text-2xl font-bold text-text dark:text-darktext border-b border-border dark:border-darkborder pb-4 mb-6">
+                Edit Profile
+            </legend>
 
-
-            <!-- username edit form -->
+            <!-- Username -->
             <div class="mb-5">
-                <label for="{{ u_form.username.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">{{ u_form.username.label }}</label>
+                <label for="{{ u_form.username.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">
+                    {{ u_form.username.label }}
+                </label>
                 {{ u_form.username }}
                 {% if u_form.username.errors %}
                     <div class="text-red-500 text-sm mt-1">
@@ -24,34 +27,55 @@
                 {% endif %}
             </div>
 
-            <!-- profile pic edit form -->
+            <!-- Email -->
+            <div class="mb-5">
+                <label for="{{ u_form.email.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">
+                    {{ u_form.email.label }}
+                </label>
+                {{ u_form.email }}
+                {% if u_form.email.errors %}
+                    <div class="text-red-500 text-sm mt-1">
+                        {% for error in u_form.email.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Profile Picture -->
             <div class="mb-5">
                 <label class="block mb-2 text-sm font-medium text-text dark:text-darktext">Profile Picture</label>
                 <div class="flex items-center space-x-4">
-                    <img src="{{ user.profile.image.url }}" alt="Current Profile Picture" class="w-24 h-24 rounded-full object-cover">
+                    {% if user.profile.image %}
+                        <img src="{{ user.profile.image.url }}" alt="Current Profile Picture" class="w-24 h-24 rounded-full object-cover">
+                    {% else %}
+                        <!-- Default image -->
+                        <img src="{% static 'img/default.jpg' %}" alt="Default Profile Picture" class="w-24 h-24 rounded-full object-cover">
+                    {% endif %}
                     <div class="flex-grow">
-                        <label for="{{ p_form.image.id_for_label }}" class="block mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">Change Picture</label>
+                        <label for="{{ p_form.image.id_for_label }}" class="block mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Change Picture
+                        </label>
                         {{ p_form.image }}
                         
-                        <!-- Delete profile pic -->
-                        {% if user.profile.image.url != '/media/default.jpg' %}
-                        <button type="submit" name="remove_image" class="mt-2 text-xs text-red-600 hover:underline">
-                            Remove Picture
-                        </button>
+                        {% if user.profile.image %}
+                            <button type="submit" name="remove_image" class="mt-2 text-xs text-red-600 hover:underline">
+                                Remove Picture
+                            </button>
                         {% endif %}
                     </div>
                 </div>
             </div>
 
+
         </fieldset>
 
-         <div class="mt-6 space-y-3">
-            <!-- save changes -->
-            <button type="button" id="save-changes-btn" class="w-full text-white bg-accent hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+        <!-- Save / Discard -->
+        <div class="mt-6 space-y-3">
+            <button type="button" id="save-changes-btn" class="w-full text-white bg-accent hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors">
                 Save Changes
             </button>
-            
-            <!-- discard -->
+
             <a href="{% url 'profile' %}" class="block w-full text-center text-text dark:text-darktext bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors">
                 Back to Profile (Discard Changes)
             </a>
@@ -60,13 +84,13 @@
 
 </div>
 
-<!-- ================================================== -->
-<!-- Model for save changes-->
-<!-- ================================================== -->
+<!-- Confirmation Modal -->
 <div id="confirmation-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
     <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow-xl max-w-sm mx-auto border border-border dark:border-darkborder">
         <h3 class="text-lg font-bold text-text dark:text-darktext">Confirm Changes</h3>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Are you sure you want to save these changes to your profile?</p>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Are you sure you want to save these changes to your profile?
+        </p>
         <div class="mt-6 flex justify-end space-x-3">
             <button type="button" id="cancel-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 rounded-md">
                 Cancel
@@ -78,38 +102,20 @@
     </div>
 </div>
 
-<!-- ================================================== -->
-<!-- javascript for save changes model           -->
-<!-- ================================================== -->
+<!-- JavaScript -->
 <script>
-    // element references
-    const saveChangesBtn = document.getElementById('save-changes-btn');
-    const confirmationModal = document.getElementById('confirmation-modal');
+    const saveBtn = document.getElementById('save-changes-btn');
+    const modal = document.getElementById('confirmation-modal');
     const cancelBtn = document.getElementById('cancel-btn');
     const confirmBtn = document.getElementById('confirm-btn');
-    const profileEditForm = document.getElementById('profile-edit-form');
+    const form = document.getElementById('profile-edit-form');
 
-    // hit save changes button
-    saveChangesBtn.addEventListener('click', () => {
-        confirmationModal.classList.remove('hidden');
-    });
+    saveBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    confirmBtn.addEventListener('click', () => form.submit());
 
-    // hit cancel button
-    cancelBtn.addEventListener('click', () => {
-        confirmationModal.classList.add('hidden');
-    });
-
-    // hit confirm button
-    confirmBtn.addEventListener('click', () => {
-        profileEditForm.submit();
-    });
-
-    // close modal when clicking outside
-    confirmationModal.addEventListener('click', (event) => {
-        if (event.target === confirmationModal) {
-            confirmationModal.classList.add('hidden');
-        }
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
     });
 </script>
-
 {% endblock content %}
