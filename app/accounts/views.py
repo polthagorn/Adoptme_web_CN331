@@ -1,29 +1,34 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout
 from .models import Profile, Notification
 from app.posts.models import Post
 from .forms import UserUpdateForm, ProfileUpdateForm
 import re
 
+
 @login_required
 def notification_list(request):
+    """
+    Display the user's notifications and mark unread as read automatically.
+    """
     notifications = Notification.objects.filter(user=request.user)
-
-    # mark all unread as read automatically when opening
     notifications.filter(is_read=False).update(is_read=True)
+    return render(request, "accounts/notification.html", {"notifications": notifications})
 
-    return render(request, "accounts/notification.html", {
-        "notifications": notifications,
-    })
 
 def login_page(request):
+    """
+    Handle login with username or email.
+    Show toast messages for success or error.
+    """
+    context = {}
     if request.method == "POST":
         username_or_email = request.POST.get("username_or_email")
         password = request.POST.get("password")
+        context["username_or_email"] = username_or_email
 
         # Try username first
         user = authenticate(request, username=username_or_email, password=password)
@@ -31,22 +36,30 @@ def login_page(request):
         # If not found, try email
         if user is None:
             try:
-                u = User.objects.get(email=username_or_email)
-                user = authenticate(request, username=u.username, password=password)
+                user_obj = User.objects.get(email=username_or_email)
+                user = authenticate(request, username=user_obj.username, password=password)
             except User.DoesNotExist:
                 user = None
 
-        if user is not None:
+        if user:
             login(request, user)
-            return redirect('/')  # Redirect to homepage
+            messages.success(request, "Login successful! 🎉")
+            return redirect('/')  # Homepage
         else:
-            messages.error(request, "Wrong username or password")
+            messages.error(request, "Wrong username or password ❌")
 
-    return render(request, 'accounts/login_page.html')
+    return render(request, 'accounts/login_page.html', context)
 
 
 def register_page(request):
+    """
+    Handle user registration with validation.
+    Show toast messages for errors and success.
+    Pre-fill user input on validation error.
+    """
+    context = {}
     if request.method == "POST":
+        # Collect form data
         username = request.POST.get('username')
         email = request.POST.get('email')
         phone = request.POST.get('phone')
@@ -57,7 +70,6 @@ def register_page(request):
         country = request.POST.get('country')
         city = request.POST.get('city')
 
-        # Save user inputs for re-rendering if error
         context = {
             "username": username,
             "email": email,
@@ -68,29 +80,25 @@ def register_page(request):
             "city": city,
         }
 
-        # ----------------------
-        # PHONE VALIDATION (NEW)
-        # ----------------------
-        
+        # Validate phone
         phone_pattern = r'^(\+66|0)\d{8,9}$'
-
         if not re.match(phone_pattern, phone):
-            messages.error(request, "Invalid phone number. Please use a valid Thai phone number.")
+            messages.error(request, "Invalid phone number. Please enter a valid Thai phone number ❌")
             return render(request, 'accounts/register_page.html', context)
 
         # Password match
         if password != confirm_password:
-            messages.error(request, "Passwords do not match")
+            messages.error(request, "Passwords do not match ❌")
             return render(request, 'accounts/register_page.html', context)
 
         # Username exists
         if User.objects.filter(username=username).exists():
-            messages.error(request, "Username already taken")
+            messages.error(request, "Username already taken ❌")
             return render(request, 'accounts/register_page.html', context)
 
         # Email exists
         if User.objects.filter(email=email).exists():
-            messages.error(request, "Email already registered")
+            messages.error(request, "Email already registered ❌")
             return render(request, 'accounts/register_page.html', context)
 
         # Create user
@@ -110,40 +118,48 @@ def register_page(request):
             city=city
         )
 
-        messages.success(request, "Account created successfully. Please login.")
+        messages.success(request, "Account created successfully! Please login 🎉")
         return redirect('login')
 
-    return render(request, 'accounts/register_page.html')
+    return render(request, 'accounts/register_page.html', context)
 
 
 def logout_page(request):
+    """
+    Log out the user and display a success toast.
+    """
     logout(request)
-    messages.success(request, "You have successfully logged out.")
+    messages.success(request, "You have successfully logged out ✅")
     return redirect('home')
 
 
 @login_required
 def profile_page(request):
-    # pull user posts from Post model
+    """
+    Display user profile along with their posts.
+    """
     user_posts = Post.objects.filter(author=request.user).order_by('-created_at')
-    
-    # create context
     context = {
         'profile': request.user.profile,
         'posts': user_posts,
     }
-    
     return render(request, 'accounts/profile_page.html', context)
+
 
 @login_required
 def profile_edit_page(request):
+    """
+    Edit user profile and user info.
+    Supports image removal and shows toast messages.
+    """
     if request.method == 'POST':
+        # Remove profile image
         if 'remove_image' in request.POST:
             profile = request.user.profile
             profile.image.delete(save=False)
-            profile.image = 'default.jpg'    
+            profile.image = 'default.jpg'
             profile.save()
-            messages.success(request, 'Your profile picture has been removed.')
+            messages.success(request, 'Your profile picture has been removed ✅')
             return redirect('profile_edit')
 
         u_form = UserUpdateForm(request.POST, instance=request.user)
@@ -151,39 +167,44 @@ def profile_edit_page(request):
 
         if u_form.is_valid() and p_form.is_valid():
             new_username = u_form.cleaned_data.get('username')
-            
             if User.objects.exclude(pk=request.user.pk).filter(username=new_username).exists():
-                u_form.add_error('username', f"Username '{new_username}' is already taken.")
+                u_form.add_error('username', f"Username '{new_username}' is already taken ❌")
             else:
                 u_form.save()
                 p_form.save()
-                messages.success(request, 'Your profile has been updated successfully!')
+                messages.success(request, 'Your profile has been updated successfully! 🎉')
                 return redirect('profile')
-
     else:
         u_form = UserUpdateForm(instance=request.user)
         p_form = ProfileUpdateForm(instance=request.user.profile)
 
     context = {
         'u_form': u_form,
-        'p_form': p_form
+        'p_form': p_form,
     }
     return render(request, 'accounts/profile_edit_page.html', context)
 
+
 def user_profile_page(request, username):
+    """
+    View another user's profile along with their posts.
+    """
     user_obj = get_object_or_404(User, username=username)
     user_posts = Post.objects.filter(author=user_obj).order_by('-created_at')
-    
+
     context = {
-        'profile_user': user_obj, 
+        'profile_user': user_obj,
         'posts': user_posts,
     }
     return render(request, 'accounts/user_profile_page.html', context)
 
+
 @login_required
 def my_bookmarks_page(request):
+    """
+    Display posts bookmarked by the logged-in user.
+    """
     bookmarked_posts = request.user.bookmarked_posts.all().order_by('-created_at')
-    
     context = {
         'posts': bookmarked_posts
     }

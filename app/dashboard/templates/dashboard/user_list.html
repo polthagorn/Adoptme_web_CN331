@@ -1,0 +1,73 @@
+{% extends "dashboard/layout.html" %}
+{% block dashboard_content %}
+
+<h1 class="text-3xl font-bold mb-6">Users</h1>
+
+<div class="bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded-lg shadow p-6">
+
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="bg-gray-200 dark:bg-gray-700 text-sm uppercase text-gray-700 dark:text-gray-300">
+                <th class="p-3">Username</th>
+                <th class="p-3">Email</th>
+                <th class="p-3">Joined</th>
+                <th class="p-3">Role</th>
+                <th class="p-3 text-center">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for user in users %}
+            <tr class="border-t border-border dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+
+                <!-- Username -->
+                <td class="p-3 font-medium">{{ user.username }}</td>
+
+                <!-- Email -->
+                <td class="p-3">{{ user.email }}</td>
+
+                <!-- Joined -->
+                <td class="p-3 text-sm text-gray-600 dark:text-gray-400">
+                    {{ user.date_joined|date:"Y-m-d H:i" }}
+                </td>
+
+                <!-- Role -->
+                <td class="p-3">
+                    {% if user.is_superuser %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-red-600 text-white rounded-full">
+                            Admin
+                        </span>
+                    {% elif user.is_staff %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-yellow-500 text-white rounded-full">
+                            Staff
+                        </span>
+                    {% else %}
+                        <span class="px-3 py-1 text-xs font-semibold bg-gray-600 text-white rounded-full">
+                            User
+                        </span>
+                    {% endif %}
+                </td>
+
+                <!-- Actions -->
+                <td class="p-3 text-center">
+
+                    {% if not user.is_superuser %}
+                    <a href="{% url 'delete_user' user.id %}"
+                       class="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition"
+                       onclick="return confirm('Are you sure you want to delete {{ user.username }}?');">
+                        Delete
+                    </a>
+                    {% else %}
+                    <span class="text-gray-400 text-sm">—</span>
+                    {% endif %}
+
+                </td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+{% endblock %}
