@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'app.dashboard',
     'app.stores',
     'app.shelters',
+    'app.chats',
     
 ]
 

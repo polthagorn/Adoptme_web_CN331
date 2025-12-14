@@ -14,6 +14,7 @@ urlpatterns = [
     path('stores/', include('app.stores.urls')),
     path('shelters/', include('app.shelters.urls')),
     path('dashboard/', include('app.dashboard.urls')),
+    path('chat/', include('app.chats.urls')),
 ]
 
 if settings.DEBUG:
