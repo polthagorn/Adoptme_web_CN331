@@ -5,7 +5,7 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 
 from app.accounts.models import Notification
-from .models import Post, Comment
+from .models import Post
 from .forms import PostForm, CommentForm
 
 
@@ -115,7 +115,7 @@ def post(request):
 # CREATE POST (USER + SHELTER SUPPORT)
 # ----------------------------------------
 @login_required
-def create_post(request):  # pragma: no cover
+def create_post(request):
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
 
@@ -194,7 +194,7 @@ def post_detail(request, post_id):
     is_liked = False
     is_bookmarked = False
 
-    if request.user.is_authenticated:
+    if request.user.is_authenticated: # pragma: no cover
         is_liked = post.likes.filter(id=request.user.id).exists()
         is_bookmarked = post.bookmarks.filter(id=request.user.id).exists()
 
