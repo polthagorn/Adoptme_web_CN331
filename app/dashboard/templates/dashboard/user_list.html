@@ -3,70 +3,126 @@
 
 <h1 class="text-3xl font-bold mb-6">Users</h1>
 
-<div class="bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded-lg shadow p-6">
+<div class="bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded-lg shadow p-6 overflow-x-auto">
 
-    <table class="w-full text-left border-collapse">
-        <thead>
-            <tr class="bg-gray-200 dark:bg-gray-700 text-sm uppercase text-gray-700 dark:text-gray-300">
-                <th class="p-3">Username</th>
-                <th class="p-3">Email</th>
-                <th class="p-3">Joined</th>
-                <th class="p-3">Role</th>
-                <th class="p-3 text-center">Actions</th>
-            </tr>
-        </thead>
+  <table class="w-full text-left border-collapse">
+    <thead>
+      <tr class="bg-gray-200 dark:bg-gray-700 text-sm uppercase text-gray-700 dark:text-gray-300">
+        <th class="p-3">Username</th>
+        <th class="p-3">Email</th>
+        <th class="p-3">Joined</th>
+        <th class="p-3">Role</th>
+        <th class="p-3">Status</th>
+        <th class="p-3">Score</th>
+        <th class="p-3 text-center">Actions</th>
+      </tr>
+    </thead>
 
-        <tbody>
-            {% for user in users %}
-            <tr class="border-t border-border dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+    <tbody>
+      {% for user in users %}
+      <tr class="border-t border-border dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
 
-                <!-- Username -->
-                <td class="p-3 font-medium">{{ user.username }}</td>
+        <!-- Username -->
+        <td class="p-3 font-medium">{{ user.username }}</td>
 
-                <!-- Email -->
-                <td class="p-3">{{ user.email }}</td>
+        <!-- Email -->
+        <td class="p-3">{{ user.email }}</td>
 
-                <!-- Joined -->
-                <td class="p-3 text-sm text-gray-600 dark:text-gray-400">
-                    {{ user.date_joined|date:"Y-m-d H:i" }}
-                </td>
+        <!-- Joined -->
+        <td class="p-3 text-sm text-gray-600 dark:text-gray-400">
+          {{ user.date_joined|date:"Y-m-d H:i" }}
+        </td>
 
-                <!-- Role -->
-                <td class="p-3">
-                    {% if user.is_superuser %}
-                        <span class="px-3 py-1 text-xs font-semibold bg-red-600 text-white rounded-full">
-                            Admin
-                        </span>
-                    {% elif user.is_staff %}
-                        <span class="px-3 py-1 text-xs font-semibold bg-yellow-500 text-white rounded-full">
-                            Staff
-                        </span>
-                    {% else %}
-                        <span class="px-3 py-1 text-xs font-semibold bg-gray-600 text-white rounded-full">
-                            User
-                        </span>
-                    {% endif %}
-                </td>
+        <!-- Role -->
+        <td class="p-3">
+          {% if user.is_superuser %}
+            <span class="px-3 py-1 text-xs font-semibold bg-red-600 text-white rounded-full">Admin</span>
+          {% elif user.is_staff %}
+            <span class="px-3 py-1 text-xs font-semibold bg-yellow-500 text-white rounded-full">Staff</span>
+          {% else %}
+            <span class="px-3 py-1 text-xs font-semibold bg-gray-600 text-white rounded-full">User</span>
+          {% endif %}
+        </td>
 
-                <!-- Actions -->
-                <td class="p-3 text-center">
+        <!-- Status -->
+        <td class="p-3">
+          {% if user.is_active %}
+            <span class="px-3 py-1 text-xs font-semibold bg-emerald-600 text-white rounded-full">Active</span>
+          {% else %}
+            <span class="px-3 py-1 text-xs font-semibold bg-red-700 text-white rounded-full">Banned</span>
+          {% endif %}
+        </td>
 
-                    {% if not user.is_superuser %}
-                    <a href="{% url 'delete_user' user.id %}"
-                       class="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition"
-                       onclick="return confirm('Are you sure you want to delete {{ user.username }}?');">
-                        Delete
-                    </a>
-                    {% else %}
-                    <span class="text-gray-400 text-sm">—</span>
-                    {% endif %}
+        <!-- Score -->
+        <td class="p-3">
+          {% if user.is_superuser %}
+            <span class="text-gray-400 text-sm">—</span>
+          {% else %}
+            <span class="font-semibold">
+              {{ user.profile.score|default:"100" }}
+            </span>
+          {% endif %}
+        </td>
 
-                </td>
+        <!-- Actions -->
+        <td class="p-3 text-center">
+          {% if user.is_superuser %}
+            <span class="text-gray-400 text-sm">—</span>
+          {% else %}
+            <div class="flex flex-wrap justify-center gap-2">
 
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+              <!-- Update score -->
+              <form method="post" action="{% url 'dashboard_update_user_score' user.id %}" class="flex items-center gap-2">
+                {% csrf_token %}
+                <input type="number" name="score"
+                       value="{{ user.profile.score|default:100 }}"
+                       class="w-24 px-3 py-1 rounded-lg border border-border dark:border-darkborder
+                              bg-white dark:bg-darksurface text-text dark:text-darktext
+                              focus:outline-none focus:ring-2 focus:ring-accent" />
+                <button type="submit"
+                        class="px-3 py-1 text-sm bg-accent text-white rounded hover:opacity-90 transition">
+                  Save
+                </button>
+              </form>
+
+              <!-- Ban / Unban -->
+              {% if user.is_active %}
+                <form method="post" action="{% url 'dashboard_ban_user' user.id %}">
+                  {% csrf_token %}
+                  <button type="submit"
+                          class="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition"
+                          onclick="return confirm('Ban {{ user.username }}? They will not be able to log in.');">
+                    Ban
+                  </button>
+                </form>
+              {% else %}
+                <form method="post" action="{% url 'dashboard_unban_user' user.id %}">
+                  {% csrf_token %}
+                  <button type="submit"
+                          class="px-3 py-1 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-700 transition">
+                    Unban
+                  </button>
+                </form>
+              {% endif %}
+
+              <!-- Delete -->
+              <form method="post" action="{% url 'dashboard_delete_user' user.id %}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="px-3 py-1 text-sm bg-gray-800 text-white rounded hover:bg-black transition"
+                        onclick="return confirm('Delete {{ user.username }} permanently? This cannot be undone.');">
+                  Delete
+                </button>
+              </form>
+
+            </div>
+          {% endif %}
+        </td>
+
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
 </div>
 
