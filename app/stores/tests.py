@@ -1,7 +1,8 @@
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from .models import Store, Product
+from app.stores.models import Store, Product, ProductReview
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 # A utility function to create a store quickly in tests
 def create_store(owner, name, store_type, status):
@@ -155,19 +156,6 @@ class FormSubmissionTests(TestCase):
         self.client.login(username='testuser', password='password123')
         self.approved_store = create_store(self.user, 'My Test Store', 'PET', 'APPROVED')
 
-    def test_store_request_creation(self):
-        """A user can successfully submit a form to request a new store."""
-        response = self.client.post(reverse('store_request'), {
-            'name': 'New Awesome Store',
-            'description': 'A great store.',
-            'store_type': 'SUPPLIES'
-        })
-        self.assertRedirects(response, reverse('store_list'))
-        self.assertTrue(Store.objects.filter(name='New Awesome Store').exists())
-        new_store = Store.objects.get(name='New Awesome Store')
-        self.assertEqual(new_store.owner, self.user)
-        self.assertEqual(new_store.status, 'PENDING')
-
     def test_product_creation(self):
         """An owner of an approved store can create a new product."""
         product_count_before = Product.objects.count()
@@ -193,3 +181,217 @@ class FormSubmissionTests(TestCase):
         # Refresh the object from the database to check for changes
         self.approved_store.refresh_from_db()
         self.assertEqual(self.approved_store.name, 'My Updated Store Name')
+
+class StoreRequestCreateViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='password')
+        # สมมติชื่อ URL ตาม view ที่ให้มา (คุณต้องเช็คใน urls.py ว่าตั้งชื่อว่าอะไร)
+        # ถ้ายังไม่มี URL 'store_request' ให้เปลี่ยน string นี้ให้ตรงกับของคุณ
+        self.url = reverse('store_request') 
+        self.success_url = reverse('store_list')
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(self.url)
+        self.assertNotEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302) # Redirect to login
+
+    def test_create_store_success_with_statement(self):
+        self.client.login(username='testuser', password='password')
+        
+        # เตรียม Data (ใช้ verification_statement เพื่อให้ผ่าน clean method)
+        data = {
+            'name': 'My Pet Shop',
+            'description': 'Best shop',
+            'store_type': 'PET',
+            'verification_statement': 'I am real.',
+            # fields อื่นๆ เป็น optional หรือมี default
+        }
+        
+        response = self.client.post(self.url, data)
+        
+        # ตรวจสอบ Redirect หลัง save
+        self.assertRedirects(response, self.success_url)
+        
+        # ตรวจสอบว่า Store ถูกสร้างและ Owner ถูก set ถูกต้อง
+        self.assertEqual(Store.objects.count(), 1)
+        store = Store.objects.first()
+        self.assertEqual(store.owner, self.user)
+        self.assertEqual(store.name, 'My Pet Shop')
+
+    def test_create_store_validation_error(self):
+        self.client.login(username='testuser', password='password')
+        
+        data = {
+            'name': 'Invalid Shop',
+            'description': 'Desc',
+            'store_type': 'SUPPLIES',
+            'verification_statement': '', 
+            'verification_document': ''
+        }
+        
+        response = self.client.post(self.url, data)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Store.objects.exists())
+        form_errors = response.context['form'].errors.as_text()
+        self.assertIn('must submit at least one', form_errors)
+
+class MarketplaceViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='test', password='password')
+        self.url = reverse('marketplace') # เช็คชื่อ URL ใน urls.py
+
+        # 1. Store Approved (Type: PET)
+        self.store_pet = Store.objects.create(
+            owner=self.user, name="Pet Shop", status='APPROVED', store_type='PET'
+        )
+        # 2. Store Approved (Type: SUPPLIES)
+        self.store_supplies = Store.objects.create(
+            owner=self.user, name="Supply Shop", status='APPROVED', store_type='SUPPLIES'
+        )
+        # 3. Store Pending (Should be hidden)
+        self.store_pending = Store.objects.create(
+            owner=self.user, name="Pending Shop", status='PENDING', store_type='PET'
+        )
+
+        # Products
+        self.p_pet = Product.objects.create(store=self.store_pet, name="Dog Food", description="Yummy", price=100)
+        self.p_supply = Product.objects.create(store=self.store_supplies, name="Cage", description="Strong", price=500)
+        self.p_hidden = Product.objects.create(store=self.store_pending, name="Hidden", price=10)
+
+        # Reviews for Rating Sort
+        ProductReview.objects.create(product=self.p_pet, author=self.user, rating=5, comment="Great")
+        ProductReview.objects.create(product=self.p_supply, author=self.user, rating=1, comment="Bad")
+
+    def test_marketplace_base_visibility(self):
+        # Test Default View (Only Approved Stores)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'stores/marketplace.html')
+        
+        products = response.context['products']
+        self.assertIn(self.p_pet, products)
+        self.assertIn(self.p_supply, products)
+        self.assertNotIn(self.p_hidden, products) # Pending store excluded
+
+    def test_search_filter(self):
+        # Test Search (q=Dog)
+        response = self.client.get(self.url, {'q': 'Dog'})
+        products = response.context['products']
+        
+        self.assertIn(self.p_pet, products)
+        self.assertNotIn(self.p_supply, products)
+
+    def test_type_filter(self):
+        # Test Type Filter (type=SUPPLIES)
+        response = self.client.get(self.url, {'type': 'SUPPLIES'})
+        products = response.context['products']
+        
+        self.assertIn(self.p_supply, products)
+        self.assertNotIn(self.p_pet, products)
+
+    def test_sort_rating_high(self):
+        # Test Sort by Rating (High -> Low)
+        response = self.client.get(self.url, {'sort': 'rating_high'})
+        products = list(response.context['products'])
+        
+        # Check annotation & order
+        self.assertTrue(hasattr(products[0], 'avg_rating'))
+        self.assertEqual(products[0], self.p_pet)    # Rating 5
+        self.assertEqual(products[1], self.p_supply) # Rating 1
+
+    def test_sort_price_low(self):
+        # Test Sort by Price (Low -> High)
+        response = self.client.get(self.url, {'sort': 'price_low'})
+        products = list(response.context['products'])
+        
+        self.assertEqual(products[0], self.p_pet)    
+        self.assertEqual(products[1], self.p_supply) 
+
+class ProductDetailViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='test', password='password')
+        self.store = Store.objects.create(owner=self.user, name="Shop", status='APPROVED')
+        self.product = Product.objects.create(store=self.store, name="Item", price=10)
+        ProductReview.objects.create(product=self.product, author=self.user, rating=4, comment="Good")
+        self.url = reverse('product_detail', args=[self.product.pk])
+
+    def test_product_detail_coverage(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'stores/product_detail.html')
+        self.assertIn('reviews', response.context)
+        self.assertEqual(response.context['average_rating'], 4.0)
+
+class ProductUpdateViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='owner', password='password')
+        self.other_user = User.objects.create_user(username='other', password='password')
+        
+        self.store = Store.objects.create(owner=self.user, name='Test Store')  # CHECK_THIS: Add required fields
+        self.product = Product.objects.create(
+            store=self.store,
+            name='Old Name',  # CHECK_THIS: Add required fields
+            price=100
+        )
+        self.url = reverse('product_update', kwargs={'pk': self.product.pk})  # CHECK_THIS: Verify URL name
+
+    def test_view_requires_login(self):
+        response = self.client.get(self.url)
+        self.assertNotEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_queryset_filters_by_owner(self):
+        self.client.force_login(self.other_user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_context_data_contains_store(self):
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['store'], self.store)
+        self.assertTemplateUsed(response, 'stores/product_update_form.html')
+
+class ProductUpdateViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='owner', password='password')
+        self.store = Store.objects.create(
+            owner=self.user,
+            name='Test Store',
+            store_type='PET',
+            status='APPROVED' 
+        )
+        self.image_file = SimpleUploadedFile("test_image.jpg", b"file_content", content_type="image/jpeg")
+        self.product = Product.objects.create(
+            store=self.store,
+            name='Old Name',
+            description='Old Description',
+            price=100.00,
+            stock=10,
+            image=self.image_file
+        )
+        self.url = reverse('product_update', kwargs={'pk': self.product.pk}) # CHECK_THIS: Verify URL name in urls.py
+
+    def test_update_success_and_redirect(self):
+        self.client.force_login(self.user)
+        
+        new_image = SimpleUploadedFile("new_image.jpg", b"new_content", content_type="image/jpeg")
+        
+        data = {
+            'name': 'New Name',
+            'description': 'New Description',
+            'price': 200.00,
+            'stock': 20,
+            'image': new_image
+        }
+        
+        response = self.client.post(self.url, data)
+        
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.name, 'New Name')
+        self.assertEqual(self.product.stock, 20)
+        self.assertRedirects(response, reverse('store_manage', kwargs={'pk': self.store.pk}))

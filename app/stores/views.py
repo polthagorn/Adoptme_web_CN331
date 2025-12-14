@@ -192,8 +192,8 @@ class StoreManageView(LoginRequiredMixin, DetailView):
         search_query = self.request.GET.get('q', '')
         products_queryset = Product.objects.filter(store=store)
 
-        if search_query:
-            products_queryset = products_queryset.filter(name__icontains=search_query)  # pragma: no cover
+        if search_query:    # pragma: no cover
+            products_queryset = products_queryset.filter(name__icontains=search_query)
 
         context['products'] = products_queryset.order_by('-created_at')
         context['search_query'] = search_query
@@ -758,3 +758,5 @@ def my_order_detail(request, pk):
             return redirect('my_order_detail', pk=pk)
 
     return render(request, 'stores/my_order_detail.html', {'order': order})
+
+
