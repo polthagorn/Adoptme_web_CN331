@@ -13,6 +13,9 @@ from django.views.decorators.http import require_POST
 import json
 from django.utils.safestring import mark_safe
 from app.accounts.models import Notification
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from app.accounts.models import Notification
 
 from .models import (
     Store, 
@@ -97,7 +100,10 @@ class MarketplaceView(ListView):
     def get_queryset(self):
         queryset = (
             Product.objects
-            .filter(store__status='APPROVED')
+            .filter(
+                store__status='APPROVED', 
+                stock__gt=0
+            )
             .select_related('store')
         )
 
@@ -343,14 +349,22 @@ class ProductReviewCreateView(LoginRequiredMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.product = get_object_or_404(Product, pk=self.kwargs['pk'])
-        if ProductReview.objects.filter(product=self.product, author=request.user).exists():
-            messages.error(request, 'You have already reviewed this product.')
-            return redirect('product_detail', pk=self.product.pk)
+        #  รับ order_id จาก URL
+        self.order = get_object_or_404(Order, pk=self.kwargs['order_id'], user=request.user)
+
+        #  เช็คว่าเคยรีวิว "สินค้านี้ ในออเดอร์นี้" หรือยัง
+        if ProductReview.objects.filter(product=self.product, author=request.user, order=self.order).exists():
+            messages.error(request, 'You have already reviewed this product for this order.')
+            return redirect('my_order_detail', pk=self.order.pk)
+            
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         form.instance.author = self.request.user
         form.instance.product = self.product
+        #  บันทึก Order ลงไปในรีวิว
+        form.instance.order = self.order
+        
         messages.success(self.request, 'Your review has been submitted successfully!')
         return super().form_valid(form)
 
@@ -361,7 +375,8 @@ class ProductReviewCreateView(LoginRequiredMixin, CreateView):
         return context
 
     def get_success_url(self):
-        return reverse('product_detail', kwargs={'pk': self.product.pk})
+        # รีวิวเสร็จ ให้กลับไปหน้า Order Detail เดิม
+        return reverse('my_order_detail', kwargs={'pk': self.order.pk})
 
 # ----------------------------------------
 # Cart Functionality
@@ -603,7 +618,21 @@ class MyOrderListView(LoginRequiredMixin, ListView):
     context_object_name = 'orders'
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user).order_by('-created_at')
+        # ดึงออเดอร์ของฉัน
+        queryset = Order.objects.filter(user=self.request.user).order_by('-created_at')
+        
+        # รับค่า status จาก URL มากรอง
+        status_filter = self.request.GET.get('status')
+        if status_filter and status_filter != 'ALL':
+            queryset = queryset.filter(status=status_filter)
+            
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # ส่งค่า status ปัจจุบันไปที่ Template เพื่อทำปุ่ม Active
+        context['current_status'] = self.request.GET.get('status', 'ALL')
+        return context
 
 
 # 3. Customer: หน้าแจ้งชำระเงิน (Payment)
@@ -724,7 +753,7 @@ def my_order_detail(request, pk):
     if request.method == 'POST':
         action = request.POST.get('action')
         
-        # กรณีขอยกเลิก (ต้องยังไม่จ่ายเงิน)
+        # กรณีขอยกเลิก (ต้องยังไม่จ่ายเงิน - PENDING เท่านั้น)
         if action == 'cancel' and order.status == 'PENDING':
             order.status = 'CANCELLED'
             order.save()
@@ -738,7 +767,7 @@ def my_order_detail(request, pk):
             messages.success(request, "Order cancelled. Stock has been restored.")
             return redirect('my_order_detail', pk=pk)
 
-        # กรณีได้รับของแล้ว
+        # กรณีได้รับของแล้ว (ต้องส่งของแล้ว - SHIPPED เท่านั้น)
         elif action == 'receive' and order.status == 'SHIPPED':
             order.status = 'COMPLETED'
             order.save()
@@ -754,9 +783,47 @@ def my_order_detail(request, pk):
                 message=msg
             )
 
-            messages.success(request, "Order completed! Thank you.")
+            messages.success(request, "Order completed! You can now review your items.")
             return redirect('my_order_detail', pk=pk)
 
+<<<<<<< HEAD
     return render(request, 'stores/my_order_detail.html', {'order': order})
 
 
+=======
+    reviewed_product_ids = ProductReview.objects.filter(
+        author=request.user,
+        order=order  # กรองเฉพาะรีวิวที่ผูกกับออเดอร์นี้
+    ).values_list('product_id', flat=True)
+
+    return render(request, 'stores/my_order_detail.html', {
+        'order': order,
+        'reviewed_product_ids': reviewed_product_ids
+    })
+
+@receiver(pre_save, sender=Store)
+def store_status_notification(sender, instance, **kwargs):
+    if instance.pk: # ตรวจสอบว่าเป็นร้านที่มีอยู่แล้ว (ไม่ใช่การสร้างใหม่)
+        try:
+            old_store = Store.objects.get(pk=instance.pk)
+            
+            # เช็คว่าสถานะเปลี่ยนจาก PENDING เป็นอย่างอื่นหรือไม่
+            if old_store.status == 'PENDING' and instance.status != 'PENDING':
+                
+                message = ""
+                if instance.status == 'APPROVED':
+                    message = f"🎉 Your store <b>{instance.name}</b> has been <b>APPROVED</b>! You can now start selling."
+                elif instance.status == 'REJECTED':
+                    message = f"❌ Your store <b>{instance.name}</b> has been <b>REJECTED</b>. Please contact admin for details."
+                
+                if message:
+                    Notification.objects.create(
+                        user=instance.owner,  # ส่งให้เจ้าของร้าน
+                        actor=None,           # เป็น System Notification (ไม่มีคนกระทำ)
+                        notification_type='system',
+                        message=message
+                    )
+                    
+        except Store.DoesNotExist:
+            pass
+>>>>>>> feb887a24012f0fe78eef00b691309147e5cc8f8

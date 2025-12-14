@@ -1,6 +1,9 @@
 # app/stores/models.py
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from app.accounts.models import Notification
 
 class Store(models.Model):
     # --- ย้ายโค้ดทั้งหมดนี้เข้ามาในคลาส Store ---
@@ -69,6 +72,7 @@ class StoreReview(models.Model):
 class ProductReview(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    order = models.ForeignKey('Order', on_delete=models.SET_NULL, null=True, blank=True, related_name='product_reviews')
     rating = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 6)]) # 1-5 ดาว
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -168,3 +172,29 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment for Order #{self.order.id}"
+    
+@receiver(pre_save, sender=Store)
+def store_status_notification(sender, instance, **kwargs):
+    if instance.pk: # ตรวจสอบว่าเป็นร้านที่มีอยู่แล้ว (ไม่ใช่การสร้างใหม่)
+        try:
+            old_store = Store.objects.get(pk=instance.pk)
+            
+            # เช็คว่าสถานะเปลี่ยนจาก PENDING เป็นอย่างอื่นหรือไม่
+            if old_store.status == 'PENDING' and instance.status != 'PENDING':
+                
+                message = ""
+                if instance.status == 'APPROVED':
+                    message = f"🎉 Your store <b>{instance.name}</b> has been <b>APPROVED</b>! You can now start selling."
+                elif instance.status == 'REJECTED':
+                    message = f"❌ Your store <b>{instance.name}</b> has been <b>REJECTED</b>. Please contact admin for details."
+                
+                if message:
+                    Notification.objects.create(
+                        user=instance.owner,  # ส่งให้เจ้าของร้าน
+                        actor=None,           # เป็น System Notification (ไม่มีคนกระทำ)
+                        notification_type='system',
+                        message=message
+                    )
+                    
+        except Store.DoesNotExist:
+            pass

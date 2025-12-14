@@ -3,10 +3,12 @@ import math
 from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 
 from app.accounts.models import Notification
 from .models import Post
 from .forms import PostForm, CommentForm
+
 
 
 # ----------------------------------------
@@ -158,7 +160,7 @@ def edit_post(request, post_id):
 
 
 # ----------------------------------------
-# POST DETAIL + COMMENTS + LIKE + BOOKMARK
+# POST DETAIL + COMMENTS
 # ----------------------------------------
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
@@ -222,7 +224,7 @@ def delete_post(request, post_id):
 
 
 # ----------------------------------------
-# LIKE POST + NOTIFICATION
+# LIKE POST (AJAX)
 # ----------------------------------------
 @login_required
 def like_post(request, post_id):
@@ -231,9 +233,11 @@ def like_post(request, post_id):
     if post.likes.filter(id=request.user.id).exists():
         # already liked → unlike
         post.likes.remove(request.user)
+        liked = False
     else:
         # not liked → add like
         post.likes.add(request.user)
+        liked = True
 
         # 🔔 NOTIFICATION FOR LIKE (only if not liking own post)
         if request.user != post.author:
@@ -245,11 +249,15 @@ def like_post(request, post_id):
                 post=post,
             )
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('posts')))
+    # ✅ Return JSON instead of Redirect
+    return JsonResponse({
+        'liked': liked,
+        'count': post.likes.count()
+    })
 
 
 # ----------------------------------------
-# BOOKMARK POST
+# BOOKMARK POST (AJAX)
 # ----------------------------------------
 @login_required
 def bookmark_post(request, post_id):
@@ -257,7 +265,12 @@ def bookmark_post(request, post_id):
 
     if post.bookmarks.filter(id=request.user.id).exists():
         post.bookmarks.remove(request.user)
+        bookmarked = False
     else:
         post.bookmarks.add(request.user)
+        bookmarked = True
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('posts')))
+    # ✅ Return JSON instead of Redirect
+    return JsonResponse({
+        'bookmarked': bookmarked
+    })
