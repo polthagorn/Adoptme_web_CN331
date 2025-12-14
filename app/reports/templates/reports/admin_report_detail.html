@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Report Detail{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-6 py-8">
+
+  <h1 class="text-3xl font-bold mb-6">Report</h1>
+
+  <!-- Report info -->
+  <div class="mb-6 p-4 rounded-lg border border-border dark:border-darkborder
+              bg-surface dark:bg-darksurface">
+    <p><strong>Reporter:</strong> {{ report.reporter }}</p>
+    <p><strong>Reason:</strong> {{ report.get_reason_display }}</p>
+    <p><strong>Status:</strong> {{ report.get_status_display }}</p>
+    <p class="mt-3 text-gray-700 dark:text-gray-300">
+      {{ report.description }}
+    </p>
+  </div>
+
+  <!-- Admin form -->
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">
+        Status
+      </label>
+
+      <select name="status"
+        class="
+            w-full p-2.5 rounded-lg
+            border border-yellow-400
+            bg-yellow-50 text-gray-900
+
+            focus:outline-none focus:ring-2
+            focus:ring-yellow-400 focus:border-yellow-400
+
+            dark:bg-yellow-900/20
+            dark:border-yellow-600
+            dark:text-yellow-100
+
+            appearance-none
+        "
+        >
+        {% for value, label in form.fields.status.choices %}
+            <option value="{{ value }}"
+            class="
+                text-gray-900 bg-white
+                dark:text-gray-100 dark:bg-gray-900
+            "
+            {% if value == form.status.value %}selected{% endif %}
+            >
+            {{ label }}
+            </option>
+        {% endfor %}
+        </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">
+        Admin Note
+      </label>
+
+      <textarea name="admin_note"
+        rows="5"
+        class="
+          w-full p-3 rounded-lg
+          border border-yellow-300
+          bg-yellow-50 text-gray-800
+          placeholder:text-yellow-700/70
+
+          focus:outline-none focus:ring-2
+          focus:ring-yellow-400 focus:border-yellow-400
+
+          dark:bg-yellow-900/20
+          dark:border-yellow-700
+          dark:text-yellow-100
+          dark:placeholder:text-yellow-300/60
+        "
+      >{{ form.admin_note.value|default_if_none:"" }}</textarea>
+    </div>
+
+    <button type="submit"
+            class="px-5 py-2 bg-accent text-white rounded-lg
+                   hover:opacity-90 transition">
+      Save
+    </button>
+  </form>
+
+</div>
+{% endblock %}

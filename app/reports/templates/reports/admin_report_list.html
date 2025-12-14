@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Reports Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-6 py-8">
+
+  <h1 class="text-3xl font-bold mb-6">Reports</h1>
+
+  <!-- Status filter -->
+  <div class="mb-6">
+    <a href="?status=open" class="mr-4 text-blue-600 hover:underline">Open</a>
+    <a href="?status=resolved" class="mr-4 text-green-600 hover:underline">Resolved</a>
+    <a href="{% url 'admin_report_list' %}" class="text-gray-600 hover:underline">All</a>
+  </div>
+
+  {% for r in reports %}
+    <div class="border border-border dark:border-darkborder rounded-lg p-4 mb-4">
+      <p class="font-semibold">{{ r.get_reason_display }}</p>
+      <p class="text-sm text-gray-500">Status: {{ r.get_status_display }}</p>
+      <p class="mt-2">{{ r.description }}</p>
+
+      <a href="{% url 'admin_report_detail' r.id %}"
+         class="inline-block mt-3 text-sm text-accent hover:underline">
+        View detail →
+      </a>
+    </div>
+  {% empty %}
+    <p class="text-gray-500">No reports found.</p>
+  {% endfor %}
+
+</div>
+{% endblock %}
