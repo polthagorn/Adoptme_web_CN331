@@ -5,8 +5,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Profile, Notification
 from app.posts.models import Post
+from app.stores.models import Order
 from .forms import UserUpdateForm, ProfileUpdateForm
-import re
+import re 
 
 
 @login_required
@@ -156,9 +157,12 @@ def profile_edit_page(request):
         # Remove profile image
         if 'remove_image' in request.POST:
             profile = request.user.profile
-            profile.image.delete(save=False)
-            profile.image = 'default.jpg'
+            if profile.image:
+                profile.image.delete(save=False)
+            
+            profile.image = None 
             profile.save()
+            
             messages.success(request, 'Your profile picture has been removed ✅')
             return redirect('profile_edit')
 
@@ -188,9 +192,16 @@ def user_profile_page(request, username):
     user_obj = get_object_or_404(User, username=username)
     user_posts = Post.objects.filter(author=user_obj).order_by('-created_at')
 
+    adopted_pets_orders = Order.objects.filter(
+        user=user_obj,
+        status='COMPLETED',       # เฉพาะที่ได้รับของแล้ว
+        store__store_type='PET'   # เฉพาะร้านขายสัตว์ (ไม่รวมของใช้)
+    ).prefetch_related('items__product').order_by('-updated_at')
+
     context = {
         'profile_user': user_obj,
         'posts': user_posts,
+        'adopted_pets_orders': adopted_pets_orders,
     }
     return render(request, 'accounts/user_profile_page.html', context)
 

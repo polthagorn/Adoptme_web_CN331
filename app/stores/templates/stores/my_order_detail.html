@@ -56,19 +56,46 @@
         <h2 class="text-xl font-bold mb-4 text-text dark:text-darktext">Items</h2>
         <div class="divide-y divide-border dark:divide-darkborder">
             {% for item in order.items.all %}
-                <div class="py-3 flex justify-between items-center">
-                    <div class="flex items-center">
+                <div class="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    
+                    <!-- Product Info -->
+                    <div class="flex items-center mb-3 sm:mb-0">
                         {% if item.product.image %}
-                            <img src="{{ item.product.image.url }}" class="w-12 h-12 object-cover rounded mr-4">
+                            <img src="{{ item.product.image.url }}" class="w-16 h-16 object-cover rounded mr-4 border border-border dark:border-darkborder">
                         {% else %}
-                            <div class="w-12 h-12 bg-gray-200 rounded mr-4"></div>
+                            <div class="w-16 h-16 bg-gray-200 rounded mr-4"></div>
                         {% endif %}
                         <div>
-                            <p class="font-bold text-text dark:text-darktext">{{ item.product.name }}</p>
-                            <p class="text-sm text-gray-500">Qty: {{ item.quantity }}</p>
+                            <a href="{% url 'product_detail' pk=item.product.pk %}" class="font-bold text-text dark:text-darktext hover:text-accent text-lg">
+                                {{ item.product.name }}
+                            </a>
+                            <p class="text-sm text-gray-500">Qty: {{ item.quantity }} x ฿{{ item.price }}</p>
                         </div>
                     </div>
-                    <span class="font-bold text-text dark:text-darktext">฿{{ item.total_price }}</span>
+
+                    <!-- Price & Review Button -->
+                    <div class="flex flex-col items-end">
+                        <span class="font-bold text-text dark:text-darktext text-lg mb-2">฿{{ item.total_price }}</span>
+                        
+                        <!--  ปุ่มรีวิว (แสดงเฉพาะเมื่อ Completed) -->
+                        {% if order.status == 'COMPLETED' %}
+                            {% if item.product.id in reviewed_product_ids %}
+                                <span class="text-green-600 text-sm font-bold flex items-center bg-green-100 px-3 py-1 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    Reviewed
+                                </span>
+                            {% else %}
+                                <!-- เพิ่ม order_id=order.id -->
+                                <a href="{% url 'product_review_create' pk=item.product.pk order_id=order.id %}" 
+                                   class="text-sm bg-accent hover:bg-blue-600 text-white px-4 py-1.5 rounded-full transition-colors shadow-sm">
+                                    ★ Write Review
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
                 </div>
             {% endfor %}
         </div>
@@ -77,6 +104,7 @@
             <span>฿{{ order.total_price }}</span>
         </div>
     </div>
+
 
     <!-- Cancel Button (Only if Pending) -->
     {% if order.status == 'PENDING' %}

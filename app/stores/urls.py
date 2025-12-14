@@ -41,7 +41,6 @@ urlpatterns = [
     path('store/<int:pk>/reviews/', StoreReviewListView.as_view(), name='store_review_list'),
     path('store/<int:pk>/add-review/', StoreReviewCreateView.as_view(), name='store_review_create'),
     path('product/<int:pk>/reviews/', ProductReviewListView.as_view(), name='product_review_list'),
-    path('product/<int:pk>/add-review/', ProductReviewCreateView.as_view(), name='product_review_create'),
     path('cart/', cart_detail, name='cart_detail'),
     path('product/<int:pk>/add-to-cart/', add_to_cart, name='add_to_cart'),
     path('cart/remove/<int:pk>/', remove_from_cart, name='remove_from_cart'),
@@ -53,4 +52,5 @@ urlpatterns = [
     path('store/orders/', StoreOrderListView.as_view(), name='store_order_list'),
     path('store/order/<int:pk>/manage/', store_order_manage, name='store_order_manage'),
     path('my-orders/<int:pk>/', my_order_detail, name='my_order_detail'),
+    path('product/<int:pk>/order/<int:order_id>/add-review/', ProductReviewCreateView.as_view(), name='product_review_create'),
 ]

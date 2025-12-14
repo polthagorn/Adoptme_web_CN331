@@ -3,6 +3,45 @@
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6 text-text dark:text-darktext">My Orders</h1>
     
+    <!-- Filter Buttons (Customer Side) -->
+    <div class="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2">
+        <a href="?status=ALL" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors whitespace-nowrap
+           {% if current_status == 'ALL' %}bg-accent text-white border-accent{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           All
+        </a>
+        <a href="?status=PENDING" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors whitespace-nowrap
+           {% if current_status == 'PENDING' %}bg-yellow-500 text-white border-yellow-500{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           To Pay
+        </a>
+        <a href="?status=PAID" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors whitespace-nowrap
+           {% if current_status == 'PAID' %}bg-blue-500 text-white border-blue-500{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           To Confirm
+        </a>
+        <a href="?status=CONFIRMED" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors whitespace-nowrap
+           {% if current_status == 'CONFIRMED' %}bg-green-500 text-white border-green-500{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           To Ship
+        </a>
+        <a href="?status=SHIPPED" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors whitespace-nowrap
+           {% if current_status == 'SHIPPED' %}bg-purple-500 text-white border-purple-500{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           To Receive
+        </a>
+        <a href="?status=COMPLETED" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors whitespace-nowrap
+           {% if current_status == 'COMPLETED' %}bg-gray-800 text-white border-gray-800{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           Completed
+        </a>
+        <a href="?status=CANCELLED" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors whitespace-nowrap
+           {% if current_status == 'CANCELLED' %}bg-red-500 text-white border-red-500{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           Cancelled
+        </a>
+    </div>
+
     <div class="space-y-4">
         {% for order in orders %}
         <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow border border-border dark:border-darkborder">
