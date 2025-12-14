@@ -1,21 +1,41 @@
 # stores/views.py
 
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.db.models import Avg
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy, reverse
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.db import models
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+import json
+from django.utils.safestring import mark_safe
+from app.accounts.models import Notification
 
-from .models import Store, Product, StoreReview, ProductReview
+from .models import (
+    Store, 
+    Product, 
+    StoreReview, 
+    ProductReview, 
+    Cart, 
+    CartItem,
+    Order,
+    OrderItem,
+    Payment,
+)
+
 from .forms import (
     StoreRequestForm,
     ProductForm,
     StoreUpdateForm,
     StoreReviewForm,
     ProductReviewForm,
+    AddToCartForm,
+    PaymentForm,    
+    OrderStatusUpdateForm,
+    OrderShippingForm,
 )
 
 
@@ -342,3 +362,399 @@ class ProductReviewCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse('product_detail', kwargs={'pk': self.product.pk})
+
+# ----------------------------------------
+# Cart Functionality
+# ----------------------------------------
+
+# 1. View สำหรับแสดงหน้ารายละเอียดสินค้า (แก้ไข ProductDetailView เดิม)
+class ProductDetailView(DetailView):
+    model = Product
+    template_name = 'stores/product_detail.html'
+    context_object_name = 'product'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.get_object()
+        reviews = product.reviews.all()
+        context['reviews'] = reviews
+        context['average_rating'] = reviews.aggregate(Avg('rating'))['rating__avg']
+        
+        # ส่ง Form ไปที่ Template
+        context['add_to_cart_form'] = AddToCartForm()
+        return context
+
+# 2. Function View สำหรับ Logic การเพิ่มลงตะกร้า
+@login_required
+def add_to_cart(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    
+    if request.method == 'POST':
+        form = AddToCartForm(request.POST)
+        if form.is_valid():
+            quantity = form.cleaned_data['quantity']
+            
+            # Check Stock
+            if product.stock < quantity:
+                messages.error(request, f"Sorry, only {product.stock} items left in stock.")
+                return redirect('product_detail', pk=pk)
+
+            cart, created = Cart.objects.get_or_create(user=request.user)
+            cart_item, item_created = CartItem.objects.get_or_create(cart=cart, product=product)
+            
+            if not item_created:
+                if (cart_item.quantity + quantity) > product.stock:
+                     messages.error(request, "Cannot add more than available stock.")
+                     return redirect('product_detail', pk=pk)
+                cart_item.quantity += quantity
+                cart_item.save()
+            else:
+                cart_item.quantity = quantity
+                cart_item.save()
+            
+            # ✅ สร้างข้อความแจ้งเตือนแบบมีลิงก์ (ใช้ mark_safe)
+            msg = f"Added <b>{product.name}</b> to basket. <a href='{reverse('cart_detail')}' class='underline font-bold ml-2'>View Basket</a>"
+            messages.success(request, mark_safe(msg))
+            
+            # ✅ Redirect กลับไปหน้าเดิม (Product Detail)
+            return redirect('product_detail', pk=pk)
+            
+    return redirect('product_detail', pk=pk)
+
+@login_required
+@require_POST
+def update_cart_quantity(request, pk):
+    try:
+        data = json.loads(request.body)
+        action = data.get('action') # 'increase' or 'decrease'
+        
+        item = get_object_or_404(CartItem, pk=pk, cart__user=request.user)
+        
+        if action == 'increase':
+            if item.quantity < item.product.stock:
+                item.quantity += 1
+                item.save()
+            else:
+                return JsonResponse({'success': False, 'error': 'Max stock reached'})
+                
+        elif action == 'decrease':
+            if item.quantity > 1:
+                item.quantity -= 1
+                item.save()
+            else:
+                # ถ้าลดเหลือ 0 ให้ลบออกเลย หรือจะห้ามลดก็ได้ (ในที่นี้ห้ามลดต่ำกว่า 1)
+                return JsonResponse({'success': False, 'error': 'Minimum quantity is 1'})
+
+        # คำนวณยอดรวมใหม่ส่งกลับไป
+        cart = item.cart
+        selected_items = cart.items.filter(is_selected=True)
+        new_total = sum(i.total_price for i in selected_items)
+        new_count = sum(i.quantity for i in selected_items)
+        
+        return JsonResponse({
+            'success': True,
+            'item_quantity': item.quantity,
+            'item_total': float(item.total_price), # ราคารวมของสินค้านั้นๆ (ราคา x จำนวน)
+            'cart_total': float(new_total),        # ราคารวมทั้งตะกร้า
+            'cart_count': new_count
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+# 3. View สำหรับดูตะกร้าสินค้า
+@login_required
+def cart_detail(request):
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    all_items = cart.items.select_related('product', 'product__store').all()
+
+    # 1. แยกประเภทสินค้าตามร้านค้า (PET vs SUPPLIES)
+    pet_items = all_items.filter(product__store__store_type='PET')
+    supply_items = all_items.filter(product__store__store_type='SUPPLIES')
+
+    # 2. ฟังก์ชันช่วยจัดกลุ่มสินค้าตามร้านค้า
+    def group_by_store(items):
+        store_dict = {}
+        for item in items:
+            store = item.product.store
+            if store not in store_dict:
+                store_dict[store] = []
+            store_dict[store].append(item)
+        return store_dict.items() # คืนค่าเป็น list of tuples [(store, [items]), ...]
+
+    grouped_pets = group_by_store(pet_items)
+    grouped_supplies = group_by_store(supply_items)
+
+    # 3. คำนวณราคารวมเฉพาะรายการที่ถูกเลือก (is_selected=True)
+    selected_total = sum(item.total_price for item in all_items if item.is_selected)
+    selected_count = sum(item.quantity for item in all_items if item.is_selected)
+
+    context = {
+        'cart': cart,
+        'grouped_pets': grouped_pets,         # ส่งไปแสดงใน Tab สัตว์เลี้ยง
+        'grouped_supplies': grouped_supplies, # ส่งไปแสดงใน Tab ของใช้
+        'selected_total': selected_total,
+        'selected_count': selected_count,
+    }
+    return render(request, 'stores/cart_detail.html', context)
+
+# Toggle Checkbox
+@login_required
+@require_POST
+def toggle_cart_item(request, pk):
+    try:
+        data = json.loads(request.body)
+        is_selected = data.get('is_selected', True)
+        
+        item = get_object_or_404(CartItem, pk=pk, cart__user=request.user)
+        item.is_selected = is_selected
+        item.save()
+        
+        # คำนวณยอดรวมใหม่ส่งกลับไปอัปเดตหน้าเว็บทันที
+        cart = item.cart
+        new_total = sum(i.total_price for i in cart.items.filter(is_selected=True))
+        new_count = sum(i.quantity for i in cart.items.filter(is_selected=True))
+        
+        return JsonResponse({
+            'success': True, 
+            'new_total': float(new_total),
+            'new_count': new_count
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+# 4. View สำหรับลบสินค้าออกจากตะกร้า
+@login_required
+def remove_from_cart(request, pk):
+    cart_item = get_object_or_404(CartItem, pk=pk, cart__user=request.user)
+    cart_item.delete()
+    messages.success(request, "Item removed from basket.")
+    return redirect('cart_detail')
+
+# ----------------------------------------
+# Order Functionality   
+# ----------------------------------------
+# 1. Customer: Checkout สินค้าในตะกร้า
+@login_required
+def checkout(request):
+    cart = get_object_or_404(Cart, user=request.user)
+    selected_items = cart.items.filter(is_selected=True)
+    
+    if not selected_items.exists():
+        messages.error(request, "No items selected for checkout.")
+        return redirect('cart_detail')
+
+    # ตรวจสอบ Stock ก่อนสร้าง Order (Double Check)
+    for item in selected_items:
+        if item.quantity > item.product.stock:
+            messages.error(request, f"Product {item.product.name} has only {item.product.stock} left.")
+            return redirect('cart_detail')
+
+    # จัดกลุ่มสินค้าตามร้านค้า
+    store_items = {}
+    for item in selected_items:
+        if item.product.store not in store_items:
+            store_items[item.product.store] = []
+        store_items[item.product.store].append(item)
+
+    for store, items in store_items.items():
+        total_price = sum(item.total_price for item in items)
+        
+        order = Order.objects.create(
+            user=request.user,
+            store=store,
+            total_price=total_price,
+            status='PENDING'
+        )
+        
+        for item in items:
+            # ✅ ตัด Stock ตรงนี้
+            product = item.product
+            product.stock -= item.quantity
+            product.save()
+
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                quantity=item.quantity,
+                price=product.price
+            )
+            item.delete()
+
+        # 🔔 แจ้งเตือนร้านค้า (กดแล้วไปหน้าจัดการออเดอร์)
+        manage_url = reverse('store_order_manage', args=[order.id])
+        msg = f"New order #{order.id} from {request.user.username}. <a href='{manage_url}' class='text-accent font-bold hover:underline ml-1'>Manage Order</a>"
+        
+        Notification.objects.create(
+            user=store.owner,
+            actor=request.user,
+            notification_type='system',
+            message=msg
+        )
+
+    messages.success(request, "Order placed successfully!")
+    return redirect('my_order_list')
+
+
+# 2. Customer: ดูรายการสั่งซื้อของฉัน
+class MyOrderListView(LoginRequiredMixin, ListView):
+    model = Order
+    template_name = 'stores/my_order_list.html'
+    context_object_name = 'orders'
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user).order_by('-created_at')
+
+
+# 3. Customer: หน้าแจ้งชำระเงิน (Payment)
+@login_required
+def order_payment(request, pk):
+    order = get_object_or_404(Order, pk=pk, user=request.user)
+    
+    if request.method == 'POST':
+        form = PaymentForm(request.POST, request.FILES)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.order = order
+            payment.save()
+            
+            # อัปเดตสถานะ Order
+            order.status = 'PAID'
+            order.save()
+            
+            # 🔔 แจ้งเตือนร้านค้า
+            manage_url = reverse('store_order_manage', args=[order.id])
+            msg = f"Payment submitted for Order #{order.id}. <a href='{manage_url}' class='text-accent font-bold hover:underline ml-1'>Check Payment</a>"
+
+            Notification.objects.create(
+                user=order.store.owner,
+                actor=request.user,
+                notification_type='system',
+                message=msg
+            )
+            
+            messages.success(request, "Payment submitted successfully!")
+            return redirect('my_order_list')
+    else:
+        form = PaymentForm(initial={'amount': order.total_price})
+
+    return render(request, 'stores/order_payment.html', {
+        'order': order,
+        'form': form
+    })
+
+
+# 4. Store Owner: ดูรายการออเดอร์ที่เข้ามา
+class StoreOrderListView(LoginRequiredMixin, ListView):
+    model = Order
+    template_name = 'stores/store_order_list.html'
+    context_object_name = 'orders'
+
+    def get_queryset(self):
+        # เริ่มต้นดึงออเดอร์ทั้งหมดของร้าน
+        queryset = Order.objects.filter(store__owner=self.request.user).order_by('-created_at')
+        
+        # ✅ รับค่า status จาก URL (เช่น ?status=PAID)
+        status_filter = self.request.GET.get('status')
+        
+        # ถ้ามีการส่งค่ามา และไม่ใช่ 'ALL' ให้กรอง
+        if status_filter and status_filter != 'ALL':
+            queryset = queryset.filter(status=status_filter)
+            
+        return queryset
+
+    # ส่งค่า status ปัจจุบันไปที่ Template เพื่อทำปุ่ม Active
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_status'] = self.request.GET.get('status', 'ALL')
+        return context
+
+
+# 5. Store Owner: จัดการออเดอร์ (ดูรายละเอียด + เปลี่ยนสถานะ)
+@login_required
+def store_order_manage(request, pk):
+    order = get_object_or_404(Order, pk=pk, store__owner=request.user)
+    
+    if request.method == 'POST':
+        # ✅ แก้ไขจุดที่ 1: เก็บสถานะเก่าไว้ "ก่อน" ที่จะสร้าง Form หรือ Validate
+        # เพราะถ้าไปเก็บหลัง form.is_valid() ค่าในตัวแปร order จะถูกเปลี่ยนเป็นค่าใหม่ไปแล้ว
+        old_status = order.status 
+
+        form = OrderShippingForm(request.POST, request.FILES, instance=order)
+        
+        if form.is_valid():
+            order = form.save()
+            
+            # ✅ เช็คว่าสถานะเปลี่ยนหรือไม่? (ค่าใหม่ vs ค่าเก่าที่เก็บไว้ตอนแรก)
+            if order.status != old_status:
+                # สร้างลิงก์ไปหน้า My Order Detail ของลูกค้า
+                customer_url = reverse('my_order_detail', args=[order.id])
+                
+                # สร้างข้อความแจ้งเตือน
+                msg = f"Your Order #{order.id} is now <b>{order.get_status_display()}</b>."
+                
+                if order.status == 'SHIPPED':
+                    msg += f" Tracking: {order.tracking_number}"
+                
+                # ใส่ลิงก์ให้ลูกค้ากด
+                msg += f" <a href='{customer_url}' class='text-accent font-bold hover:underline ml-1'>View Details</a>"
+
+                # สร้าง Notification
+                Notification.objects.create(
+                    user=order.user,    # ส่งหาลูกค้า
+                    actor=request.user, # ผู้กระทำคือพ่อค้า
+                    notification_type='system',
+                    message=msg
+                )
+            
+            messages.success(request, "Order updated successfully.")
+            return redirect('store_order_list')
+    else:
+        form = OrderShippingForm(instance=order)
+
+    return render(request, 'stores/store_order_manage.html', {
+        'order': order,
+        'form': form
+    })
+
+@login_required
+def my_order_detail(request, pk):
+    order = get_object_or_404(Order, pk=pk, user=request.user)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        # กรณีขอยกเลิก (ต้องยังไม่จ่ายเงิน)
+        if action == 'cancel' and order.status == 'PENDING':
+            order.status = 'CANCELLED'
+            order.save()
+            
+            # ✅ คืน Stock สินค้า
+            for item in order.items.all():
+                product = item.product
+                product.stock += item.quantity
+                product.save()
+                
+            messages.success(request, "Order cancelled. Stock has been restored.")
+            return redirect('my_order_detail', pk=pk)
+
+        # กรณีได้รับของแล้ว
+        elif action == 'receive' and order.status == 'SHIPPED':
+            order.status = 'COMPLETED'
+            order.save()
+            
+            # 🔔 แจ้งเตือนร้านค้า
+            manage_url = reverse('store_order_manage', args=[order.id])
+            msg = f"Order #{order.id} has been received by the customer. <a href='{manage_url}' class='text-accent font-bold hover:underline ml-1'>View Order</a>"
+            
+            Notification.objects.create(
+                user=order.store.owner,
+                actor=request.user,
+                notification_type='system',
+                message=msg
+            )
+
+            messages.success(request, "Order completed! Thank you.")
+            return redirect('my_order_detail', pk=pk)
+
+    return render(request, 'stores/my_order_detail.html', {'order': order})

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6 text-text dark:text-darktext">My Orders</h1>
+    
+    <div class="space-y-4">
+        {% for order in orders %}
+        <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow border border-border dark:border-darkborder">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="font-bold text-lg text-text dark:text-darktext">Order #{{ order.id }}</h3>
+                    <p class="text-sm text-gray-500">Store: {{ order.store.name }}</p>
+                    <p class="text-sm text-gray-500">Date: {{ order.created_at|date:"d M Y H:i" }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="px-3 py-1 rounded-full text-sm font-bold 
+                        {% if order.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                        {% elif order.status == 'PAID' %}bg-blue-100 text-blue-800
+                        {% elif order.status == 'CONFIRMED' %}bg-green-100 text-green-800
+                        {% elif order.status == 'SHIPPED' %}bg-purple-100 text-purple-800
+                        {% elif order.status == 'CANCELLED' %}bg-red-100 text-red-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
+                    <p class="mt-2 font-bold text-accent text-xl">฿{{ order.total_price }}</p>
+                </div>
+            </div>
+
+            <!-- Items Preview -->
+            <div class="border-t border-border dark:border-darkborder pt-4 mb-4">
+                {% for item in order.items.all %}
+                    <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                        <span>{{ item.quantity }}x {{ item.product.name }}</span>
+                        <span>฿{{ item.total_price }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'my_order_detail' pk=order.pk %}" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text dark:text-darktext font-bold py-2 px-4 rounded-lg transition-colors">
+                    View Details
+                </a>
+                
+                {% if order.status == 'PENDING' %}
+                    <a href="{% url 'order_payment' pk=order.pk %}" class="bg-accent hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                        Pay Now
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+            <p class="text-center text-gray-500">No orders found.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

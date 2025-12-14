@@ -32,6 +32,10 @@ class Store(models.Model):
     verification_document = models.FileField(upload_to='store_verification_docs/', null=True, blank=True, verbose_name="Verification Document")
     verification_statement = models.TextField(null=True, blank=True, verbose_name="Verification Statement")
 
+    # เพิ่ม QR Code สำหรับรับเงิน
+    payment_qr = models.ImageField(upload_to='store_qrs/', null=True, blank=True, verbose_name="Payment QR Code")
+    bank_details = models.TextField(null=True, blank=True, verbose_name="Bank Account Details (Optional)")
+
     def __str__(self): # pragma: no cover
         return self.name
 
@@ -76,3 +80,91 @@ class ProductReview(models.Model):
 
     def __str__(self):
         return f'{self.rating} stars for {self.product.name} by {self.author.username}'
+    
+class Cart(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+
+    def __str__(self):
+        return f"Cart of {self.user.username}"
+
+    @property
+    def total_price(self):
+        return sum(item.total_price for item in self.items.all())
+
+    @property
+    def total_items(self):
+        return sum(item.quantity for item in self.items.all())
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_selected = models.BooleanField(default=True) 
+
+    class Meta:
+        unique_together = ('cart', 'product')
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name}"
+
+    @property
+    def total_price(self):
+        return self.product.price * self.quantity
+
+# -- เพิ่มโค้ดสำหรับการสั่งซื้อสินค้า (Orders) ---
+
+# สร้าง Model สำหรับใบสั่งซื้อ (Order)
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Waiting for Payment'),   # 1. สั่งซื้อยังไม่จ่าย
+        ('PAID', 'Payment Submitted'),        # 2. จ่ายแล้ว (รอร้านตรวจสอบ)
+        ('CONFIRMED', 'Payment Confirmed'),   # 2.5 ร้านยืนยันการจ่ายเงินแล้ว
+        ('SHIPPED', 'Shipped'),               # 3. จัดส่งแล้ว
+        ('COMPLETED', 'Received'),            # 4. รับของแล้ว
+        ('CANCELLED', 'Cancelled'),           # 5. ยกเลิกแล้ว
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='orders')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    tracking_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tracking Number")
+    shipping_proof = models.ImageField(upload_to='shipping_proofs/', blank=True, null=True, verbose_name="Shipping Proof")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Order #{self.id} - {self.store.name}"
+
+# สร้าง Model สำหรับรายการสินค้าในออเดอร์ (Snapshot ราคาตอนซื้อ)
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2) # ราคาต่อชิ้นตอนที่กดซื้อ
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name}"
+    
+    @property
+    def total_price(self):
+        return self.price * self.quantity
+
+# สร้าง Model สำหรับแจ้งชำระเงิน (Payment)
+class Payment(models.Model):
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Amount Transferred")
+    transfer_date = models.DateField(verbose_name="Transfer Date")
+    transfer_time = models.TimeField(verbose_name="Transfer Time")
+    slip_image = models.ImageField(upload_to='payment_slips/', null=True, blank=True, verbose_name="Transfer Slip") # ควรมีรูปสลิปด้วยเพื่อความชัวร์
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Payment for Order #{self.order.id}"

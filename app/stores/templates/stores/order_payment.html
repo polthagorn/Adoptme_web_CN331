@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+    <h1 class="text-3xl font-bold mb-6 text-text dark:text-darktext">Payment for Order #{{ order.id }}</h1>
+
+    <div class="bg-surface dark:bg-darksurface p-8 rounded-lg shadow border border-border dark:border-darkborder">
+        
+        <!-- QR Code Section -->
+        <div class="text-center mb-8 border-b border-border dark:border-darkborder pb-8">
+            <h2 class="text-xl font-bold mb-4 text-text dark:text-darktext">1. Scan to Pay</h2>
+            
+            {% if order.store.payment_qr %}
+                <!-- ✅ แก้ไขตรงนี้: เพิ่ม Wrapper ให้คลิกได้ -->
+                <div class="relative inline-block group cursor-pointer" onclick="openModal('{{ order.store.payment_qr.url }}')">
+                    <img src="{{ order.store.payment_qr.url }}" alt="Payment QR" 
+                         class="mx-auto w-64 h-64 object-contain border rounded-lg mb-4 shadow-sm transition-transform duration-300 group-hover:scale-105">
+                    
+                    <!-- Overlay Hint -->
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span class="bg-black bg-opacity-70 text-white text-sm font-bold px-3 py-1 rounded-full pointer-events-none">
+                            🔍 Click to Expand
+                        </span>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">(Click QR Code to enlarge)</p>
+            {% else %}
+                <div class="w-64 h-64 bg-gray-200 mx-auto flex items-center justify-center rounded-lg mb-4">
+                    <span class="text-gray-500">No QR Code Available</span>
+                </div>
+            {% endif %}
+            
+            <div class="text-left bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                <p class="font-bold text-text dark:text-darktext">Store: {{ order.store.name }}</p>
+                <p class="text-text dark:text-darktext">Bank Details: {{ order.store.bank_details|default:"-" }}</p>
+                <p class="text-xl font-bold text-accent mt-2">Total Amount: ฿{{ order.total_price }}</p>
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <div>
+            <h2 class="text-xl font-bold mb-4 text-text dark:text-darktext">2. Confirm Payment</h2>
+            <form method="POST" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2 text-text dark:text-darktext">Amount Transferred</label>
+                    {{ form.amount }}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-text dark:text-darktext">Date</label>
+                        {{ form.transfer_date }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-text dark:text-darktext">Time</label>
+                        {{ form.transfer_time }}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold mb-2 text-text dark:text-darktext">Upload Slip (Required)</label>
+                    {{ form.slip_image }}
+                </div>
+
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg mt-4 transition-colors">
+                    Submit Payment
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ Modal สำหรับขยายรูป (Lightbox) -->
+<div id="qrModal" class="fixed inset-0 z-[100] hidden bg-black bg-opacity-90 flex items-center justify-center p-4" onclick="closeModal()">
+    <span class="absolute top-5 right-5 text-white text-4xl font-bold cursor-pointer hover:text-gray-300">&times;</span>
+    <img id="modalQrImage" class="max-w-full max-h-full rounded-lg shadow-2xl transform scale-95 transition-transform duration-300 bg-white p-2" src="">
+</div>
+
+<script>
+    function openModal(imageUrl) {
+        const modal = document.getElementById('qrModal');
+        const modalImg = document.getElementById('modalQrImage');
+        
+        modalImg.src = imageUrl;
+        modal.classList.remove('hidden');
+        
+        // Animation effect
+        setTimeout(() => {
+            modalImg.classList.remove('scale-95');
+            modalImg.classList.add('scale-100');
+        }, 10);
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('qrModal');
+        const modalImg = document.getElementById('modalQrImage');
+        
+        modalImg.classList.remove('scale-100');
+        modalImg.classList.add('scale-95');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 200);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,82 @@
+<!-- Dashboard สำหรับร้านค้า -->
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6 text-text dark:text-darktext">Incoming Orders</h1>
+
+    <!-- Filter Buttons -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        <a href="?status=ALL" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors
+           {% if current_status == 'ALL' %}bg-accent text-white border-accent{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           All
+        </a>
+        <a href="?status=PENDING" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors
+           {% if current_status == 'PENDING' %}bg-yellow-500 text-white border-yellow-500{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           Pending
+        </a>
+        <a href="?status=PAID" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors
+           {% if current_status == 'PAID' %}bg-blue-500 text-white border-blue-500{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           Paid
+        </a>
+        <a href="?status=CONFIRMED" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors
+           {% if current_status == 'CONFIRMED' %}bg-green-500 text-white border-green-500{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           Confirmed
+        </a>
+        <a href="?status=SHIPPED" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors
+           {% if current_status == 'SHIPPED' %}bg-purple-500 text-white border-purple-500{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           Shipped
+        </a>
+        <a href="?status=COMPLETED" 
+           class="px-4 py-2 rounded-full text-sm font-bold border transition-colors
+           {% if current_status == 'COMPLETED' %}bg-gray-800 text-white border-gray-800{% else %}bg-surface dark:bg-darksurface text-gray-600 dark:text-gray-300 border-gray-300 dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+           Completed
+        </a>
+    </div>
+
+    <div class="overflow-x-auto bg-surface dark:bg-darksurface rounded-lg shadow border border-border dark:border-darkborder">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm uppercase">
+                    <th class="p-4 border-b border-border dark:border-darkborder">Order ID</th>
+                    <th class="p-4 border-b border-border dark:border-darkborder">Customer</th>
+                    <th class="p-4 border-b border-border dark:border-darkborder">Status</th>
+                    <th class="p-4 border-b border-border dark:border-darkborder">Total</th>
+                    <th class="p-4 border-b border-border dark:border-darkborder">Date</th>
+                    <th class="p-4 border-b border-border dark:border-darkborder">Action</th>
+                </tr>
+            </thead>
+            <tbody class="text-text dark:text-darktext">
+                {% for order in orders %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-border dark:border-darkborder last:border-0">
+                    <td class="p-4">#{{ order.id }}</td>
+                    <td class="p-4">{{ order.user.username }}</td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 rounded text-xs font-bold
+                            {% if order.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                            {% elif order.status == 'PAID' %}bg-blue-100 text-blue-800
+                            {% elif order.status == 'CONFIRMED' %}bg-green-100 text-green-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="p-4 font-bold">฿{{ order.total_price }}</td>
+                    <td class="p-4 text-sm">{{ order.created_at|date:"d/m/Y" }}</td>
+                    <td class="p-4">
+                        <a href="{% url 'store_order_manage' pk=order.pk %}" class="text-accent hover:underline font-bold">Manage</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="p-8 text-center text-gray-500">No orders yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

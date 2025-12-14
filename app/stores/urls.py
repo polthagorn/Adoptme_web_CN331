@@ -14,7 +14,17 @@ from .views import (
     StoreReviewCreateView,
     ProductReviewListView,
     ProductReviewCreateView,
-
+    add_to_cart,
+    cart_detail,
+    remove_from_cart,
+    toggle_cart_item,
+    update_cart_quantity,
+    checkout,
+    MyOrderListView,
+    order_payment,
+    StoreOrderListView,
+    store_order_manage,
+    my_order_detail,
 )
 
 urlpatterns = [
@@ -32,4 +42,15 @@ urlpatterns = [
     path('store/<int:pk>/add-review/', StoreReviewCreateView.as_view(), name='store_review_create'),
     path('product/<int:pk>/reviews/', ProductReviewListView.as_view(), name='product_review_list'),
     path('product/<int:pk>/add-review/', ProductReviewCreateView.as_view(), name='product_review_create'),
+    path('cart/', cart_detail, name='cart_detail'),
+    path('product/<int:pk>/add-to-cart/', add_to_cart, name='add_to_cart'),
+    path('cart/remove/<int:pk>/', remove_from_cart, name='remove_from_cart'),
+    path('cart/toggle/<int:pk>/', toggle_cart_item, name='toggle_cart_item'),
+    path('cart/update/<int:pk>/', update_cart_quantity, name='update_cart_quantity'),
+     path('checkout/', checkout, name='checkout'),
+    path('my-orders/', MyOrderListView.as_view(), name='my_order_list'),
+    path('order/<int:pk>/pay/', order_payment, name='order_payment'),
+    path('store/orders/', StoreOrderListView.as_view(), name='store_order_list'),
+    path('store/order/<int:pk>/manage/', store_order_manage, name='store_order_manage'),
+    path('my-orders/<int:pk>/', my_order_detail, name='my_order_detail'),
 ]

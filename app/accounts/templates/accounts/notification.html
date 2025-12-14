@@ -4,24 +4,41 @@
 {% block title %}Notifications{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto mt-10 bg-surface dark:bg-darksurface p-6 rounded-2xl shadow-lg">
+<div class="max-w-2xl mx-auto mt-10 bg-surface dark:bg-darksurface p-6 rounded-2xl shadow-lg border border-border dark:border-darkborder">
 
   <h2 class="text-2xl font-bold mb-4 text-accent">Notifications</h2>
 
   {% if notifications %}
     <div class="space-y-4">
       {% for n in notifications %}
-        <div class="p-4 rounded-xl border border-border dark:border-darkborder 
-                    {% if not n.is_read %}bg-blue-50 dark:bg-blue-900/30{% endif %}">
-          <p class="text-sm">{{ n.message }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <div class="relative p-4 rounded-xl border border-border dark:border-darkborder transition-colors duration-200
+                    {% if not n.is_read %}bg-blue-50 dark:bg-blue-900/20{% else %}hover:bg-gray-50 dark:hover:bg-gray-800/50{% endif %}">
+          
+          <!-- ข้อความ -->
+          <p class="text-sm text-text dark:text-darktext leading-relaxed pr-6"> <!-- pr-6 เพื่อเว้นที่ให้ปุ่มลบ -->
+            {{ n.message|safe }}
+          </p>
+          
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 font-medium">
             {{ n.created_at|date:"M d, Y H:i" }}
           </p>
+
+          <!-- ปุ่มลบ (กากบาท) -->
+          <a href="{% url 'delete_notification' pk=n.pk %}" 
+             class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors p-1"
+             title="Delete notification">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </a>
+
         </div>
       {% endfor %}
     </div>
   {% else %}
-    <p class="text-gray-500 text-center">No notifications yet.</p>
+    <div class="py-10 text-center">
+        <p class="text-gray-500 dark:text-gray-400">No notifications yet.</p>
+    </div>
   {% endif %}
 
 </div>

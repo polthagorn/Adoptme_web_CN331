@@ -205,3 +205,9 @@ def my_bookmarks_page(request):
         'posts': bookmarked_posts
     }
     return render(request, 'accounts/my_bookmarks_page.html', context)
+
+@login_required
+def delete_notification(request, pk):
+    notification = get_object_or_404(Notification, pk=pk, user=request.user)
+    notification.delete()
+    return redirect('notifications')

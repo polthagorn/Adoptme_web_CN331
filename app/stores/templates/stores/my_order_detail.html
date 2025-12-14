@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-text dark:text-darktext">Order #{{ order.id }}</h1>
+        <a href="{% url 'my_order_list' %}" class="text-gray-500 hover:text-accent">Back to My Orders</a>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow border border-border dark:border-darkborder mb-6 text-center">
+        <p class="text-gray-500 dark:text-gray-400 mb-2">Current Status</p>
+        <span class="text-2xl font-bold 
+            {% if order.status == 'PENDING' %}text-yellow-600
+            {% elif order.status == 'PAID' %}text-blue-600
+            {% elif order.status == 'SHIPPED' %}text-purple-600
+            {% elif order.status == 'COMPLETED' %}text-green-600
+            {% elif order.status == 'CANCELLED' %}text-red-600
+            {% endif %}">
+            {{ order.get_status_display }}
+        </span>
+    </div>
+
+    <!-- Shipping Info (Show only if Shipped or Completed) -->
+    {% if order.status == 'SHIPPED' or order.status == 'COMPLETED' %}
+    <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800 mb-6">
+        <h2 class="text-xl font-bold mb-4 text-blue-800 dark:text-blue-300">Shipping Details</h2>
+        <p class="text-text dark:text-darktext mb-2"><span class="font-bold">Tracking Number:</span> {{ order.tracking_number }}</p>
+        
+        {% if order.shipping_proof %}
+            <p class="font-bold text-text dark:text-darktext mb-2">Shipping Proof:</p>
+            <div class="relative inline-block group cursor-pointer" onclick="openModal('{{ order.shipping_proof.url }}')">
+                <img src="{{ order.shipping_proof.url }}" class="w-48 h-auto rounded border border-blue-300 shadow-sm">
+                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black bg-opacity-50 transition-opacity rounded">
+                    <span class="text-white text-sm font-bold">Zoom</span>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if order.status == 'SHIPPED' %}
+            <div class="mt-6 pt-4 border-t border-blue-200 dark:border-blue-800">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Received the package?</p>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="receive">
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded transition-colors">
+                        Mark as Received
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Order Items -->
+    <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow border border-border dark:border-darkborder mb-6">
+        <h2 class="text-xl font-bold mb-4 text-text dark:text-darktext">Items</h2>
+        <div class="divide-y divide-border dark:divide-darkborder">
+            {% for item in order.items.all %}
+                <div class="py-3 flex justify-between items-center">
+                    <div class="flex items-center">
+                        {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" class="w-12 h-12 object-cover rounded mr-4">
+                        {% else %}
+                            <div class="w-12 h-12 bg-gray-200 rounded mr-4"></div>
+                        {% endif %}
+                        <div>
+                            <p class="font-bold text-text dark:text-darktext">{{ item.product.name }}</p>
+                            <p class="text-sm text-gray-500">Qty: {{ item.quantity }}</p>
+                        </div>
+                    </div>
+                    <span class="font-bold text-text dark:text-darktext">฿{{ item.total_price }}</span>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="flex justify-between font-bold text-xl mt-4 pt-4 border-t border-border dark:border-darkborder text-accent">
+            <span>Total Amount</span>
+            <span>฿{{ order.total_price }}</span>
+        </div>
+    </div>
+
+    <!-- Cancel Button (Only if Pending) -->
+    {% if order.status == 'PENDING' %}
+        <div class="text-center mt-8">
+            <form method="POST" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="cancel">
+                <button type="submit" class="text-red-500 hover:text-red-700 font-bold border border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 py-2 px-6 rounded transition-colors">
+                    Cancel Order
+                </button>
+            </form>
+            <p class="text-sm text-gray-500 mt-2">You can cancel only before payment.</p>
+        </div>
+    {% endif %}
+    
+    <!-- Pay Button (Only if Pending) -->
+    {% if order.status == 'PENDING' %}
+        <div class="fixed bottom-0 left-0 w-full bg-surface dark:bg-darksurface p-4 border-t border-border dark:border-darkborder shadow-lg flex justify-center">
+            <a href="{% url 'order_payment' pk=order.pk %}" class="bg-accent hover:bg-blue-600 text-white font-bold py-3 px-12 rounded-lg shadow-lg transform hover:scale-105 transition-transform">
+                Pay Now (฿{{ order.total_price }})
+            </a>
+        </div>
+        <div class="h-20"></div> <!-- Spacer -->
+    {% endif %}
+
+</div>
+
+<!-- Lightbox Modal (Copy from previous answer) -->
+<div id="imageModal" class="fixed inset-0 z-[100] hidden bg-black bg-opacity-90 flex items-center justify-center p-4" onclick="closeModal()">
+    <span class="absolute top-5 right-5 text-white text-4xl font-bold cursor-pointer hover:text-gray-300">&times;</span>
+    <img id="modalImage" class="max-w-full max-h-full rounded-lg shadow-2xl transform scale-95 transition-transform duration-300" src="">
+</div>
+<script>
+    function openModal(imageUrl) {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        modalImg.src = imageUrl;
+        modal.classList.remove('hidden');
+        setTimeout(() => { modalImg.classList.remove('scale-95'); modalImg.classList.add('scale-100'); }, 10);
+    }
+    function closeModal() {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        modalImg.classList.remove('scale-100'); modalImg.classList.add('scale-95');
+        setTimeout(() => { modal.classList.add('hidden'); }, 200);
+    }
+</script>
+{% endblock %}

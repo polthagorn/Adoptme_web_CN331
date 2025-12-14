@@ -10,4 +10,5 @@ urlpatterns = [
     path('user/<str:username>/', views.user_profile_page, name='user_profile'),
     path('my-bookmarks/', views.my_bookmarks_page, name='my_bookmarks'),
     path("notifications/", views.notification_list, name="notifications"),
+    path("notifications/delete/<int:pk>/", views.delete_notification, name="delete_notification"),
 ]

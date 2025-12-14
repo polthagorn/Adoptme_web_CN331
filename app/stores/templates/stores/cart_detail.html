@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}My Basket - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 min-h-screen bg-background dark:bg-darkbg pb-32"> <!-- เพิ่ม padding bottom -->
+    
+    <!-- Header -->
+    <h1 class="text-3xl font-bold text-text dark:text-darktext mb-6 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+        Shopping Cart
+    </h1>
+
+    {% if cart.items.all %}
+        <!-- Tabs Navigation -->
+        <div class="flex border-b border-border dark:border-darkborder mb-6">
+            <button onclick="switchTab('pets')" id="tab-pets" class="px-6 py-3 text-lg font-semibold border-b-2 border-accent text-accent focus:outline-none transition-colors">
+                🐾 Pets
+            </button>
+            <button onclick="switchTab('supplies')" id="tab-supplies" class="px-6 py-3 text-lg font-semibold border-b-2 border-transparent text-gray-500 hover:text-text dark:hover:text-darktext focus:outline-none transition-colors">
+                📦 Supplies
+            </button>
+        </div>
+
+        <!-- Content Area -->
+        <div id="cart-content">
+            <!-- 1. PETS TAB -->
+            <div id="content-pets" class="space-y-6">
+                {% if grouped_pets %}
+                    {% for store, items in grouped_pets %}
+                        {% include "stores/includes/cart_store_group.html" with store=store items=items %}
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-16 bg-surface dark:bg-darksurface rounded-lg border border-dashed border-border dark:border-darkborder">
+                        <p class="text-gray-500 dark:text-gray-400 mb-6 text-lg">No pets in your basket.</p>
+                        <a href="{% url 'marketplace' %}?type=PET" class="inline-block bg-accent hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg">Browse Pets</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- 2. SUPPLIES TAB -->
+            <div id="content-supplies" class="hidden space-y-6">
+                {% if grouped_supplies %}
+                    {% for store, items in grouped_supplies %}
+                        {% include "stores/includes/cart_store_group.html" with store=store items=items %}
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-16 bg-surface dark:bg-darksurface rounded-lg border border-dashed border-border dark:border-darkborder">
+                        <p class="text-gray-500 dark:text-gray-400 mb-6 text-lg">No supplies in your basket.</p>
+                        <a href="{% url 'marketplace' %}?type=SUPPLIES" class="inline-block bg-accent hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg">Browse Supplies</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sticky Footer Bar -->
+        <div class="fixed bottom-0 left-0 w-full bg-surface dark:bg-darksurface border-t border-border dark:border-darkborder shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-4 z-50">
+            <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+                
+                <!-- Left: Selection Info & Continue Shopping -->
+                <div class="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-start">
+                    <div class="text-text dark:text-darktext font-medium">
+                        Selected (<span id="selected-count" class="font-bold text-accent">{{ selected_count }}</span> items)
+                    </div>
+                    <a href="{% url 'marketplace' %}" class="text-sm text-gray-500 hover:text-accent underline sm:hidden">
+                        Continue Shopping
+                    </a>
+                </div>
+                
+                <!-- Right: Total & Buttons -->
+                <div class="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end">
+                    <a href="{% url 'marketplace' %}" class="hidden sm:block text-gray-500 hover:text-accent font-semibold mr-4 transition-colors">
+                        Continue Shopping
+                    </a>
+
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Total Payment</p>
+                        <p class="text-2xl font-bold text-accent">฿ <span id="total-price">{{ selected_total|floatformat:2 }}</span></p>
+                    </div>
+                    
+                    <a href="{% url 'checkout' %}" class="bg-accent hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 text-center">
+                        Check Out
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-20 bg-surface dark:bg-darksurface rounded-lg border border-border dark:border-darkborder shadow-sm">
+            <h2 class="text-3xl font-bold text-text dark:text-darktext mb-3">Your basket is empty</h2>
+            <a href="{% url 'marketplace' %}" class="inline-block bg-accent hover:bg-blue-600 text-white font-bold py-4 px-10 rounded-lg mt-4">
+                Go to Marketplace
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    // --- Tab Switching ---
+    function switchTab(tabName) {
+        const petsContent = document.getElementById('content-pets');
+        const suppliesContent = document.getElementById('content-supplies');
+        const petsTab = document.getElementById('tab-pets');
+        const suppliesTab = document.getElementById('tab-supplies');
+
+        if (tabName === 'pets') {
+            petsContent.classList.remove('hidden');
+            suppliesContent.classList.add('hidden');
+            petsTab.classList.add('border-accent', 'text-accent');
+            petsTab.classList.remove('border-transparent', 'text-gray-500');
+            suppliesTab.classList.remove('border-accent', 'text-accent');
+            suppliesTab.classList.add('border-transparent', 'text-gray-500');
+        } else {
+            petsContent.classList.add('hidden');
+            suppliesContent.classList.remove('hidden');
+            suppliesTab.classList.add('border-accent', 'text-accent');
+            suppliesTab.classList.remove('border-transparent', 'text-gray-500');
+            petsTab.classList.remove('border-accent', 'text-accent');
+            petsTab.classList.add('border-transparent', 'text-gray-500');
+        }
+    }
+
+    // --- Checkbox Toggle ---
+    function toggleItem(itemId, isChecked) {
+        fetch(`/stores/cart/toggle/${itemId}/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ is_selected: isChecked })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('total-price').innerText = data.new_total.toFixed(2);
+                document.getElementById('selected-count').innerText = data.new_count;
+            }
+        });
+    }
+
+    function toggleStore(storeId, isChecked) {
+        const checkboxes = document.querySelectorAll(`.store-checkbox-${storeId}`);
+        checkboxes.forEach(cb => {
+            if (cb.checked !== isChecked) {
+                cb.checked = isChecked;
+                toggleItem(cb.dataset.itemId, isChecked);
+            }
+        });
+    }
+
+    // --- ✅ Quantity Update Logic ---
+    function updateQuantity(itemId, action) {
+        fetch(`/stores/cart/update/${itemId}/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ action: action })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // อัปเดตจำนวนใน Input
+                document.getElementById(`qty-${itemId}`).value = data.item_quantity;
+                
+                // อัปเดตราคารวมของสินค้านั้น (Item Total)
+                document.getElementById(`item-total-${itemId}`).innerText = data.item_total.toFixed(2);
+                
+                // อัปเดตราคารวมทั้งหมด (Cart Total)
+                document.getElementById('total-price').innerText = data.cart_total.toFixed(2);
+                document.getElementById('selected-count').innerText = data.cart_count;
+            } else {
+                // แจ้งเตือนถ้ามี Error (เช่น Stock เต็ม)
+                createToast(data.error, 'error');
+            }
+        })
+        .catch(err => console.error(err));
+    }
+</script>
+{% endblock %}

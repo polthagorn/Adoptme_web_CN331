@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-text dark:text-darktext">Manage Order #{{ order.id }}</h1>
+        <a href="{% url 'store_order_list' %}" class="text-gray-500 hover:text-accent">Back to List</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Order Info (Left) -->
+        <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow border border-border dark:border-darkborder">
+            <h2 class="text-xl font-bold mb-4 text-text dark:text-darktext">Order Info</h2>
+            <p class="text-text dark:text-darktext">Customer: {{ order.user.username }}</p>
+            <p class="text-text dark:text-darktext">Date: {{ order.created_at }}</p>
+            
+            <div class="mt-4 border-t border-border dark:border-darkborder pt-4">
+                {% for item in order.items.all %}
+                    <div class="flex justify-between text-sm text-text dark:text-darktext">
+                        <span>{{ item.quantity }}x {{ item.product.name }}</span>
+                        <span>฿{{ item.total_price }}</span>
+                    </div>
+                {% endfor %}
+                <div class="flex justify-between font-bold text-lg mt-2 text-accent">
+                    <span>Total:</span>
+                    <span>฿{{ order.total_price }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Management Form (Right) -->
+        <div class="bg-surface dark:bg-darksurface p-6 rounded-lg shadow border border-border dark:border-darkborder">
+            <h2 class="text-xl font-bold mb-4 text-text dark:text-darktext">Update Status</h2>
+            
+            <form method="POST" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2 text-text dark:text-darktext">Status</label>
+                    {{ form.status }}
+                </div>
+
+                <div id="shipping-fields" class="space-y-4 border-t border-border dark:border-darkborder pt-4 mt-4">
+                    <p class="text-sm text-gray-500">Required if status is 'Shipped'</p>
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-text dark:text-darktext">Tracking Number</label>
+                        {{ form.tracking_number }}
+                        {% if form.tracking_number.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.tracking_number.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-text dark:text-darktext">Shipping Proof (Image)</label>
+                        {{ form.shipping_proof }}
+                        {% if form.shipping_proof.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.shipping_proof.errors.0 }}</p>
+                        {% endif %}
+                        
+                        {% if order.shipping_proof %}
+                            <div class="mt-2">
+                                <p class="text-xs text-gray-500">Current Proof:</p>
+                                <a href="{{ order.shipping_proof.url }}" target="_blank" class="text-accent hover:underline text-sm">View Image</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-accent hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-4">
+                    Update Order
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Payment Proof Section (Below) -->
+    <div class="mt-8 bg-surface dark:bg-darksurface p-6 rounded-lg shadow border border-border dark:border-darkborder">
+        <h2 class="text-xl font-bold mb-4 text-text dark:text-darktext">Customer Payment</h2>
+        {% if order.payment %}
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="text-text dark:text-darktext">
+                    <p>Amount: ฿{{ order.payment.amount }}</p>
+                    <p>Date: {{ order.payment.transfer_date }} {{ order.payment.transfer_time }}</p>
+                </div>
+                {% if order.payment.slip_image %}
+                    <div class="w-48">
+                        <a href="{{ order.payment.slip_image.url }}" target="_blank">
+                            <img src="{{ order.payment.slip_image.url }}" class="rounded border border-border dark:border-darkborder hover:opacity-75 transition">
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <p class="text-gray-500">No payment submitted yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
