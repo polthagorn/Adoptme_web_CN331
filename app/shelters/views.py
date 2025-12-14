@@ -19,9 +19,9 @@ class ShelterRegisterView(LoginRequiredMixin, CreateView):
         if hasattr(request.user, 'shelter_profile'):
             # if yes, redirect to the profile view
             return redirect('shelter_profile')
-        return super().dispatch(request, *args, **kwargs) # pragma: no cover
+        return super().dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form): # pragma: no cover
+    def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
