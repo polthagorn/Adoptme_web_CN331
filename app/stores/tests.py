@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from app.stores.models import Store, Product, ProductReview
+from app.stores.models import Store, Product, ProductReview, StoreReview
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 # A utility function to create a store quickly in tests
@@ -359,27 +359,48 @@ class ProductUpdateViewTests(TestCase):
 class ProductUpdateViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='owner', password='password')
+        self.other_user = User.objects.create_user(username='other', password='password')
+        
         self.store = Store.objects.create(
             owner=self.user,
             name='Test Store',
+            description='Test Store Description',
             store_type='PET',
-            status='APPROVED' 
+            status='APPROVED'
         )
-        self.image_file = SimpleUploadedFile("test_image.jpg", b"file_content", content_type="image/jpeg")
+        
         self.product = Product.objects.create(
             store=self.store,
             name='Old Name',
             description='Old Description',
             price=100.00,
-            stock=10,
-            image=self.image_file
+            stock=10
         )
-        self.url = reverse('product_update', kwargs={'pk': self.product.pk}) # CHECK_THIS: Verify URL name in urls.py
+        self.url = reverse('product_update', kwargs={'pk': self.product.pk}) # CHECK_THIS: Verify URL name
+
+    def test_view_requires_login(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_queryset_filters_by_owner(self):
+        self.client.force_login(self.other_user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_context_data_contains_store(self):
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['store'], self.store)
 
     def test_update_success_and_redirect(self):
         self.client.force_login(self.user)
         
-        new_image = SimpleUploadedFile("new_image.jpg", b"new_content", content_type="image/jpeg")
+        new_image = SimpleUploadedFile(
+            "test_image.gif",
+            b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x05\x04\x04\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b',
+            content_type="image/gif"
+        )
         
         data = {
             'name': 'New Name',
@@ -393,5 +414,91 @@ class ProductUpdateViewTests(TestCase):
         
         self.product.refresh_from_db()
         self.assertEqual(self.product.name, 'New Name')
-        self.assertEqual(self.product.stock, 20)
+        self.assertEqual(self.product.price, 200.00)
         self.assertRedirects(response, reverse('store_manage', kwargs={'pk': self.store.pk}))
+
+class ProductDeleteViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='owner', password='password')
+        self.other_user = User.objects.create_user(username='other', password='password')
+        
+        self.store = Store.objects.create(
+            owner=self.user, 
+            name='Test Store',
+            description='Test Description',
+            store_type='PET'
+        )
+        
+        self.product = Product.objects.create(
+            store=self.store,
+            name='Test Product',
+            description='Product Description',
+            price=100.00,
+            stock=10
+        )
+        self.url = reverse('product_delete', kwargs={'pk': self.product.pk}) # CHECK_THIS: Verify URL name in urls.py
+
+    def test_delete_view_requires_login(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_delete_view_queryset_restriction(self):
+        self.client.force_login(self.other_user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_success_and_redirect(self):
+        self.client.force_login(self.user)
+        
+        get_response = self.client.get(self.url)
+        self.assertEqual(get_response.status_code, 200)
+        self.assertTemplateUsed(get_response, 'stores/product_confirm_delete.html')
+        
+        post_response = self.client.post(self.url)
+        
+        self.assertRedirects(post_response, reverse('store_manage', kwargs={'pk': self.store.pk}))
+        self.assertFalse(Product.objects.filter(pk=self.product.pk).exists())
+
+class StoreReviewListViewTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username='owner', password='password')
+        self.reviewer = User.objects.create_user(username='reviewer', password='password')
+        
+        self.store = Store.objects.create(
+            owner=self.owner,
+            name='Test Store',
+            description='Store Description',
+            store_type='PET',
+            status='APPROVED'
+        )
+        
+        self.review1 = StoreReview.objects.create(
+            store=self.store,
+            author=self.reviewer,
+            rating=5,
+            comment='Great store!'
+        )
+        
+        self.url = reverse('store_review_list', kwargs={'pk': self.store.pk}) # CHECK_THIS: Verify URL name
+
+    def test_view_status_code(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        response = self.client.get(self.url)
+        self.assertTemplateUsed(response, 'stores/store_review_list.html')
+
+    def test_context_contains_reviews(self):
+        response = self.client.get(self.url)
+        self.assertIn('store', response.context)
+        self.assertIn('reviews', response.context)
+        
+        self.assertEqual(response.context['store'], self.store)
+        self.assertIn(self.review1, response.context['reviews'])
+        self.assertEqual(len(response.context['reviews']), 1)
+
+    def test_view_returns_404_for_invalid_store(self):
+        url = reverse('store_review_list', kwargs={'pk': 9999}) # CHECK_THIS: Verify URL name
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
