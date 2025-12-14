@@ -401,3 +401,49 @@ class MyBookmarksViewTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
         self.assertIn('/accounts/login/', response.url)
+
+class DeleteNotificationViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='password')
+        self.other_user = User.objects.create_user(username='otheruser', password='password')
+        
+        self.post = Post.objects.create(
+            author=self.other_user, 
+            title="Test Post", 
+            content="Content"
+        )
+
+        self.notification = Notification.objects.create(
+            user=self.user,
+            actor=self.other_user,
+            notification_type='like',
+            message='liked your post',
+            post=self.post
+        )
+        
+        self.notification_other = Notification.objects.create(
+            user=self.other_user,
+            actor=self.user,
+            notification_type='comment',
+            message='commented',
+            post=self.post
+        )
+
+        self.url = reverse('delete_notification', args=[self.notification.pk])
+        self.success_url = reverse('notifications')
+
+    def test_delete_notification_success(self):
+        self.client.login(username='testuser', password='password')
+        response = self.client.get(self.url)
+        
+        self.assertRedirects(response, self.success_url)
+        self.assertFalse(Notification.objects.filter(pk=self.notification.pk).exists())
+
+    def test_delete_other_user_notification(self):
+        self.client.login(username='testuser', password='password')
+        url = reverse('delete_notification', args=[self.notification_other.pk]) 
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Notification.objects.filter(pk=self.notification_other.pk).exists())
