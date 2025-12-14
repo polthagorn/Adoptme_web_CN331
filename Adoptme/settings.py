@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     'app.stores',
     'app.shelters',
     'app.chats',
-    
+    'app.reports',
 ]
 
 MIDDLEWARE = [

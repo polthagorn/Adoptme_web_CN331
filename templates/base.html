@@ -63,7 +63,7 @@
           <a href="{% url 'dashboard_home' %}" class="hover:text-accent font-semibold">Dashboard</a>
         {% endif %}
 
-        <!-- ✅ Chat (with live unread badge) -->
+        <!-- Chat (with live unread badge) -->
         <a href="{% url 'chat_inbox' %}" title="Chat"
            class="relative inline-flex items-center justify-center w-9 h-9 rounded-full
                   bg-white-200 text-gray-800 dark:bg-darksurface dark:text-darktext
@@ -113,6 +113,44 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01M9 16h.01" />
           </svg>
         </a>
+
+        <!-- Report dropdown (matches your icon buttons) -->
+        <div class="relative ml-2">
+          <button id="report-menu-btn" type="button"
+                  class="relative inline-flex items-center justify-center w-9 h-9 rounded-full
+                         bg-white-200 text-gray-800 dark:bg-darksurface dark:text-darktext
+                         border border-border dark:border-darkborder hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors"
+                  title="Report">
+            <!-- flag icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 3v18M5 4h12l-1.5 4L17 12H5" />
+            </svg>
+          </button>
+
+          <div id="report-menu"
+               class="hidden absolute right-0 mt-2 w-64
+                      bg-surface dark:bg-darksurface
+                      border border-border dark:border-darkborder
+                      rounded-xl shadow-lg overflow-hidden z-50">
+            <a href="{% url 'report_user_search' %}"
+               class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-white/5 transition font-semibold">
+              👤 Report a User
+            </a>
+            <a href="{% url 'report_bug' %}"
+               class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-white/5 transition font-semibold">
+              🐞 Report Bug / Glitches
+            </a>
+
+            {% if request.user.is_staff or request.user.is_superuser %}
+              <div class="border-t border-border dark:border-darkborder"></div>
+              <a href="{% url 'admin_report_list' %}"
+                 class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-white/5 transition font-semibold">
+                🛡️ Reports Admin
+              </a>
+            {% endif %}
+          </div>
+        </div>
 
         <!-- for store -->
         {% if request.user.stores.exists %}
@@ -177,6 +215,27 @@
       icon.src = dark ? moonIcon : sunIcon;
     });
 
+    // Report dropdown
+    const reportBtn = document.getElementById("report-menu-btn");
+    const reportMenu = document.getElementById("report-menu");
+
+    if (reportBtn && reportMenu) {
+      reportBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        reportMenu.classList.toggle("hidden");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!reportMenu.contains(e.target) && !reportBtn.contains(e.target)) {
+          reportMenu.classList.add("hidden");
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") reportMenu.classList.add("hidden");
+      });
+    }
+
     // Toast helper
     function createToast(message, type) {
       const container = document.getElementById('toast-container');
@@ -233,7 +292,7 @@
   </script>
 
   {% if request.user.is_authenticated %}
-  <!-- ✅ Live chat unread polling -->
+  <!-- Live chat unread polling -->
   <script>
     async function refreshUnreadCounts() {
       try {

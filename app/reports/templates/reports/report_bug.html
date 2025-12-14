@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Report Bug / Glitches{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto mt-10 bg-surface dark:bg-darksurface p-8 rounded-2xl shadow-lg border border-border dark:border-darkborder">
+  <h1 class="text-2xl font-extrabold text-text dark:text-darktext mb-2">🐞 Report Bug / Glitches</h1>
+  <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
+    Tell us what happened. Add screenshot/video if you can.
+  </p>
+
+  <form method="post" enctype="multipart/form-data" class="space-y-4">
+    {% csrf_token %}
+
+    <!-- Hide reason UI (always BUG) -->
+    <input type="hidden" name="reason" value="bug">
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">Details</label>
+      {{ form.description }}
+      {% for e in form.description.errors %}<p class="text-red-500 text-sm">{{ e }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">Media (optional)</label>
+      <!-- multi upload via HTML (works even on older Django) -->
+      <input type="file" name="media_files" multiple
+             class="w-full p-3 border border-border dark:border-darkborder rounded-xl bg-white dark:bg-darksurface text-text dark:text-darktext">
+      <p class="text-xs text-gray-500 mt-1">Attach images/videos/files (optional). Max 10MB each.</p>
+    </div>
+
+    <button class="w-full py-3 rounded-xl bg-accent hover:bg-blue-700 text-white font-bold transition">
+      Submit bug report
+    </button>
+  </form>
+</div>
+
+<style>
+  textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    background: white;
+  }
+  html.dark textarea {
+    border-color: #30363d;
+    background: #161b22;
+    color: #e6edf3;
+  }
+</style>
+{% endblock %}

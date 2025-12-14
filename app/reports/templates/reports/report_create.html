@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Report{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto mt-10 bg-surface dark:bg-darksurface p-8 rounded-2xl shadow-lg border border-border dark:border-darkborder">
+  <h1 class="text-2xl font-extrabold text-text dark:text-darktext mb-2">Report</h1>
+  <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
+    You are reporting: <span class="font-semibold">{{ target }}</span>
+  </p>
+
+  <form method="post" enctype="multipart/form-data" class="space-y-4">
+    {% csrf_token %}
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">Reason</label>
+      {{ form.reason }}
+      {% for e in form.reason.errors %}<p class="text-red-500 text-sm">{{ e }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">Details (optional)</label>
+      {{ form.description }}
+      {% for e in form.description.errors %}<p class="text-red-500 text-sm">{{ e }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">Media (optional)</label>
+      <input
+      type="file"
+      name="media_files"
+      multiple
+      class="w-full p-3 border border-border dark:border-darkborder rounded-xl bg-white dark:bg-darksurface text-text dark:text-darktext"
+    />
+
+      {% if form.media_files.help_text %}
+        <p class="text-xs text-gray-500 mt-1">{{ form.media_files.help_text }}</p>
+      {% endif %}
+      {% for e in form.media_files.errors %}<p class="text-red-500 text-sm">{{ e }}</p>{% endfor %}
+    </div>
+
+    <button class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition">
+      Submit report
+    </button>
+  </form>
+</div>
+
+<style>
+  select, textarea, input[type="file"] {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    background: white;
+  }
+  html.dark select, html.dark textarea, html.dark input[type="file"] {
+    border-color: #30363d;
+    background: #161b22;
+    color: #e6edf3;
+  }
+</style>
+{% endblock %}

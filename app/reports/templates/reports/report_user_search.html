@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Report a User{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto mt-10">
+
+  <div class="bg-surface dark:bg-darksurface p-6 rounded-2xl shadow border border-border dark:border-darkborder">
+    <h1 class="text-3xl font-extrabold text-text dark:text-darktext">Report a user</h1>
+    <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+      Search by username (or email) and click “Report”.
+    </p>
+
+    <form method="get" class="mt-4 flex gap-2">
+      <input name="q" value="{{ request.GET.q }}" placeholder="Search username…"
+             class="flex-1 px-4 py-3 rounded-xl border border-border dark:border-darkborder bg-white dark:bg-darksurface text-text dark:text-darktext focus:ring-2 focus:ring-accent focus:outline-none" />
+      <button class="px-5 py-3 rounded-xl bg-accent hover:bg-blue-700 text-white font-bold transition">
+        Search
+      </button>
+    </form>
+  </div>
+
+  <div class="mt-6 bg-surface dark:bg-darksurface rounded-2xl shadow border border-border dark:border-darkborder overflow-hidden">
+    <div class="divide-y divide-border dark:divide-darkborder">
+      {% for u in users %}
+      <div class="p-4 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="font-bold text-text dark:text-darktext truncate">@{{ u.username }}</p>
+          <p class="text-sm text-gray-600 dark:text-gray-300 truncate">{{ u.email }}</p>
+        </div>
+
+        <a href="{% url 'create_report' %}?ct=auth.user&id={{ u.id }}"
+           class="shrink-0 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition">
+          Report
+        </a>
+      </div>
+      {% empty %}
+      <div class="p-6 text-gray-600 dark:text-gray-300">
+        {% if request.GET.q %}No users found.{% else %}Type a username to search.{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
