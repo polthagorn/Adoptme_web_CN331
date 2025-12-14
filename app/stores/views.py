@@ -786,11 +786,6 @@ def my_order_detail(request, pk):
             messages.success(request, "Order completed! You can now review your items.")
             return redirect('my_order_detail', pk=pk)
 
-<<<<<<< HEAD
-    return render(request, 'stores/my_order_detail.html', {'order': order})
-
-
-=======
     reviewed_product_ids = ProductReview.objects.filter(
         author=request.user,
         order=order  # กรองเฉพาะรีวิวที่ผูกกับออเดอร์นี้
@@ -826,4 +821,3 @@ def store_status_notification(sender, instance, **kwargs):
                     
         except Store.DoesNotExist:
             pass
->>>>>>> feb887a24012f0fe78eef00b691309147e5cc8f8
