@@ -166,14 +166,10 @@ def profile_edit_page(request):
         p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
 
         if u_form.is_valid() and p_form.is_valid():
-            new_username = u_form.cleaned_data.get('username')
-            if User.objects.exclude(pk=request.user.pk).filter(username=new_username).exists():
-                u_form.add_error('username', f"Username '{new_username}' is already taken ❌")
-            else:
-                u_form.save()
-                p_form.save()
-                messages.success(request, 'Your profile has been updated successfully! 🎉')
-                return redirect('profile')
+            u_form.save()
+            p_form.save()
+            messages.success(request, 'Your profile has been updated successfully! 🎉')
+            return redirect('profile')
     else:
         u_form = UserUpdateForm(instance=request.user)
         p_form = ProfileUpdateForm(instance=request.user.profile)

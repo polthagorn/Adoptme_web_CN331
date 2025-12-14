@@ -6,11 +6,6 @@ from django.contrib import messages
 from app.stores.models import Store
 from django.shortcuts import get_object_or_404, redirect
 
-
-
-def dashboard_home(request):
-    return render(request, "dashboard/index.html")
-
 # Allow only superusers to approve shelters
 def superuser_required(view_func):
     return user_passes_test(lambda u: u.is_superuser)(view_func)
