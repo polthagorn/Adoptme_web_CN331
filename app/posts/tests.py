@@ -1,3 +1,4 @@
+import json
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -407,108 +408,130 @@ class PostDetailNotificationTest(TestCase):
         self.assertNotEqual(response.status_code, 200)
         self.assertTrue(response.status_code in [302, 301])
 
-class LikePostViewTest(TestCase):
+class LikePostViewTests(TestCase):
     def setUp(self):
-        self.client = Client()
+        # Create users
         self.author = User.objects.create_user(username='author', password='password')
         self.user = User.objects.create_user(username='user', password='password')
+
+        # Create a post (author is self.author)
+        self.post = Post.objects.create(
+            author=self.author,
+            title='Test Post',
+            content='Content',
+            animal_type='dog',
+            animal_race='golden_retriever'
+        )
+        
+        self.url = reverse('like_post', kwargs={'post_id': self.post.id})
+
+    def test_like_post_success_and_create_notification(self):
+        """Test liking a post adds like and creates a notification."""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(self.url)
+        
+        # Check Response
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data['liked'])
+        self.assertEqual(data['count'], 1)
+        
+        # Check DB updates
+        self.assertTrue(self.post.likes.filter(pk=self.user.pk).exists())
+        
+        # Check Notification created
+        self.assertTrue(Notification.objects.filter(
+            user=self.author,
+            actor=self.user,
+            notification_type='like',
+            post=self.post
+        ).exists())
+
+    def test_unlike_post_success(self):
+        """Test unliking a post removes like."""
+        self.client.force_login(self.user)
+        self.post.likes.add(self.user) # Pre-like the post
+        
+        response = self.client.post(self.url)
+        
+        # Check Response
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertFalse(data['liked'])
+        self.assertEqual(data['count'], 0)
+        
+        # Check DB updates
+        self.assertFalse(self.post.likes.filter(pk=self.user.pk).exists())
+
+    def test_like_own_post_does_not_create_notification(self):
+        """Liking your own post should NOT create a notification."""
+        self.client.force_login(self.author)
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(self.post.likes.filter(pk=self.author.pk).exists())
+        
+        # Ensure NO notification is created
+        self.assertFalse(Notification.objects.filter(
+            user=self.author,
+            actor=self.author,
+            notification_type='like'
+        ).exists())
+
+    def test_unauthenticated_user_redirect(self):
+        """Unauthenticated users should be redirected to login."""
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_like_invalid_post_returns_404(self):
+        """Trying to like a non-existent post should return 404."""
+        self.client.force_login(self.user)
+        invalid_url = reverse('like_post', kwargs={'post_id': 9999})
+        response = self.client.post(invalid_url)
+        self.assertEqual(response.status_code, 404)
+
+class BookmarkPostViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='user', password='password')
+        self.author = User.objects.create_user(username='author', password='password')
         
         self.post = Post.objects.create(
             author=self.author,
-            title="Test Post",
-            content="Content"
+            title='Test Post',
+            content='Content',
+            animal_type='cat'
         )
-        
-        self.url = reverse('like_post', args=[self.post.id]) 
-        self.fallback_url = reverse('posts') 
+        self.url = reverse('bookmark_post', kwargs={'post_id': self.post.id}) # CHECK_THIS: Verify URL name
 
-    def test_like_post_creates_like_and_notification(self):
-        self.client.login(username='user', password='password')
+    def test_bookmark_post_add(self):
+        self.client.force_login(self.user)
         
-        # จำลอง HTTP_REFERER
-        header = {'HTTP_REFERER': '/previous/url/'}
-        response = self.client.get(self.url, **header)
+        response = self.client.post(self.url)
         
-        self.assertRedirects(response, '/previous/url/', fetch_redirect_response=False)
-        
-        # Check Like added
-        self.assertTrue(self.post.likes.filter(id=self.user.id).exists())
-        
-        # Check Notification created
-        self.assertEqual(Notification.objects.count(), 1)
-        noti = Notification.objects.first()
-        self.assertEqual(noti.user, self.author)
-        self.assertEqual(noti.actor, self.user)
-        self.assertEqual(noti.notification_type, 'like')
-
-    def test_unlike_post_removes_like(self):
-        self.client.login(username='user', password='password')
-        
-        # ให้ User like ไปก่อน
-        self.post.likes.add(self.user)
-        
-        response = self.client.get(self.url)
-        
-        # Check Redirect to fallback (ไม่มี referer)
-        self.assertRedirects(response, self.fallback_url)
-        
-        # Check Like removed
-        self.assertFalse(self.post.likes.filter(id=self.user.id).exists())
-
-    def test_like_own_post_no_notification(self):
-        self.client.login(username='author', password='password')
-        
-        response = self.client.get(self.url)
-        
-        # Check Like added
-        self.assertTrue(self.post.likes.filter(id=self.author.id).exists())
-        
-        # Check Notification NOT created
-        self.assertEqual(Notification.objects.count(), 0)
-
-    def test_like_nonexistent_post_404(self):
-        self.client.login(username='user', password='password')
-        url = reverse('like_post', args=[999])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
-
-class BookmarkPostViewTest(TestCase):
-    def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='password')
-        self.post = Post.objects.create(
-            author=self.user,
-            title="Test Post",
-            content="Content"
-        )
-        
-        self.url = reverse('bookmark_post', args=[self.post.id])
-        self.fallback_url = reverse('posts')
-
-    def test_bookmark_add(self):
-        self.client.login(username='testuser', password='password')
-        
-        # จำลอง HTTP_REFERER
-        header = {'HTTP_REFERER': '/previous/page/'}
-        response = self.client.get(self.url, **header)
-        
-        self.assertRedirects(response, '/previous/page/', fetch_redirect_response=False)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data['bookmarked'])
         self.assertTrue(self.post.bookmarks.filter(id=self.user.id).exists())
 
-    def test_bookmark_remove(self):
-        self.client.login(username='testuser', password='password')
-        
-        # เพิ่ม bookmark ไว้ก่อน
+    def test_bookmark_post_remove(self):
+        self.client.force_login(self.user)
         self.post.bookmarks.add(self.user)
         
-        response = self.client.get(self.url)
+        response = self.client.post(self.url)
         
-        self.assertRedirects(response, self.fallback_url)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertFalse(data['bookmarked'])
         self.assertFalse(self.post.bookmarks.filter(id=self.user.id).exists())
 
-    def test_bookmark_invalid_post_404(self):
-        self.client.login(username='testuser', password='password')
-        url = reverse('bookmark_post', args=[999])
-        
-        response = self.client.get(url)
+    def test_bookmark_unauthenticated(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_bookmark_invalid_post(self):
+        self.client.force_login(self.user)
+        url = reverse('bookmark_post', kwargs={'post_id': 9999}) # CHECK_THIS: Verify URL name
+        response = self.client.post(url)
         self.assertEqual(response.status_code, 404)

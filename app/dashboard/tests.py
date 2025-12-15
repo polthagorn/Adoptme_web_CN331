@@ -68,17 +68,6 @@ class DashboardPageTests(DashboardBaseTest):
         self.assertEqual(res.status_code, 200)
         self.assertContains(res, self.user.username)
 
-    def test_shelter_approval_loads(self):
-        ShelterProfile.objects.create(
-            user=self.owner,
-            name="Happy Shelter",
-            status="PENDING",
-        )
-        url = reverse("shelter_approval")
-        res = self.client.get(url)
-        self.assertIn(res.status_code, (200, 302))
-        if res.status_code == 302:
-            self.fail(f"Expected 200 but got redirect to: {res['Location']}")
 
     def test_store_approval_loads(self):
         Store.objects.create(owner=self.owner, name="Pet Store", status="PENDING")

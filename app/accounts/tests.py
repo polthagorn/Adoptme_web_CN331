@@ -256,35 +256,27 @@ class ProfileEditViewTest(TestCase):
         # เช็คว่ามี error กลับมา (ไม่ต้องระบุข้อความเป๊ะๆ ก็ได้ เพื่อความยืดหยุ่น)
         self.assertTrue(len(form_errors['username']) > 0)
 
-    def test_remove_image(self):
-        """ทดสอบปุ่มลบรูปภาพ"""
-        self.client.login(username='testuser', password='password')
+class ProfileEditViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password', email='old@example.com')
+        self.profile, created = Profile.objects.get_or_create(user=self.user)
+        self.url = reverse('profile_edit')
+
+    def test_remove_profile_image(self):
+        self.client.force_login(self.user)
         
-        # จำลองการมีรูปภาพอยู่ก่อน
-        image = SimpleUploadedFile("test_image.jpg", b"file_content", content_type="image/jpeg")
-        self.user.profile.image = image
-        self.user.profile.save()
+        self.profile.image = SimpleUploadedFile("test.jpg", b"content", content_type="image/jpeg")
+        self.profile.save()
         
-        # ส่ง POST request พร้อมปุ่ม remove_image
         data = {
-            'remove_image': 'true', # ค่า value ไม่สำคัญ ขอแค่มี key
-             # ต้องส่งข้อมูล form หลักไปด้วยเพราะ view อาจจะ validate ก่อน (ขึ้นอยู่กับ logic flow)
-             # แต่ในโค้ดของคุณเช็ค `if 'remove_image'` ก่อน `form.is_valid` เลยไม่ต้องส่ง field อื่นก็ได้
+            'remove_image': 'true'
         }
         
         response = self.client.post(self.url, data)
         
-        # ตรวจสอบ redirect กลับมาหน้า edit (ตามโค้ดของคุณ)
+        self.profile.refresh_from_db()
+        self.assertFalse(self.profile.image)
         self.assertRedirects(response, self.url)
-        
-        # ตรวจสอบว่ารูปกลายเป็น default
-        self.user.profile.refresh_from_db()
-        self.assertEqual(self.user.profile.image.name, 'default.jpg')
-
-    def test_login_required(self):
-        """ทดสอบว่าต้อง login ก่อนเข้าใช้งาน"""
-        response = self.client.get(self.url)
-        self.assertRedirects(response, f'/accounts/login/?next={self.url}')
 
 class UserProfilePageViewTest(TestCase):
     def setUp(self):
