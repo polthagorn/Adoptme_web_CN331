@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-
+from django.http import HttpResponseForbidden
 from app.accounts.models import Notification
 from .models import Post
 from .forms import PostForm, CommentForm
@@ -238,7 +238,10 @@ def post_detail(request, post_id):
 # ----------------------------------------
 @login_required
 def delete_post(request, post_id):
-    post = get_object_or_404(Post, id=post_id, author=request.user)
+    post = get_object_or_404(Post, id=post_id)
+
+    if request.user != post.author and not request.user.is_staff and not request.user.is_superuser:
+        return HttpResponseForbidden("You don't have permission to delete this post.")
 
     if request.method == 'POST':
         post.delete()
