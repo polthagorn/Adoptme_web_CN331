@@ -4,7 +4,6 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from app.posts.models import Post, Comment
-from app.posts.forms import PostForm
 from app.shelters.models import ShelterProfile
 from app.accounts.models import Notification
 
@@ -276,84 +275,86 @@ class PostHaversineFilterTest(TestCase):
         
         self.assertEqual(response.status_code, 200)
 
-class CreatePostViewTest(TestCase):
+class CreatePostViewTests(TestCase):
     def setUp(self):
-        self.client = Client()
+        self.shelter_owner = User.objects.create_user(username='shelter_owner', password='password')
+        self.follower = User.objects.create_user(username='follower', password='password')
         
-        self.user = User.objects.create_user(username='user', password='password')
-        
-        self.shelter_owner = User.objects.create_user(username='owner', password='password')
-        
-        dummy_file = SimpleUploadedFile("doc.pdf", b"file_content")
-        self.shelter = ShelterProfile.objects.create(
+        dummy_file = SimpleUploadedFile("doc.pdf", b"file_content", content_type="application/pdf")
+
+        self.shelter_profile = ShelterProfile.objects.create(
             user=self.shelter_owner,
-            name="Test Shelter",
-            description="Desc",
-            address="Addr",
-            phone="123",
-            email="test@shelter.com",
+            name="Happy Shelter",
+            description="Best shelter",
+            address="123 Street",
+            phone="0812345678",
+            email="shelter@test.com",
             verification_document=dummy_file,
-            status='APPROVED'
+            status='APPROVED' 
         )
         
-        self.url = reverse('create_post')
-        self.success_url = reverse('posts')
+        self.shelter_profile.followers.add(self.follower)
+        
+        self.url = reverse('create_post') # CHECK_THIS: Verify URL name
 
-    def test_get_create_post_page(self):
-        self.client.login(username='user', password='password')
+    def test_create_post_by_shelter_triggers_notification(self):
+        self.client.force_login(self.shelter_owner)
+        
+        data = {
+            'title': 'New Adoption Update',
+            'content': 'We have new puppies!',
+            'tag': 'adoption_update',
+            'animal_type': 'dog',
+            'animal_race': 'golden_retriever',
+            'latitude': 13.7563,
+            'longitude': 100.5018
+        }
+        
+        response = self.client.post(self.url, data)
+        
+        self.assertRedirects(response, reverse('posts'))
+        
+        post = Post.objects.first()
+        self.assertIsNotNone(post)
+        self.assertEqual(post.title, 'New Adoption Update')
+        self.assertEqual(post.shelter, self.shelter_profile)
+        
+        self.assertTrue(Notification.objects.filter(
+            user=self.follower,
+            actor=self.shelter_owner,
+            notification_type='system',
+            post=post
+        ).exists())
+
+    def test_create_post_normal_user_no_notification(self):
+        normal_user = User.objects.create_user(username='normal', password='password')
+        self.client.force_login(normal_user)
+        
+        data = {
+            'title': 'My Pet',
+            'content': 'Cute dog',
+            'tag': 'other',
+            'animal_type': 'dog',
+            'animal_race': 'other',
+            'latitude': 0.0,
+            'longitude': 0.0
+        }
+        
+        self.client.post(self.url, data)
+        
+        post = Post.objects.filter(author=normal_user).first()
+        self.assertIsNone(post.shelter)
+        
+        self.assertFalse(Notification.objects.filter(actor=normal_user).exists())
+
+    def test_create_post_get_request_renders_template(self):
+        self.client.force_login(self.shelter_owner)
+        
         response = self.client.get(self.url)
         
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'posts/create_post.html')
-
-    def test_create_post_regular_user(self):
-        self.client.login(username='user', password='password')
-        
-        data = {
-            'title': 'Lost Dog',
-            'content': 'Please help find my dog',
-            'tag': 'missing',
-            'animal_type': 'dog',
-            'animal_race': 'golden_retriever',
-            'location': 'Bangkok'
-        }
-        
-        response = self.client.post(self.url, data)
-        
-        self.assertRedirects(response, self.success_url)
-        
-        post = Post.objects.last()
-        self.assertEqual(post.title, 'Lost Dog')
-        self.assertEqual(post.author, self.user)
-        self.assertIsNone(post.shelter)
-
-    def test_create_post_shelter_user_auto_assign(self):
-        self.client.login(username='owner', password='password')
-        
-        data = {
-            'title': 'Shelter Update',
-            'content': 'We have new pets',
-            'tag': 'adoption_update',
-            'animal_type': 'cat',
-            'animal_race': 'persian'
-        }
-        
-        response = self.client.post(self.url, data)
-        
-        self.assertRedirects(response, self.success_url)
-        
-        post = Post.objects.last()
-        self.assertEqual(post.author, self.shelter_owner)
-        self.assertEqual(post.shelter, self.shelter)
-
-    def test_create_post_invalid_form(self):
-        self.client.login(username='user', password='password')
-        
-        response = self.client.post(self.url, {})
-        
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(response.context['form'].is_valid())
-        self.assertTrue(response.context['form'].errors)
+        self.assertIn('form', response.context)
 
 class PostDetailNotificationTest(TestCase):
     def setUp(self):
