@@ -42,8 +42,21 @@
 <body class="bg-background text-text dark:bg-darkbg dark:text-darktext font-sans min-h-screen flex flex-col transition-colors duration-500"
       data-messages="{% for message in messages %}{{ message|safe }}|{{ message.tags }},{% endfor %}">
 
+  <!-- ✅ DEFAULT BACKGROUND for every page (override on pages that already have their own bg) -->
+  {% block page_background %}
+  <div class="fixed inset-0 -z-10 pointer-events-none">
+    <div class="
+      absolute inset-0
+      bg-[url('{% static "img/blanktown-light.jpg" %}')]
+      dark:bg-[url('{% static "img/blanktown-dark.jpg" %}')]
+      bg-cover bg-center bg-no-repeat
+    "></div>
+    <div class="absolute inset-0 bg-white/20 dark:bg-black/45"></div>
+  </div>
+  {% endblock page_background %}
+
   <!-- Header -->
-  <header class="bg-surface dark:bg-darksurface border-b border-border dark:border-darkborder p-4 px-10 flex justify-between items-center shadow-sm">
+  <header class="bg-surface/90 dark:bg-darksurface/85 backdrop-blur-md border-b border-border dark:border-darkborder p-4 px-10 flex justify-between items-center shadow-sm">
     <a href="{% url 'welcome' %}" class="text-3xl font-extrabold text-accent tracking-wide hover:scale-105 transition-transform">
       Adopt Me
     </a>
@@ -68,13 +81,11 @@
            class="relative inline-flex items-center justify-center w-9 h-9 rounded-full
                   bg-white-200 text-gray-800 dark:bg-darksurface dark:text-darktext
                   border border-border dark:border-darkborder hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors">
-          <!-- chat icon -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
             <path d="M7.5 8.25h9a.75.75 0 0 1 0 1.5h-9a.75.75 0 0 1 0-1.5Zm0 3.75h6a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1 0-1.5Z"/>
             <path fill-rule="evenodd" d="M4.5 4.5A2.25 2.25 0 0 1 6.75 2.25h10.5A2.25 2.25 0 0 1 19.5 4.5v9A2.25 2.25 0 0 1 17.25 15.75H10.81l-3.53 3.53A.75.75 0 0 1 6 18.75v-3H6.75A2.25 2.25 0 0 1 4.5 13.5v-9Zm2.25-.75a.75.75 0 0 0-.75.75v9a.75.75 0 0 0 .75.75H7.5v2.19l2.72-2.72a.75.75 0 0 1 .53-.22h6.5a.75.75 0 0 0 .75-.75v-9a.75.75 0 0 0-.75-.75H6.75Z" clip-rule="evenodd"/>
           </svg>
 
-          <!-- JS will update this in real time -->
           <span id="globalUnreadBadge"
                 class="hidden absolute -top-1 -right-1 min-w-[1.1rem] h-4 px-1 flex items-center justify-center
                        rounded-full bg-red-500 text-white text-[0.6rem] font-bold"></span>
@@ -88,15 +99,12 @@
                   dark:bg-red-900/30 dark:text-red-300 dark:border-red-700
                   dark:hover:bg-red-900/50
                   text-sm font-semibold transition">
-          
-          <!-- shield / report icon -->
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
               fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 3l7 4v5c0 5-3.5 9-7 11-3.5-2-7-6-7-11V7l7-4z" />
           </svg>
-
-            Reports
+          Reports
         </a>
         {% endif %}
 
@@ -134,14 +142,13 @@
           </svg>
         </a>
 
-        <!-- Report dropdown (matches your icon buttons) -->
+        <!-- Report dropdown -->
         <div class="relative ml-2">
           <button id="report-menu-btn" type="button"
                   class="relative inline-flex items-center justify-center w-9 h-9 rounded-full
                          bg-white-200 text-gray-800 dark:bg-darksurface dark:text-darktext
                          border border-border dark:border-darkborder hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors"
                   title="Report">
-            <!-- flag icon -->
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M5 3v18M5 4h12l-1.5 4L17 12H5" />
@@ -172,7 +179,6 @@
           </div>
         </div>
 
-        <!-- for store -->
         {% if request.user.stores.exists %}
             <div class="ml-4 pl-4 border-l border-gray-300 dark:border-gray-700 flex items-center space-x-3">
 
@@ -210,7 +216,7 @@
   </main>
 
   <!-- Footer -->
-  <footer class="text-center text-sm text-gray-500 dark:text-gray-400 border-t border-border dark:border-darkborder py-6">
+  <footer class="text-center text-sm text-gray-500 dark:text-gray-400 border-t border-border dark:border-darkborder py-6 bg-surface/70 dark:bg-darksurface/60 backdrop-blur">
     &copy; {% now "Y" %} Adopt Me | Made by ผู้ดีBangkok
   </footer>
 
@@ -320,7 +326,6 @@
         if (!res.ok) return;
         const data = await res.json();
 
-        // Header badge (global)
         const headerBadge = document.getElementById("globalUnreadBadge");
         if (headerBadge) {
           const n = data.total_unread || 0;
@@ -333,7 +338,6 @@
           }
         }
 
-        // Inbox badges (only if on inbox page)
         const per = data.per_conversation || {};
         document.querySelectorAll("[data-conv-id]").forEach(card => {
           const id = card.getAttribute("data-conv-id");
@@ -349,9 +353,7 @@
             badge.classList.add("hidden");
           }
         });
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
     }
 
     refreshUnreadCounts();
