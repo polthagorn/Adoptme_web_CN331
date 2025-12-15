@@ -1,9 +1,11 @@
+import json
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from app.shelters.models import ShelterProfile
 from app.posts.models import Post
 from django.core.files.uploadedfile import SimpleUploadedFile
+from app.accounts.models import Notification
 
 class ShelterViewsTest(TestCase):
 
@@ -118,22 +120,113 @@ class ShelterRegisterViewTest(TestCase):
         # เช็คว่ามีการสร้าง Profile และผูกกับ User ถูกต้อง
         self.assertTrue(ShelterProfile.objects.filter(user=self.user_no_profile).exists())
 
-class PublicShelterProfileViewTest(TestCase):
+class PublicShelterProfileViewTests(TestCase):
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(username='test', password='password')
+        self.owner = User.objects.create_user(username='owner', password='password')
+        self.visitor = User.objects.create_user(username='visitor', password='password')
+        
+        dummy_file = SimpleUploadedFile("doc.pdf", b"content", content_type="application/pdf")
+        
         self.shelter = ShelterProfile.objects.create(
-            user=self.user,
-            name="Shelter",
+            user=self.owner,
+            name="Test Shelter",
+            description="Desc",
+            address="Addr",
+            phone="123",
+            email="test@test.com",
+            verification_document=dummy_file,
             status='APPROVED'
         )
-        Post.objects.create(author=self.user, shelter=self.shelter, title="Post", content="Content")
         
-        self.url = reverse('public_shelter_profile', args=[self.shelter.pk]) # เช็คชื่อ URL ใน urls.py
+        self.post = Post.objects.create(
+            author=self.owner,
+            shelter=self.shelter,
+            title="Shelter Post",
+            content="Content",
+            animal_type='dog',
+            animal_race='golden_retriever'
+        )
+        
+        self.url = reverse('public_shelter_profile', kwargs={'pk': self.shelter.pk}) # CHECK_THIS: Verify URL name
 
-    def test_view_coverage(self):
+    def test_view_authenticated_not_following(self):
+        self.client.force_login(self.visitor)
         response = self.client.get(self.url)
         
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'shelters/public_shelter_profile.html')
-        self.assertIn('shelter_posts', response.context)
+        self.assertFalse(response.context['is_following'])
+        self.assertIn(self.post, response.context['shelter_posts'])
+
+    def test_view_authenticated_following(self):
+        self.shelter.followers.add(self.visitor)
+        self.client.force_login(self.visitor)
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['is_following'])
+
+    def test_view_unauthenticated(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context['is_following'])
+        self.assertIn(self.post, response.context['shelter_posts'])
+
+class FollowShelterViewTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username='owner', password='password')
+        self.visitor = User.objects.create_user(username='visitor', password='password')
+        
+        dummy_file = SimpleUploadedFile("doc.pdf", b"content", content_type="application/pdf")
+        
+        self.shelter = ShelterProfile.objects.create(
+            user=self.owner,
+            name="Test Shelter",
+            description="Desc",
+            address="Addr",
+            phone="123",
+            email="test@test.com",
+            verification_document=dummy_file,
+            status='APPROVED'
+        )
+        self.url = reverse('follow_shelter', kwargs={'pk': self.shelter.pk}) # CHECK_THIS: Verify URL name
+
+    def test_follow_shelter_success(self):
+        self.client.force_login(self.visitor)
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data['is_following'])
+        self.assertEqual(data['follower_count'], 1)
+        
+        self.assertTrue(self.shelter.followers.filter(pk=self.visitor.pk).exists())
+        self.assertTrue(Notification.objects.filter(user=self.owner, actor=self.visitor).exists())
+
+    def test_unfollow_shelter_success(self):
+        self.shelter.followers.add(self.visitor)
+        self.client.force_login(self.visitor)
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertFalse(data['is_following'])
+        self.assertEqual(data['follower_count'], 0)
+        
+        self.assertFalse(self.shelter.followers.filter(pk=self.visitor.pk).exists())
+
+    def test_owner_cannot_follow_own_shelter(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(self.shelter.followers.filter(pk=self.owner.pk).exists())
+
+    def test_get_method_not_allowed(self):
+        self.client.force_login(self.visitor)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
