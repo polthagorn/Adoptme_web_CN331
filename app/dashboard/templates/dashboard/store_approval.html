@@ -4,48 +4,60 @@
 <h1 class="text-3xl font-bold mb-6">Pending Store Approvals</h1>
 
 {% if stores %}
-<table class="w-full bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded shadow">
+<div class="overflow-x-auto">
+  <table class="w-full bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded shadow">
     <thead class="bg-gray-200 dark:bg-gray-700 text-sm uppercase">
-        <tr>
-            <th class="p-3 text-left">Store</th>
-            <th class="p-3 text-left">Owner</th>
-            <th class="p-3 text-left">Type</th>
-            <th class="p-3 text-left">Created</th>
-            <th class="p-3 text-center">Actions</th>
-        </tr>
+      <tr>
+        <th class="p-3 text-left">Store</th>
+        <th class="p-3 text-left">Owner</th>
+        <th class="p-3 text-left">Type</th>
+        <th class="p-3 text-left">Created</th>
+        <th class="p-3 text-center">Actions</th>
+      </tr>
     </thead>
 
     <tbody>
-        {% for store in stores %}
-        <tr class="border-t border-border dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-            <td class="p-3 font-semibold">{{ store.name }}</td>
-            <td class="p-3">{{ store.owner.username }}</td>
-            <td class="p-3 capitalize">
-                {{ store.get_store_type_display }}
-            </td>
-            <td class="p-3 text-sm text-gray-500 dark:text-gray-400">
-                {{ store.created_at|date:"Y-m-d H:i" }}
-            </td>
+      {% for store in stores %}
+      <tr class="border-t border-border dark:border-darkborder hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+        <td class="p-3 font-semibold">{{ store.name }}</td>
+        <td class="p-3">{{ store.owner.username }}</td>
+        <td class="p-3 capitalize">{{ store.get_store_type_display }}</td>
+        <td class="p-3 text-sm text-gray-500 dark:text-gray-400">
+          {{ store.created_at|date:"Y-m-d H:i" }}
+        </td>
 
-            <td class="p-3 text-center space-x-3">
-                <a href="{% url 'approve_store' store.id %}"
-                   class="text-green-600 font-semibold hover:underline">
-                    Approve
-                </a>
+        <td class="p-3">
+          <div class="flex items-center justify-center gap-3">
 
-                <a href="{% url 'reject_store' store.id %}"
-                   class="text-red-600 font-semibold hover:underline">
-                    Reject
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
+            <!-- ✅ APPROVE = POST -->
+            <form method="post" action="{% url 'approve_store' store.id %}">
+              {% csrf_token %}
+              <button type="submit"
+                class="px-4 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-semibold">
+                Approve
+              </button>
+            </form>
+
+            <!-- ✅ REJECT = POST -->
+            <form method="post" action="{% url 'reject_store' store.id %}">
+              {% csrf_token %}
+              <button type="submit"
+                class="px-4 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-semibold">
+                Reject
+              </button>
+            </form>
+
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
     </tbody>
-</table>
+  </table>
+</div>
 
 {% else %}
 <p class="text-gray-600 dark:text-gray-400">
-    No stores currently awaiting approval.
+  No stores currently awaiting approval.
 </p>
 {% endif %}
 
