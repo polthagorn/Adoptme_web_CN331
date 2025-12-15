@@ -1,8 +1,9 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from app.stores.models import Store, Product, ProductReview, StoreReview
-from django.core.files.uploadedfile import SimpleUploadedFile
+from app.accounts.models import Notification
 
 # A utility function to create a store quickly in tests
 def create_store(owner, name, store_type, status):
@@ -101,29 +102,6 @@ class StoreViewContentTests(TestCase):
         self.assertContains(response, self.store1.name)
         self.assertContains(response, self.store2.name)
         self.assertNotContains(response, self.store3.name)
-
-    def test_marketplace_view_shows_only_approved_products(self):
-        """MarketplaceView should only display products from approved stores."""
-        # Create a product in a pending store, which should not be visible
-        create_product(self.store2, 'Hidden Item', 10.00)
-        
-        response = self.client.get(reverse('marketplace'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.product1.name)
-        self.assertContains(response, self.product2.name)
-        self.assertNotContains(response, 'Hidden Item')
-
-    def test_marketplace_search_functionality(self):
-        """Marketplace search should filter products and find stores."""
-        # Search for a product name
-        response = self.client.get(reverse('marketplace'), {'q': 'Cat Food'})
-        self.assertContains(response, self.product1.name)
-        self.assertNotContains(response, self.product2.name)
-
-        # Search for a store name
-        response = self.client.get(reverse('marketplace'), {'q': 'Doggy Depot'})
-        self.assertContains(response, self.product2.name) # Shows related product
-        self.assertContains(response, 'Doggy Depot') # Shows the store itself
 
     def test_marketplace_filter_by_type(self):
         """Marketplace filter should correctly filter by store type."""
@@ -237,185 +215,283 @@ class StoreRequestCreateViewTest(TestCase):
         form_errors = response.context['form'].errors.as_text()
         self.assertIn('must submit at least one', form_errors)
 
-class MarketplaceViewTest(TestCase):
+class MarketplaceViewTests(TestCase):
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(username='test', password='password')
-        self.url = reverse('marketplace') # เช็คชื่อ URL ใน urls.py
-
-        # 1. Store Approved (Type: PET)
+        self.user = User.objects.create_user(username='owner', password='password')
+        
         self.store_pet = Store.objects.create(
-            owner=self.user, name="Pet Shop", status='APPROVED', store_type='PET'
-        )
-        # 2. Store Approved (Type: SUPPLIES)
-        self.store_supplies = Store.objects.create(
-            owner=self.user, name="Supply Shop", status='APPROVED', store_type='SUPPLIES'
-        )
-        # 3. Store Pending (Should be hidden)
-        self.store_pending = Store.objects.create(
-            owner=self.user, name="Pending Shop", status='PENDING', store_type='PET'
-        )
-
-        # Products
-        self.p_pet = Product.objects.create(store=self.store_pet, name="Dog Food", description="Yummy", price=100)
-        self.p_supply = Product.objects.create(store=self.store_supplies, name="Cage", description="Strong", price=500)
-        self.p_hidden = Product.objects.create(store=self.store_pending, name="Hidden", price=10)
-
-        # Reviews for Rating Sort
-        ProductReview.objects.create(product=self.p_pet, author=self.user, rating=5, comment="Great")
-        ProductReview.objects.create(product=self.p_supply, author=self.user, rating=1, comment="Bad")
-
-    def test_marketplace_base_visibility(self):
-        # Test Default View (Only Approved Stores)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'stores/marketplace.html')
-        
-        products = response.context['products']
-        self.assertIn(self.p_pet, products)
-        self.assertIn(self.p_supply, products)
-        self.assertNotIn(self.p_hidden, products) # Pending store excluded
-
-    def test_search_filter(self):
-        # Test Search (q=Dog)
-        response = self.client.get(self.url, {'q': 'Dog'})
-        products = response.context['products']
-        
-        self.assertIn(self.p_pet, products)
-        self.assertNotIn(self.p_supply, products)
-
-    def test_type_filter(self):
-        # Test Type Filter (type=SUPPLIES)
-        response = self.client.get(self.url, {'type': 'SUPPLIES'})
-        products = response.context['products']
-        
-        self.assertIn(self.p_supply, products)
-        self.assertNotIn(self.p_pet, products)
-
-    def test_sort_rating_high(self):
-        # Test Sort by Rating (High -> Low)
-        response = self.client.get(self.url, {'sort': 'rating_high'})
-        products = list(response.context['products'])
-        
-        # Check annotation & order
-        self.assertTrue(hasattr(products[0], 'avg_rating'))
-        self.assertEqual(products[0], self.p_pet)    # Rating 5
-        self.assertEqual(products[1], self.p_supply) # Rating 1
-
-    def test_sort_price_low(self):
-        # Test Sort by Price (Low -> High)
-        response = self.client.get(self.url, {'sort': 'price_low'})
-        products = list(response.context['products'])
-        
-        self.assertEqual(products[0], self.p_pet)    
-        self.assertEqual(products[1], self.p_supply) 
-
-class ProductDetailViewTest(TestCase):
-    def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(username='test', password='password')
-        self.store = Store.objects.create(owner=self.user, name="Shop", status='APPROVED')
-        self.product = Product.objects.create(store=self.store, name="Item", price=10)
-        ProductReview.objects.create(product=self.product, author=self.user, rating=4, comment="Good")
-        self.url = reverse('product_detail', args=[self.product.pk])
-
-    def test_product_detail_coverage(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'stores/product_detail.html')
-        self.assertIn('reviews', response.context)
-        self.assertEqual(response.context['average_rating'], 4.0)
-
-class ProductUpdateViewTests(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='owner', password='password')
-        self.other_user = User.objects.create_user(username='other', password='password')
-        
-        self.store = Store.objects.create(owner=self.user, name='Test Store')  # CHECK_THIS: Add required fields
-        self.product = Product.objects.create(
-            store=self.store,
-            name='Old Name',  # CHECK_THIS: Add required fields
-            price=100
-        )
-        self.url = reverse('product_update', kwargs={'pk': self.product.pk})  # CHECK_THIS: Verify URL name
-
-    def test_view_requires_login(self):
-        response = self.client.get(self.url)
-        self.assertNotEqual(response.status_code, 200)
-        self.assertEqual(response.status_code, 302)
-
-    def test_get_queryset_filters_by_owner(self):
-        self.client.force_login(self.other_user)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 404)
-
-    def test_context_data_contains_store(self):
-        self.client.force_login(self.user)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['store'], self.store)
-        self.assertTemplateUsed(response, 'stores/product_update_form.html')
-
-class ProductUpdateViewTests(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='owner', password='password')
-        self.other_user = User.objects.create_user(username='other', password='password')
-        
-        self.store = Store.objects.create(
             owner=self.user,
-            name='Test Store',
-            description='Test Store Description',
+            name='Pet Shop A',
             store_type='PET',
             status='APPROVED'
         )
         
+        self.store_supplies = Store.objects.create(
+            owner=self.user,
+            name='Supply Shop B',
+            store_type='SUPPLIES',
+            status='APPROVED'
+        )
+        
+        self.store_pending = Store.objects.create(
+            owner=self.user,
+            name='Pending Shop',
+            store_type='PET',
+            status='PENDING'
+        )
+        
+        self.p1 = Product.objects.create(store=self.store_pet, name='Dog Food', description='Yummy', price=100, stock=10)
+        self.p2 = Product.objects.create(store=self.store_supplies, name='Leash', description='Strong', price=50, stock=5)
+        self.p3_out_of_stock = Product.objects.create(store=self.store_pet, name='Gone', price=10, stock=0)
+        self.p4_pending = Product.objects.create(store=self.store_pending, name='Hidden', price=10, stock=10)
+
+        self.url = reverse('marketplace')
+
+    def test_view_filters_approved_and_stock(self):
+        """Show only products from APPROVED stores with stock > 0"""
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        products = response.context['products']
+        
+        self.assertIn(self.p1, products)
+        self.assertIn(self.p2, products)
+        self.assertNotIn(self.p3_out_of_stock, products)
+        self.assertNotIn(self.p4_pending, products)      
+
+    def test_search_functionality(self):
+        response = self.client.get(self.url, {'q': 'Food'})
+        self.assertIn(self.p1, response.context['products'])
+        self.assertNotIn(self.p2, response.context['products'])
+        
+        response = self.client.get(self.url, {'q': 'Strong'})
+        self.assertIn(self.p2, response.context['products'])
+        
+        response = self.client.get(self.url, {'q': 'Supply Shop'})
+        self.assertIn(self.p2, response.context['products'])
+
+    def test_filter_by_store_type(self):
+        """Filter by PET or SUPPLIES"""
+        response = self.client.get(self.url, {'type': 'PET'})
+        products = response.context['products']
+        self.assertIn(self.p1, products)
+        self.assertNotIn(self.p2, products)
+
+    def test_sort_by_price(self):
+        """Test price_low and price_high"""
+
+        response = self.client.get(self.url, {'sort': 'price_low'})
+        products = list(response.context['products'])
+        self.assertEqual(products, [self.p2, self.p1])
+        
+        response = self.client.get(self.url, {'sort': 'price_high'})
+        products = list(response.context['products'])
+        self.assertEqual(products, [self.p1, self.p2])
+
+    def test_sort_by_rating(self):
+        """Test rating_high logic with annotation"""
+        reviewer = User.objects.create_user(username='reviewer', password='password')
+        
+        ProductReview.objects.create(product=self.p1, author=reviewer, rating=1, comment='Bad')
+        ProductReview.objects.create(product=self.p2, author=reviewer, rating=5, comment='Good')
+        
+        response = self.client.get(self.url, {'sort': 'rating_high'})
+        products = list(response.context['products'])
+        
+        self.assertEqual(products[0], self.p2)
+        self.assertEqual(products[1], self.p1)
+
+    def test_pagination(self):
+        for i in range(13):
+            Product.objects.create(store=self.store_pet, name=f'Extra {i}', price=10, stock=1)
+            
+        response = self.client.get(self.url)
+        self.assertTrue(response.context['is_paginated'])
+        self.assertEqual(len(response.context['products']), 12)
+
+class ProductDetailViewTests(TestCase):
+    def setUp(self):
+        # 1. สร้าง User (เจ้าของร้าน และ คนรีวิว)
+        self.owner = User.objects.create_user(username='owner', password='password')
+        self.reviewer = User.objects.create_user(username='reviewer', password='password')
+        
+        # 2. สร้าง Store (จำเป็นต้องมีเพราะ Product ผูกกับ Store)
+        self.store = Store.objects.create(
+            owner=self.owner,
+            name='Test Store',
+            description='Test Desc',
+            store_type='PET',
+            status='APPROVED'
+        )
+        
+        # 3. สร้าง Product
         self.product = Product.objects.create(
             store=self.store,
-            name='Old Name',
-            description='Old Description',
+            name='Test Product',
+            description='Desc',
             price=100.00,
             stock=10
         )
-        self.url = reverse('product_update', kwargs={'pk': self.product.pk}) # CHECK_THIS: Verify URL name
+        
+        # 4. กำหนด URL (ตรวจสอบว่าใน urls.py ตั้งชื่อ name='product_detail' หรือไม่)
+        self.url = reverse('product_detail', kwargs={'pk': self.product.pk})
 
-    def test_view_requires_login(self):
+    def test_view_loads_success_and_context_correct(self):
+        # 5. สร้าง Review จำลอง 2 อัน (5 ดาว และ 3 ดาว -> เฉลี่ยต้องได้ 4.0)
+        # หมายเหตุ: field 'order' เป็น null=True ดังนั้นไม่ต้องใส่ก็ได้
+        ProductReview.objects.create(product=self.product, author=self.reviewer, rating=5, comment='Great')
+        ProductReview.objects.create(product=self.product, author=self.owner, rating=3, comment='Okay') # ให้เจ้าของรีวิวเล่นๆ เพื่อเทส
+
+        # 6. ยิง GET Request
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 302)
+        
+        # 7. ตรวจสอบผลลัพธ์
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'stores/product_detail.html')
+        
+        # ตรวจสอบว่าสินค้าถูกต้อง
+        self.assertEqual(response.context['product'], self.product)
+        
+        # ตรวจสอบ Rating เฉลี่ย (5+3)/2 = 4.0
+        self.assertEqual(response.context['average_rating'], 4.0)
+        
+        # ตรวจสอบจำนวนรีวิว
+        self.assertEqual(len(response.context['reviews']), 2)
 
-    def test_get_queryset_filters_by_owner(self):
-        self.client.force_login(self.other_user)
+class ProductUpdateViewTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username='owner', password='password')
+        self.follower = User.objects.create_user(username='follower', password='password')
+        self.stranger = User.objects.create_user(username='stranger', password='password')
+        
+        self.store = Store.objects.create(
+            owner=self.owner,
+            name='My Shop',
+            description='Test Shop',
+            store_type='PET',
+            status='APPROVED'
+        )
+        self.store.followers.add(self.follower)
+        
+        self.product = Product.objects.create(
+            store=self.store,
+            name='Original Name',
+            description='Desc',
+            price=100.00,
+            discount_price=None,
+            stock=10
+        )
+        
+        self.url = reverse('product_update', kwargs={'pk': self.product.pk})
+
+    def test_view_access_control(self):
+        """คนอื่นที่ไม่ใช่เจ้าของร้าน เข้ามาแก้ไม่ได้ (ต้องได้ 404)"""
+        self.client.force_login(self.stranger)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 404)
 
-    def test_context_data_contains_store(self):
-        self.client.force_login(self.user)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['store'], self.store)
-
-    def test_update_success_and_redirect(self):
-        self.client.force_login(self.user)
-        
-        new_image = SimpleUploadedFile(
-            "test_image.gif",
-            b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x05\x04\x04\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b',
-            content_type="image/gif"
-        )
+    def test_update_triggers_notification_on_new_sale(self):
+        """เปลี่ยนจากราคาเต็ม -> ลดราคา ต้องมีการแจ้งเตือน"""
+        self.client.force_login(self.owner)
         
         data = {
-            'name': 'New Name',
-            'description': 'New Description',
-            'price': 200.00,
-            'stock': 20,
-            'image': new_image
+            'name': 'Original Name',
+            'description': 'Desc',
+            'price': 100.00,
+            'discount_price': 80.00,
+            'stock': 10
         }
         
         response = self.client.post(self.url, data)
         
+        # 1. เช็ค Redirect
+        self.assertRedirects(response, reverse('store_manage', kwargs={'pk': self.store.pk}))
+        
+        # 2. เช็คข้อมูลเปลี่ยนจริง
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.discount_price, 80.00)
+        
+        # 3. เช็ค Notification
+        self.assertEqual(Notification.objects.count(), 1)
+        noti = Notification.objects.first()
+        self.assertEqual(noti.user, self.follower) # ส่งให้ follower
+        self.assertIn('SALE -20%', noti.message)   # ข้อความถูกต้อง
+
+    def test_update_no_notification_if_price_same(self):
+        """ถ้าลดราคาอยู่แล้ว และอัปเดตอย่างอื่น (แต่ราคาเท่าเดิม) ต้องไม่แจ้งเตือนซ้ำ"""
+        # Setup: ลดราคาอยู่แล้ว
+        self.product.discount_price = 80.00
+        self.product.save()
+        
+        self.client.force_login(self.owner)
+        
+        data = {
+            'name': 'New Name', # เปลี่ยนชื่อสินค้า
+            'description': 'Desc',
+            'price': 100.00,
+            'discount_price': 80.00, # ราคาเดิม
+            'stock': 5
+        }
+        
+        self.client.post(self.url, data)
+        
+        # ต้องไม่มี Notification ใหม่
+        self.assertEqual(Notification.objects.count(), 0)
+        
+        # แต่ชื่อต้องเปลี่ยน
         self.product.refresh_from_db()
         self.assertEqual(self.product.name, 'New Name')
-        self.assertEqual(self.product.price, 200.00)
-        self.assertRedirects(response, reverse('store_manage', kwargs={'pk': self.store.pk}))
+
+    def test_update_triggers_notification_on_deeper_sale(self):
+        """ถ้าลดราคาอยู่แล้ว แต่ลดเพิ่มอีก (80 -> 50) ต้องแจ้งเตือนใหม่"""
+        self.product.discount_price = 80.00
+        self.product.save()
+        
+        self.client.force_login(self.owner)
+        
+        data = {
+            'name': 'Original Name',
+            'description': 'Desc',
+            'price': 100.00,
+            'discount_price': 50.00, # ลดเพิ่ม!
+            'stock': 10
+        }
+        
+        self.client.post(self.url, data)
+        
+        self.assertEqual(Notification.objects.count(), 1)
+        self.assertIn('SALE -50%', Notification.objects.first().message)
+
+    def test_remove_discount_no_notification(self):
+        """ถ้าเอาราคาลดออก (เลิกลด) ต้องไม่แจ้งเตือน"""
+        self.product.discount_price = 80.00
+        self.product.save()
+        
+        self.client.force_login(self.owner)
+        
+        data = {
+            'name': 'Original Name',
+            'description': 'Desc',
+            'price': 100.00,
+            'discount_price': '', # ลบออก
+            'stock': 10
+        }
+        
+        self.client.post(self.url, data)
+        
+        self.product.refresh_from_db()
+        self.assertIsNone(self.product.discount_price)
+        self.assertEqual(Notification.objects.count(), 0)
+
+    def test_context_contains_store_object(self):
+        """ทดสอบว่าใน Context มีตัวแปร 'store' ส่งไปด้วย"""
+        self.client.force_login(self.owner)
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('store', response.context)
+        self.assertEqual(response.context['store'], self.store)
 
 class ProductDeleteViewTests(TestCase):
     def setUp(self):
@@ -502,3 +578,79 @@ class StoreReviewListViewTests(TestCase):
         url = reverse('store_review_list', kwargs={'pk': 9999}) # CHECK_THIS: Verify URL name
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+class StoreReviewCreateViewTests(TestCase):
+    def setUp(self):
+        # 1. สร้าง Users
+        self.owner = User.objects.create_user(username='owner', password='password')
+        self.reviewer = User.objects.create_user(username='reviewer', password='password')
+        
+        # 2. สร้าง Store
+        self.store = Store.objects.create(
+            owner=self.owner,
+            name='Test Store',
+            description='Desc',
+            store_type='PET',
+            status='APPROVED'
+        )
+        
+        self.url = reverse('store_review_create', kwargs={'pk': self.store.pk}) 
+        self.store_profile_url = reverse('store_profile', kwargs={'pk': self.store.pk})
+
+    def test_create_review_success(self):
+        """ทดสอบการสร้างรีวิวสำเร็จ"""
+        self.client.force_login(self.reviewer)
+        
+        data = {
+            'rating': 5,
+            'comment': 'Excellent service!',
+        }
+        
+        response = self.client.post(self.url, data)
+        
+        # 1. เช็ค Redirect ไปหน้า Store Profile
+        self.assertRedirects(response, self.store_profile_url)
+        
+        # 2. เช็คข้อมูลลง Database ถูกต้อง
+        self.assertEqual(StoreReview.objects.count(), 1)
+        review = StoreReview.objects.first()
+        self.assertEqual(review.rating, 5)
+        self.assertEqual(review.comment, 'Excellent service!')
+        self.assertEqual(review.author, self.reviewer)
+        self.assertEqual(review.store, self.store)
+        
+        # 3. เช็ค Success Message
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any('submitted successfully' in str(m) for m in messages))
+
+    def test_prevent_duplicate_review(self):
+        """ทดสอบว่าถ้าเคยรีวิวแล้ว ต้องรีวิวซ้ำไม่ได้ (Logic ใน dispatch)"""
+        self.client.force_login(self.reviewer)
+        
+        # สร้างรีวิวไว้ก่อนแล้ว 1 อัน
+        StoreReview.objects.create(
+            store=self.store,
+            author=self.reviewer,
+            rating=4,
+            comment='First review'
+        )
+        
+        # พยายามเข้าหน้าเขียนรีวิวอีกครั้ง
+        response = self.client.get(self.url)
+        
+        # ต้องถูก Redirect กลับไปหน้า Profile ทันที
+        self.assertRedirects(response, self.store_profile_url)
+        
+        # ต้องมี Error Message
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any('already reviewed' in str(m) for m in messages))
+
+    def test_context_data_correct(self):
+        """ทดสอบว่า Context ส่งค่าไป Template ถูกต้อง"""
+        self.client.force_login(self.reviewer)
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['target_object'], self.store)
+        self.assertEqual(response.context['review_type'], 'Store')

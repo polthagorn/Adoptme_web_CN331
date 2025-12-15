@@ -31,10 +31,6 @@ class Store(models.Model):
     verification_document = models.FileField(upload_to='store_verification_docs/', null=True, blank=True, verbose_name="Verification Document")
     verification_statement = models.TextField(null=True, blank=True, verbose_name="Verification Statement")
 
-    # --- เพิ่มฟิลด์สำหรับ Verification ---
-    verification_document = models.FileField(upload_to='store_verification_docs/', null=True, blank=True, verbose_name="Verification Document")
-    verification_statement = models.TextField(null=True, blank=True, verbose_name="Verification Statement")
-
     # เพิ่ม QR Code สำหรับรับเงิน
     payment_qr = models.ImageField(upload_to='store_qrs/', null=True, blank=True, verbose_name="Payment QR Code")
     bank_details = models.TextField(null=True, blank=True, verbose_name="Bank Account Details (Optional)")
@@ -61,7 +57,6 @@ class Product(models.Model):
     name = models.CharField(max_length=255, verbose_name="product name")
     description = models.TextField(verbose_name="product description")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="product price")
-    discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Discount Price")
     image = models.ImageField(upload_to='product_images/', blank=True, null=True, verbose_name="product image")
     stock = models.PositiveIntegerField(default=0, verbose_name="stock quantity")
     created_at = models.DateTimeField(auto_now_add=True)
