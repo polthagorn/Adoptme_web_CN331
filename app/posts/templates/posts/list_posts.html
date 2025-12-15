@@ -90,12 +90,18 @@
 
     <!-- TAG FILTER BAR -->
     <div class="flex flex-wrap gap-2">
-      <!-- (Keep your existing tag filters logic here - truncated for brevity but functionality preserved) -->
+     
       <a href="?tag=none{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}" class="px-3 py-1 rounded-full text-sm font-medium border {% if selected_tag == 'none' or not selected_tag %}bg-gray-600 text-white border-transparent{% else %}text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">All</a>
       <a href="?tag=missing{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}" class="px-3 py-1 rounded-full text-sm font-medium border {% if selected_tag == 'missing' %}bg-red-500 text-white border-transparent{% else %}text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">Missing</a>
       <a href="?tag=found{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}" class="px-3 py-1 rounded-full text-sm font-medium border {% if selected_tag == 'found' %}bg-green-500 text-white border-transparent{% else %}text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">Found</a>
       <a href="?tag=adoption_update{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}" class="px-3 py-1 rounded-full text-sm font-medium border {% if selected_tag == 'adoption_update' %}bg-blue-500 text-white border-transparent{% else %}text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">Adoption</a>
-      <!-- Add other tags as needed -->
+      <a href="?tag=qa{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}" class="px-3 py-1 rounded-full text-sm font-medium border {% if selected_tag == 'qa' %}bg-blue-500 text-white border-transparent{% else %}text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">Q&A</a>
+      <a href="?tag=other{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}" class="px-3 py-1 rounded-full text-sm font-medium border {% if selected_tag == 'other' %}bg-blue-500 text-white border-transparent{% else %}text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">Other</a>
+      <a href="?tag=care{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}" class="px-3 py-1 rounded-full text-sm font-medium border {% if selected_tag == 'care' %}bg-blue-500 text-white border-transparent{% else %}text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">Care tips</a>
+      <a href="?tag=health{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}" class="px-3 py-1 rounded-full text-sm font-medium border {% if selected_tag == 'health' %}bg-blue-500 text-white border-transparent{% else %}text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">Health / Doctors</a>
+      <a href="?tag=success{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}" class="px-3 py-1 rounded-full text-sm font-medium border {% if selected_tag == 'success' %}bg-blue-500 text-white border-transparent{% else %}text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">Success / Story </a>
+      <a href="?tag=event{% if selected_animal_type %}&animal_type={{ selected_animal_type }}{% endif %}" class="px-3 py-1 rounded-full text-sm font-medium border {% if selected_tag == 'event' %}bg-blue-500 text-white border-transparent{% else %}text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">Event</a>
+
     </div>
 
     <!-- ANIMAL FILTER FORM -->
