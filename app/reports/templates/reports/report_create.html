@@ -7,51 +7,64 @@
     You are reporting: <span class="font-semibold">{{ target }}</span>
   </p>
 
-  <form method="post" enctype="multipart/form-data" class="space-y-4">
+  <!-- ✅ action="" = submit to same URL with ?ct=&id= still attached -->
+  <form method="post"
+        action=""
+        enctype="multipart/form-data"
+        class="space-y-4"
+        onsubmit="this.querySelector('button[type=submit]').disabled=true;">
+
     {% csrf_token %}
 
     <div>
       <label class="block text-sm font-semibold mb-1">Reason</label>
       {{ form.reason }}
-      {% for e in form.reason.errors %}<p class="text-red-500 text-sm">{{ e }}</p>{% endfor %}
+      {% for e in form.reason.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ e }}</p>
+      {% endfor %}
     </div>
 
     <div>
       <label class="block text-sm font-semibold mb-1">Details (optional)</label>
       {{ form.description }}
-      {% for e in form.description.errors %}<p class="text-red-500 text-sm">{{ e }}</p>{% endfor %}
+      {% for e in form.description.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ e }}</p>
+      {% endfor %}
     </div>
 
     <div>
       <label class="block text-sm font-semibold mb-1">Media (optional)</label>
-      <input
-      type="file"
-      name="media_files"
-      multiple
-      class="w-full p-3 border border-border dark:border-darkborder rounded-xl bg-white dark:bg-darksurface text-text dark:text-darktext"
-    />
 
-      {% if form.media_files.help_text %}
-        <p class="text-xs text-gray-500 mt-1">{{ form.media_files.help_text }}</p>
-      {% endif %}
-      {% for e in form.media_files.errors %}<p class="text-red-500 text-sm">{{ e }}</p>{% endfor %}
+      <input
+        type="file"
+        name="media_files"
+        multiple
+        class="w-full px-4 py-3 rounded-xl border border-border dark:border-darkborder
+               bg-white dark:bg-darksurface text-text dark:text-darktext
+               focus:outline-none focus:ring-2 focus:ring-red-500"
+      />
+
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        You can upload multiple files (images/videos). Optional.
+      </p>
     </div>
 
-    <button class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition">
+    <button type="submit"
+      class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition">
       Submit report
     </button>
   </form>
 </div>
 
 <style>
-  select, textarea, input[type="file"] {
+  select, textarea {
     width: 100%;
     padding: 0.75rem;
     border-radius: 0.75rem;
     border: 1px solid #e2e8f0;
     background: white;
   }
-  html.dark select, html.dark textarea, html.dark input[type="file"] {
+  html.dark select, html.dark textarea {
     border-color: #30363d;
     background: #161b22;
     color: #e6edf3;

@@ -9,13 +9,84 @@
 
   <!-- Report info -->
   <div class="mb-6 p-4 rounded-lg border border-border dark:border-darkborder
-              bg-surface dark:bg-darksurface">
+              bg-surface dark:bg-darksurface space-y-2">
+
     <p><strong>Reporter:</strong> {{ report.reporter }}</p>
+
+    <!-- ✅ Target / who (or what) is being reported -->
+    <p>
+      <strong>Reported:</strong>
+
+      {# ---- If target exists (GenericForeignKey resolved) ---- #}
+      {% if report.target %}
+
+        {# If target is auth.user (User report or bug report target user) #}
+        {% if report.target_content_type.app_label == "auth" and report.target_content_type.model == "user" %}
+          @{{ report.target.username }}
+
+          {# Detect "bug report" style (you set target = reporter user in report_bug) #}
+          {% if report.target.id == report.reporter.id and report.reason == "bug" %}
+            <span class="text-xs ml-2 px-2 py-0.5 rounded-full
+                         bg-yellow-100 text-yellow-800
+                         dark:bg-yellow-900/30 dark:text-yellow-100">
+              Bug report (self-target)
+            </span>
+          {% endif %}
+
+        {% else %}
+          {# Other models: show app.model + object string #}
+          <span class="text-gray-600 dark:text-gray-300">
+            {{ report.target_content_type.app_label }}.{{ report.target_content_type.model }}
+            —
+          </span>
+          <span class="font-semibold">{{ report.target }}</span>
+        {% endif %}
+
+      {% else %}
+        {# ---- Target missing (deleted), fallback ---- #}
+        <span class="text-gray-600 dark:text-gray-300">
+          {{ report.target_content_type.app_label }}.{{ report.target_content_type.model }}
+          (id={{ report.target_object_id }}) — deleted/unavailable
+        </span>
+      {% endif %}
+    </p>
+
     <p><strong>Reason:</strong> {{ report.get_reason_display }}</p>
     <p><strong>Status:</strong> {{ report.get_status_display }}</p>
-    <p class="mt-3 text-gray-700 dark:text-gray-300">
-      {{ report.description }}
-    </p>
+
+    {% if report.description %}
+      <p class="mt-3 text-gray-700 dark:text-gray-300">
+        {{ report.description }}
+      </p>
+    {% else %}
+      <p class="mt-3 text-gray-500 dark:text-gray-400 italic">
+        No description provided.
+      </p>
+    {% endif %}
+
+    {# ✅ Optional: show attachments if you want #}
+    {% if report.media.all %}
+      <div class="pt-3">
+        <p class="font-semibold mb-2">Attachments:</p>
+        <ul class="space-y-1">
+          {% for m in report.media.all %}
+            <li class="text-sm">
+              <span class="px-2 py-0.5 rounded-full text-xs
+                           bg-gray-100 text-gray-700
+                           dark:bg-gray-800 dark:text-gray-200">
+                {{ m.get_media_type_display }}
+              </span>
+
+              <a href="{{ m.file.url }}" target="_blank"
+                 class="ml-2 text-accent hover:underline break-all">
+                {{ m.file.name }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
   </div>
 
   <!-- Admin form -->
@@ -44,17 +115,17 @@
         "
         >
         {% for value, label in form.fields.status.choices %}
-            <option value="{{ value }}"
+          <option value="{{ value }}"
             class="
-                text-gray-900 bg-white
-                dark:text-gray-100 dark:bg-gray-900
+              text-gray-900 bg-white
+              dark:text-gray-100 dark:bg-gray-900
             "
             {% if value == form.status.value %}selected{% endif %}
-            >
+          >
             {{ label }}
-            </option>
+          </option>
         {% endfor %}
-        </select>
+      </select>
     </div>
 
     <div>

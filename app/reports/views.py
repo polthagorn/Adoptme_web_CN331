@@ -28,6 +28,7 @@ def create_report(request):
     ?ct=<app_label.model>&id=<object_id>
     Example: ?ct=posts.post&id=12
     """
+
     ct_str = request.GET.get("ct")
     obj_id = request.GET.get("id")
 
@@ -39,6 +40,10 @@ def create_report(request):
     content_type = get_object_or_404(ContentType, app_label=app_label, model=model)
 
     model_cls = content_type.model_class()
+    if model_cls is None:
+        messages.error(request, "Invalid report target.")
+        return redirect("home")
+
     target_obj = get_object_or_404(model_cls, pk=obj_id)
 
     existing = Report.objects.filter(
@@ -49,7 +54,7 @@ def create_report(request):
     ).first()
     if existing:
         messages.info(request, "You already reported this. Our team will review it.")
-        return redirect(request.META.get("HTTP_REFERER", "home"))
+        return redirect("home")
 
     if request.method == "POST":
         form = ReportCreateForm(request.POST, request.FILES)
@@ -60,7 +65,7 @@ def create_report(request):
             report.target_object_id = target_obj.pk
             report.save()
 
-            # Save multiple media attachments
+   
             for f in request.FILES.getlist("media_files"):
                 ReportMedia.objects.create(
                     report=report,
@@ -69,11 +74,16 @@ def create_report(request):
                 )
 
             messages.success(request, "Thanks! Your report has been submitted.")
-            return redirect(request.META.get("HTTP_REFERER", "home"))
+            return redirect("home")  
+
+        messages.error(request, "Please fix the errors below.")
     else:
         form = ReportCreateForm()
 
-    return render(request, "reports/report_create.html", {"form": form, "target": target_obj})
+    return render(request, "reports/report_create.html", {
+        "form": form,
+        "target": target_obj,
+    })
 
 
 @login_required
