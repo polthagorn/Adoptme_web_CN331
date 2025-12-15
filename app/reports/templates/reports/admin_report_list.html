@@ -7,18 +7,47 @@
 
   <h1 class="text-3xl font-bold mb-6">Reports</h1>
 
-  <!-- Status filter -->
-  <div class="mb-6">
-    <a href="?status=open" class="mr-4 text-blue-600 hover:underline">Open</a>
-    <a href="?status=resolved" class="mr-4 text-green-600 hover:underline">Resolved</a>
-    <a href="{% url 'admin_report_list' %}" class="text-gray-600 hover:underline">All</a>
+  <!-- ✅ Status filter (framed) -->
+  <div class="mb-6 p-4 rounded-lg border border-border dark:border-darkborder
+              bg-white dark:bg-gray-900">
+    <div class="flex flex-wrap gap-4 text-sm font-semibold">
+      <a href="?status=open"
+         class="px-3 py-1.5 rounded-lg
+                bg-blue-50 text-blue-700 border border-blue-200
+                hover:bg-blue-100
+                dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700">
+        Open
+      </a>
+
+      <a href="?status=resolved"
+         class="px-3 py-1.5 rounded-lg
+                bg-green-50 text-green-700 border border-green-200
+                hover:bg-green-100
+                dark:bg-green-900/30 dark:text-green-300 dark:border-green-700">
+        Resolved
+      </a>
+
+      <a href="{% url 'admin_report_list' %}"
+         class="px-3 py-1.5 rounded-lg
+                bg-gray-100 text-gray-700 border border-gray-300
+                hover:bg-gray-200
+                dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600">
+        All
+      </a>
+    </div>
   </div>
 
+  <!-- ✅ Report results -->
   {% for r in reports %}
-    <div class="border border-border dark:border-darkborder rounded-lg p-4 mb-4">
+    <div class="mb-4 p-4 rounded-lg border border-border dark:border-darkborder
+                bg-white dark:bg-gray-900">
       <p class="font-semibold">{{ r.get_reason_display }}</p>
-      <p class="text-sm text-gray-500">Status: {{ r.get_status_display }}</p>
-      <p class="mt-2">{{ r.description }}</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Status: {{ r.get_status_display }}
+      </p>
+      <p class="mt-2 text-gray-700 dark:text-gray-300">
+        {{ r.description }}
+      </p>
 
       <a href="{% url 'admin_report_detail' r.id %}"
          class="inline-block mt-3 text-sm text-accent hover:underline">
@@ -26,7 +55,10 @@
       </a>
     </div>
   {% empty %}
-    <p class="text-gray-500">No reports found.</p>
+    <div class="p-6 rounded-lg border border-border dark:border-darkborder
+                bg-white dark:bg-gray-900 text-center">
+      <p class="text-gray-500 dark:text-gray-400">No reports found.</p>
+    </div>
   {% endfor %}
 
 </div>
