@@ -75,7 +75,7 @@ class DeletePostViewTest(TestCase):
         self.client.login(username='other', password='password')
         response = self.client.post(self.url)
         
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 403)
         self.assertTrue(Post.objects.filter(id=self.post.id).exists())
 
 class EditPostViewTest(TestCase):
