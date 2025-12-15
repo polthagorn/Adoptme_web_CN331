@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-from app.accounts.models import Profile
+from app.accounts.models import Profile, Notification
 from app.shelters.models import ShelterProfile
 from app.stores.models import Store
 
@@ -183,32 +183,48 @@ class ShelterApprovalTests(DashboardBaseTest):
         self.assertEqual(self.shelter.rejection_reason, "")
 
 
-# ----------------------------
-# Stores approve/reject branches
-# ----------------------------
-class StoreApprovalTests(DashboardBaseTest):
+class StoreApprovalHappyPathTests(TestCase):
     def setUp(self):
-        super().setUp()
+        self.superuser = User.objects.create_superuser(username='admin', password='password', email='admin@test.com')
+        self.user = User.objects.create_user(username='owner', password='password')
+        
         self.store = Store.objects.create(
-            owner=self.owner,
-            name="Pet Store",
-            status="PENDING"
+            owner=self.user,
+            name='Test Store',
+            description='Test Description',
+            store_type='PET',
+            status='PENDING'
         )
+        
+        self.approve_url = reverse('approve_store', kwargs={'store_id': self.store.id})
+        self.reject_url = reverse('reject_store', kwargs={'store_id': self.store.id})
+        self.dashboard_url = reverse('store_approval')
 
-    def test_approve_store(self):
-        url = reverse("approve_store", args=[self.store.id])
-        self.client.post(url, follow=True)
-
+    def test_approve_store_success(self):
+        self.client.force_login(self.superuser)
+        
+        # ยิง POST เพื่อ Approve
+        response = self.client.post(self.approve_url)
+        
+        # ตรวจสอบว่า Status เปลี่ยนเป็น APPROVED
         self.store.refresh_from_db()
-        self.assertEqual(self.store.status, "APPROVED")
+        self.assertEqual(self.store.status, 'APPROVED')
+        
+        # ตรวจสอบว่า Redirect ไปถูกหน้า
+        self.assertRedirects(response, self.dashboard_url)
 
-    def test_reject_store(self):
-        url = reverse("reject_store", args=[self.store.id])
-        self.client.post(url, follow=True)
-
+    def test_reject_store_success(self):
+        self.client.force_login(self.superuser)
+        
+        # ยิง POST เพื่อ Reject
+        response = self.client.post(self.reject_url)
+        
+        # ตรวจสอบว่า Status เปลี่ยนเป็น REJECTED
         self.store.refresh_from_db()
-        self.assertEqual(self.store.status, "REJECTED")
-
+        self.assertEqual(self.store.status, 'REJECTED')
+        
+        # ตรวจสอบว่า Redirect ไปถูกหน้า
+        self.assertRedirects(response, self.dashboard_url)
 
 # ----------------------------
 # User score branches

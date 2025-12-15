@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import pre_save, post_save
+from app.accounts.models import Notification
 
 class Store(models.Model):
     # --- ย้ายโค้ดทั้งหมดนี้เข้ามาในคลาส Store ---
