@@ -124,12 +124,36 @@ def create_post(request):
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
+            
+            is_shelter_post = False
 
-            # Shelter auto-assign
+            # เช็ค Shelter และ Assign
             if hasattr(request.user, 'shelter_profile') and request.user.shelter_profile.status == 'APPROVED':
                 post.shelter = request.user.shelter_profile
+                is_shelter_post = True
 
-            post.save()
+            post.save() # Save ก่อนเพื่อให้มี post.id
+
+            # Logic แจ้งเตือนแบบมีลิงก์กด 
+            if is_shelter_post:
+                followers = post.shelter.followers.all()
+                
+                # สร้าง URL สำหรับไปหน้า Post Detail
+                post_url = reverse('post_detail', args=[post.id])
+                
+                for follower in followers:
+                    if follower != request.user:
+                        # สร้างข้อความแบบ HTML ตามสไตล์ที่คุณต้องการ
+                        msg = f"<b>{post.shelter.name}</b> has posted a new update: {post.title}. <a href='{post_url}' class='text-accent font-bold hover:underline ml-1'>View Post</a>"
+                        
+                        Notification.objects.create(
+                            user=follower,
+                            actor=request.user,
+                            notification_type='system',
+                            message=msg,
+                            post=post # ใส่ไว้ด้วยเผื่อใช้ในอนาคต
+                        )
+
             return redirect('posts')
     else:
         form = PostForm()

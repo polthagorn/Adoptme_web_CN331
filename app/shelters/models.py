@@ -57,7 +57,7 @@ class ShelterProfile(models.Model):
         verbose_name="Status"
     )
 
-    # ⭐ เพิ่ม field นี้
+    # field นี้
     rejection_reason = models.TextField(
         null=True,
         blank=True,
@@ -67,6 +67,13 @@ class ShelterProfile(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True
     )
+
+    followers = models.ManyToManyField(
+        User, 
+        related_name='following_shelters', 
+        blank=True
+    )
+
 
     def __str__(self):  # pragma: no cover
         return self.name

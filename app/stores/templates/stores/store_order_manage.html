@@ -13,14 +13,24 @@
             <p class="text-text dark:text-darktext">Customer: {{ order.user.username }}</p>
             <p class="text-text dark:text-darktext">Date: {{ order.created_at }}</p>
             
-            <div class="mt-4 border-t border-border dark:border-darkborder pt-4">
+            <div class="mt-4 border-t border-border dark:border-darkborder pt-4 space-y-3">
                 {% for item in order.items.all %}
                     <div class="flex justify-between text-sm text-text dark:text-darktext">
-                        <span>{{ item.quantity }}x {{ item.product.name }}</span>
-                        <span>฿{{ item.total_price }}</span>
+                        <div class="flex flex-col">
+                            <span class="font-bold">{{ item.quantity }}x {{ item.product.name }}</span>
+                            
+                            <!-- ✅ แสดงป้าย PROMO ถ้าซื้อตอนลดราคา -->
+                            {% if item.is_promotional %}
+                                <span class="mt-1 inline-block px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded border border-red-200 w-fit">
+                                    PROMO (Full: ฿{{ item.original_price }})
+                                </span>
+                            {% endif %}
+                        </div>
+                        <span class="font-bold">฿{{ item.total_price }}</span>
                     </div>
                 {% endfor %}
-                <div class="flex justify-between font-bold text-lg mt-2 text-accent">
+                
+                <div class="flex justify-between font-bold text-lg mt-4 pt-2 border-t border-border dark:border-darkborder text-accent">
                     <span>Total:</span>
                     <span>฿{{ order.total_price }}</span>
                 </div>

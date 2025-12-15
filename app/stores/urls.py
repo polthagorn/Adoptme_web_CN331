@@ -25,6 +25,8 @@ from .views import (
     StoreOrderListView,
     store_order_manage,
     my_order_detail,
+    toggle_follow_store,
+    FollowingListView,
 )
 
 urlpatterns = [
@@ -53,4 +55,6 @@ urlpatterns = [
     path('store/order/<int:pk>/manage/', store_order_manage, name='store_order_manage'),
     path('my-orders/<int:pk>/', my_order_detail, name='my_order_detail'),
     path('product/<int:pk>/order/<int:order_id>/add-review/', ProductReviewCreateView.as_view(), name='product_review_create'),
+    path('store/<int:pk>/follow/', toggle_follow_store, name='toggle_follow_store'),
+    path('my-following/', FollowingListView.as_view(), name='following_list'),
 ]

@@ -4,113 +4,199 @@
 {% block title %}My Profile - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 max-w-4xl">
+<div class="container mx-auto px-4 max-w-4xl py-8">
 
+    <!-- Header Profile -->
     <div class="bg-surface dark:bg-darksurface p-8 rounded-lg shadow-md mb-8 border border-border dark:border-darkborder">
         <div class="flex flex-col sm:flex-row items-center sm:items-start">
-
             <img
                 src="{% if profile.image %}{{ profile.image.url }}{% else %}{% static 'img/default.jpg' %}{% endif %}"
                 alt="Profile Picture"
-                class="w-32 h-32 rounded-full object-cover flex-shrink-0"
+                class="w-32 h-32 rounded-full object-cover flex-shrink-0 border-4 border-surface dark:border-darksurface bg-gray-200"
             >
-
             <div class="mt-4 sm:mt-0 sm:ml-6 text-center sm:text-left flex-grow">
                 <h1 class="text-3xl font-bold text-text dark:text-darktext">
                     {{ user.get_full_name|default:user.username }}
                 </h1>
-                <p class="text-lg text-gray-500 dark:text-gray-400">
-                    @{{ user.username }}
-                </p>
-
-                <div class="mt-4 flex flex-col sm:flex-row sm:space-x-6 text-gray-600 dark:text-gray-400">
+                <p class="text-lg text-gray-500 dark:text-gray-400">@{{ user.username }}</p>
+                <div class="mt-4 flex flex-col sm:flex-row sm:space-x-6 text-gray-600 dark:text-gray-400 justify-center sm:justify-start">
                     <span>📍 {{ profile.city|default:"-" }}, {{ profile.country|default:"-" }}</span>
                     <span>📞 {{ profile.phone|default:"-" }}</span>
                     <span>✉️ {{ user.email|default:"-" }}</span>
                 </div>
-
-                <div class="mt-4 flex flex-wrap gap-3 justify-center sm:justify-start">
-                    <a href="{% url 'profile_edit' %}"
-                       class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                        Edit Profile
-                    </a>
-
-                    <a href="{% url 'my_bookmarks' %}"
-                       class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text dark:text-darktext font-bold py-2 px-4 rounded-lg transition-colors">
-                        My Bookmarks
-                    </a>
-
-                    <a href="{% url 'logout' %}"
-                       class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                        Logout
-                    </a>
+                <div class="mt-6 flex flex-wrap gap-3 justify-center sm:justify-start">
+                    <a href="{% url 'profile_edit' %}" class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Edit Profile</a>
+                    <a href="{% url 'my_bookmarks' %}" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text dark:text-darktext font-bold py-2 px-4 rounded-lg transition-colors">My Bookmarks</a>
+                    <a href="{% url 'following_list' %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Following</a>
+                    <a href="{% url 'logout' %}" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Logout</a>
                 </div>
             </div>
-
-            <div class="mt-4 sm:mt-0 sm:ml-auto text-center">
+            <div class="mt-6 sm:mt-0 sm:ml-auto text-center bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                 <p class="text-sm text-gray-500 dark:text-gray-400">Reputation Score</p>
-                <p class="text-4xl font-bold text-accent">{{ profile.score }}</p>
-                
+                <p class="text-3xl font-bold text-accent">{{ profile.score }}</p>
             </div>
         </div>
     </div>
 
+    <!-- My Posts Section -->
     <div>
-        <h2 class="text-2xl font-bold text-text dark:text-darktext mb-4">
+        <h2 class="text-2xl font-bold text-text dark:text-darktext mb-6 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+            </svg>
             My Posts
         </h2>
 
-        <div class="space-y-6">
+        <div class="space-y-8">
             {% for post in posts %}
-                <div class="bg-surface dark:bg-darksurface p-4 rounded-lg shadow-md border border-border dark:border-darkborder flex space-x-4">
-
-                    {% if post.image %}
-                        <img
-                            src="{{ post.image.url }}"
-                            alt="{{ post.title }}"
-                            class="w-32 h-32 object-cover rounded-md flex-shrink-0 hidden sm:block"
-                        >
-                    {% else %}
-                        <div class="w-32 h-32 bg-gray-200 dark:bg-gray-700 rounded-md flex-shrink-0 hidden sm:block"></div>
-                    {% endif %}
-
-                    <div class="flex-grow">
-                        <h3 class="text-xl font-semibold">
-                            <a href="{% url 'post_detail' post.id %}"
-                               class="text-accent hover:underline">
-                                {{ post.title }}
+                <div class="bg-surface dark:bg-darksurface rounded-xl shadow-md border border-border dark:border-darkborder overflow-hidden hover:shadow-lg transition-shadow">
+                    
+                    <!-- Post Header -->
+                    <div class="p-4 flex items-center border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30">
+                        <img src="{% if profile.image %}{{ profile.image.url }}{% else %}{% static 'img/default.jpg' %}{% endif %}" 
+                             class="w-10 h-10 rounded-full object-cover mr-3 border border-gray-200 dark:border-gray-600">
+                        <div>
+                            <p class="font-bold text-text dark:text-darktext text-sm">{{ user.username }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ post.created_at|date:"F d, Y • H:i" }}</p>
+                        </div>
+                        
+                        <!-- Actions (Edit/Delete) -->
+                        <div class="ml-auto flex space-x-2">
+                            <a href="{% url 'edit_post' post.id %}" class="text-gray-400 hover:text-yellow-500 p-1" title="Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                             </a>
-                        </h3>
-
-                        <p class="text-gray-600 dark:text-gray-400 mt-1">
-                            {{ post.content|truncatewords:25 }}
-                        </p>
-
-                        <p class="text-sm text-gray-400 mt-2">
-                            Posted on {{ post.created_at|date:"M d, Y" }}
-                        </p>
-
-                        <div class="mt-3 flex space-x-2">
-                            <a href="{% url 'edit_post' post.id %}"
-                               class="text-sm bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-1 px-3 rounded-md">
-                                Edit
-                            </a>
-                            <a href="{% url 'delete_post' post.id %}"
-                               class="text-sm bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-md">
-                                Delete
+                            <a href="{% url 'delete_post' post.id %}" class="text-gray-400 hover:text-red-500 p-1" title="Delete">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </a>
                         </div>
                     </div>
+
+                    <!-- Post Body -->
+                    <div class="p-4">
+                        <a href="{% url 'post_detail' post.id %}">
+                            <h3 class="text-xl font-bold mb-2 text-text dark:text-darktext hover:text-accent transition-colors">{{ post.title }}</h3>
+                        </a>
+                        <p class="text-gray-700 dark:text-gray-300 mb-4 line-clamp-3 whitespace-pre-line">{{ post.content }}</p>
+                        
+                        {% if post.image %}
+                            <a href="{% url 'post_detail' post.id %}" class="block mt-3">
+                                <img src="{{ post.image.url }}" alt="{{ post.title }}" class="w-full h-auto object-cover max-h-[500px] rounded-lg hover:opacity-95 transition-opacity">
+                            </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- ⭐ Post Footer (AJAX Actions) ⭐ -->
+                    <div class="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center text-sm border-t border-gray-100 dark:border-gray-700">
+                        <div class="flex items-center space-x-6">
+                            
+                            <!-- ❤️ LIKE BUTTON -->
+                            <button onclick="toggleLike('{{ post.id }}')" class="flex items-center space-x-2 text-gray-500 hover:text-red-500 focus:outline-none group transition-colors">
+                                <svg id="like-icon-{{ post.id }}" 
+                                     class="w-5 h-5 transition-colors duration-300 {% if user in post.likes.all %}text-red-500 fill-current{% else %}text-gray-500 dark:text-gray-400 group-hover:text-red-500{% endif %}"
+                                     fill="{% if user in post.likes.all %}currentColor{% else %}none{% endif %}" 
+                                     stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path>
+                                </svg>
+                                <span id="like-count-{{ post.id }}" class="font-semibold text-gray-600 dark:text-gray-300">{{ post.likes.count }}</span>
+                            </button>
+                    
+                            <!-- 💬 COMMENT BUTTON -->
+                            <a href="{% url 'post_detail' post.id %}" class="flex items-center space-x-2 text-gray-500 hover:text-accent focus:outline-none group transition-colors">
+                                <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                                <span class="font-semibold text-gray-600 dark:text-gray-300">{{ post.comments.count }}</span>
+                            </a>
+                        </div>
+                    
+                        <!-- 🔖 BOOKMARK BUTTON -->
+                        <button onclick="toggleBookmark('{{ post.id }}')" class="text-gray-500 hover:text-accent focus:outline-none group transition-colors">
+                            <svg id="bookmark-icon-{{ post.id }}" 
+                                 class="w-5 h-5 transition-colors duration-300 {% if user in post.bookmarks.all %}text-accent fill-current{% else %}text-gray-500 dark:text-gray-400 group-hover:text-accent{% endif %}"
+                                 fill="{% if user in post.bookmarks.all %}currentColor{% else %}none{% endif %}" 
+                                 stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             {% empty %}
-                <div class="bg-surface dark:bg-darksurface p-10 rounded-lg shadow-md border border-border dark:border-darkborder text-center">
-                    <p class="text-gray-500 dark:text-gray-400">
-                        You haven't made any posts yet.
-                    </p>
+                <div class="text-center py-12 bg-surface dark:bg-darksurface rounded-xl border border-dashed border-border dark:border-darkborder">
+                    <p class="text-gray-500 dark:text-gray-400 text-lg">You haven't made any posts yet.</p>
+                    <a href="{% url 'create_post' %}" class="text-accent hover:underline mt-2 inline-block font-semibold">Create your first post</a>
                 </div>
             {% endfor %}
         </div>
     </div>
 
 </div>
+
+<!-- ⭐ Scripts สำหรับ AJAX ⭐ -->
+<script>
+function toggleLike(postId) {
+    fetch(`/posts/${postId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.status === 403 || response.status === 401) {
+            window.location.href = "{% url 'login' %}";
+            return;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data) {
+            const icon = document.getElementById(`like-icon-${postId}`);
+            const count = document.getElementById(`like-count-${postId}`);
+            count.innerText = data.count;
+            if (data.liked) {
+                icon.classList.remove('text-gray-500', 'dark:text-gray-400');
+                icon.classList.add('text-red-500', 'fill-current');
+                icon.setAttribute('fill', 'currentColor');
+            } else {
+                icon.classList.add('text-gray-500', 'dark:text-gray-400');
+                icon.classList.remove('text-red-500', 'fill-current');
+                icon.setAttribute('fill', 'none');
+            }
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function toggleBookmark(postId) {
+    fetch(`/posts/${postId}/bookmark/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.status === 403 || response.status === 401) {
+            window.location.href = "{% url 'login' %}";
+            return;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data) {
+            const icon = document.getElementById(`bookmark-icon-${postId}`);
+            if (data.bookmarked) {
+                icon.classList.remove('text-gray-500', 'dark:text-gray-400');
+                icon.classList.add('text-accent', 'fill-current');
+                icon.setAttribute('fill', 'currentColor');
+            } else {
+                icon.classList.add('text-gray-500', 'dark:text-gray-400');
+                icon.classList.remove('text-accent', 'fill-current');
+                icon.setAttribute('fill', 'none');
+            }
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
 {% endblock content %}

@@ -16,6 +16,7 @@ from app.accounts.models import Notification
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from app.accounts.models import Notification
+from django.views.generic import TemplateView
 
 from .models import (
     Store, 
@@ -77,6 +78,7 @@ class StoreProfileView(DetailView):
         ).order_by('-created_at')
         context['reviews'] = reviews
         context['average_rating'] = reviews.aggregate(Avg('rating'))['rating__avg']
+        context['product_review_count'] = ProductReview.objects.filter(product__store=store).count()
         return context
 
 
@@ -207,6 +209,7 @@ class StoreManageView(LoginRequiredMixin, DetailView):
         reviews = store.reviews.all()
         context['reviews'] = reviews
         context['average_rating'] = reviews.aggregate(Avg('rating'))['rating__avg']
+        context['product_review_count'] = ProductReview.objects.filter(product__store=store).count()
         return context
 
 
@@ -228,7 +231,30 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.store = self.store
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        
+        # เพิ่ม Logic แจ้งเตือนผู้ติดตาม
+        followers = self.store.followers.all()
+        product_url = reverse('product_detail', args=[self.object.pk])
+        
+        # สร้าง Notification ให้ผู้ติดตามทุกคน
+        notifications = []
+        for follower in followers:
+            # ไม่ต้องแจ้งเตือนตัวเองถ้าเจ้าของร้านกด follow ร้านตัวเอง
+            if follower != self.request.user:
+                notifications.append(
+                    Notification(
+                        user=follower,
+                        actor=self.request.user,
+                        notification_type='system',
+                        message=f"Store <b>{self.store.name}</b> added a new product: <a href='{product_url}' class='font-bold hover:underline'>{self.object.name}</a>"
+                    )
+                )
+        
+        # บันทึกทีเดียว (Bulk Create) เพื่อประสิทธิภาพ
+        Notification.objects.bulk_create(notifications)
+        
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -276,6 +302,52 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
         product = self.get_object()
         return reverse_lazy('store_manage', kwargs={'pk': product.store.pk})
 
+    def form_valid(self, form):
+        # 1. ดึงข้อมูลเก่าจาก Database มาเก็บไว้ก่อน (เพื่อเทียบราคา)
+        old_product = Product.objects.get(pk=self.object.pk)
+        old_discount = old_product.discount_price
+
+        # 2. บันทึกข้อมูลใหม่ลง Database
+        response = super().form_valid(form)
+
+        # 3. ดึงข้อมูลใหม่มาเช็ค
+        new_product = self.object
+        new_discount = new_product.discount_price
+
+        # 4. เงื่อนไข: ถ้ามีราคาลดใหม่ และ ราคาไม่เท่ากับของเดิม (ลดเพิ่ม หรือ เพิ่งเริ่มลด)
+        if new_discount and new_discount > 0 and new_discount != old_discount:
+            
+            followers = new_product.store.followers.all()
+            product_url = reverse('product_detail', args=[new_product.pk])
+            
+            # คำนวณ % ที่ลดลง
+            percent = int(((new_product.price - new_discount) / new_product.price) * 100)
+
+            notifications = []
+            for follower in followers:
+                # ไม่ต้องแจ้งเตือนตัวเอง
+                if follower != self.request.user:
+                    msg = (
+                        f"🔥 <b>SALE -{percent}%!</b> "
+                        f"<b>{new_product.name}</b> from {new_product.store.name} "
+                        f"is now <b>฿{new_discount}</b> (was ฿{new_product.price}). "
+                        f"<a href='{product_url}' class='text-accent font-bold hover:underline'>Buy Now</a>"
+                    )
+                    
+                    notifications.append(
+                        Notification(
+                            user=follower,
+                            actor=self.request.user,
+                            notification_type='system',
+                            message=msg
+                        )
+                    )
+            
+            # ส่งแจ้งเตือนทีเดียว
+            if notifications:
+                Notification.objects.bulk_create(notifications)
+
+        return response
 
 class ProductDeleteView(LoginRequiredMixin, DeleteView):
     model = Product
@@ -291,14 +363,44 @@ class ProductDeleteView(LoginRequiredMixin, DeleteView):
 
 
 class StoreReviewListView(DetailView):
-    """แสดงรายการรีวิวทั้งหมดของร้านค้า"""
+    """แสดงรายการรีวิวทั้งหมดของร้านค้า (รวมถึงรีวิวสินค้าในร้าน)"""
     model = Store
     template_name = 'stores/store_review_list.html'
     context_object_name = 'store'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['reviews'] = self.get_object().reviews.all()
+        store = self.object # ได้ object Store จาก DetailView
+
+        # 1. รับค่าตัวกรองจาก URL
+        review_type = self.request.GET.get('type', 'store') # default เป็น 'store'
+        rating_filter = self.request.GET.get('rating', 'all')
+
+        # 2. เลือก Queryset ตามประเภทที่เลือก
+        if review_type == 'product':
+            # ดึงรีวิวสินค้าทั้งหมดที่เป็นของร้านนี้
+            # ใช้ select_related เพื่อลด query sql เวลาดึงข้อมูล user และ product
+            reviews = ProductReview.objects.filter(product__store=store).select_related('author__profile', 'product')
+        else:
+            # ดึงรีวิวของร้านค้า (ใช้ related_name='reviews' จาก model Store)
+            reviews = store.reviews.select_related('author__profile')
+
+        # 3. กรองตามจำนวนดาว (ถ้ามีการเลือก)
+        if rating_filter != 'all':
+            try:
+                rating_val = int(rating_filter)
+                reviews = reviews.filter(rating=rating_val)
+            except ValueError:
+                pass # ถ้าค่าไม่ใช่ตัวเลข ให้ข้ามไป
+
+        # 4. เรียงลำดับจากใหม่ไปเก่า
+        reviews = reviews.order_by('-created_at')
+
+        # 5. ส่งค่ากลับไปที่ Template
+        context['reviews'] = reviews
+        context['current_type'] = review_type      # เพื่อใช้ทำปุ่ม Active
+        context['current_rating'] = rating_filter  # เพื่อใช้ทำปุ่ม Active
+        
         return context
 
 
@@ -573,6 +675,7 @@ def checkout(request):
         store_items[item.product.store].append(item)
 
     for store, items in store_items.items():
+        #  total_price ให้ใช้ property ของ item
         total_price = sum(item.total_price for item in items)
         
         order = Order.objects.create(
@@ -583,7 +686,6 @@ def checkout(request):
         )
         
         for item in items:
-            # ✅ ตัด Stock ตรงนี้
             product = item.product
             product.stock -= item.quantity
             product.save()
@@ -592,7 +694,8 @@ def checkout(request):
                 order=order,
                 product=product,
                 quantity=item.quantity,
-                price=product.price
+                # บันทึกราคาขายจริง ณ ตอนนั้น (sell_price)
+                price=product.sell_price 
             )
             item.delete()
 
@@ -821,3 +924,54 @@ def store_status_notification(sender, instance, **kwargs):
                     
         except Store.DoesNotExist:
             pass
+
+@login_required
+@require_POST
+def toggle_follow_store(request, pk):
+    store = get_object_or_404(Store, pk=pk)
+    
+    if store.followers.filter(id=request.user.id).exists():
+        store.followers.remove(request.user)
+        following = False
+    else:
+        store.followers.add(request.user)
+        following = True
+        
+        # แจ้งเตือนเจ้าของร้านว่ามีคนมาติดตาม (Optional)
+        if request.user != store.owner:
+            Notification.objects.create(
+                user=store.owner,
+                actor=request.user,
+                notification_type='system',
+                message=f"{request.user.username} started following your store <b>{store.name}</b>."
+            )
+
+    return JsonResponse({
+        'following': following,
+        'count': store.followers.count()
+    })
+
+# 2. View ดูรายชื่อร้านที่ติดตาม
+class FollowingListView(LoginRequiredMixin, TemplateView):
+    template_name = 'stores/following_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        
+        # รับค่า tab จาก URL (default เป็น 'stores')
+        tab = self.request.GET.get('tab', 'stores')
+        context['current_tab'] = tab
+        
+        # ดึงข้อมูลร้านค้าที่ติดตาม (จาก User object โดยตรง)
+        context['stores'] = user.following_stores.all()
+        
+        # ดึงข้อมูล Shelter ที่ติดตาม
+        # ตรวจสอบก่อนว่ามีความสัมพันธ์นี้จริง (กัน Error)
+        if hasattr(user, 'following_shelters'):
+            context['shelters'] = user.following_shelters.all()
+        else:
+            context['shelters'] = []
+            
+        return context
+

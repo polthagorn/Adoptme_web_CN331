@@ -3,28 +3,66 @@
 {% block title %}{{ store.name }} - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4">
+<div class="container mx-auto px-4 py-8">
+    
     <!-- ส่วน Header ของร้านค้า -->
     <div class="bg-surface dark:bg-darksurface p-8 rounded-lg shadow-md mb-8 border border-border dark:border-darkborder">
+        
         <!-- Cover Image -->
         {% if store.cover_image %}
             <div class="h-48 md:h-64 bg-cover bg-center rounded-t-lg -mt-8 -mx-8" style="background-image: url('{{ store.cover_image.url }}')"></div>
         {% else %}
-            <div class="h-48 md:h-64 bg-gray-200 dark:bg-gray-700 rounded-t-lg -mt-8 -mx-8"></div>
+            <div class="h-48 md:h-64 bg-gray-200 dark:bg-gray-700 rounded-t-lg -mt-8 -mx-8 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
         {% endif %}
         
-        <div class="flex items-end -mt-16 ml-8">
+        <div class="flex flex-col sm:flex-row items-start">
             <!-- Profile Image -->
-            {% if store.profile_image %}
-                <img src="{{ store.profile_image.url }}" class="w-32 h-32 rounded-full border-4 border-surface dark:border-darksurface object-cover">
-            {% else %}
-                <div class="w-32 h-32 bg-gray-300 dark:bg-gray-600 rounded-full border-4 border-surface dark:border-darksurface"></div>
-            {% endif %}
-        </div>
-        <div class="mt-4">
-            <h1 class="text-3xl font-bold text-text dark:text-darktext">{{ store.name }}</h1>
-            <p class="text-gray-500 dark:text-gray-400">{{ store.get_store_type_display }}</p>
-            <p class="mt-4 text-text dark:text-darktext">{{ store.description }}</p>
+            <div class="-mt-16 ml-4 sm:ml-8 flex-shrink-0">
+                {% if store.profile_image %}
+                    <img src="{{ store.profile_image.url }}" class="w-32 h-32 rounded-full border-4 border-surface dark:border-darksurface object-cover bg-white">
+                {% else %}
+                    <div class="w-32 h-32 bg-gray-300 dark:bg-gray-600 rounded-full border-4 border-surface dark:border-darksurface flex items-center justify-center text-gray-500">No Img</div>
+                {% endif %}
+            </div>
+
+            <!-- Store Info & Follow Button -->
+            <div class="mt-4 sm:mt-2 ml-4 sm:ml-6 flex-grow w-full sm:w-auto">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    
+                    <!-- ชื่อและประเภท -->
+                    <div>
+                        <h1 class="text-3xl font-bold text-text dark:text-darktext">{{ store.name }}</h1>
+                        <p class="text-gray-500 dark:text-gray-400 font-medium">{{ store.get_store_type_display }}</p>
+                    </div>
+
+                    <!-- ส่วนปุ่ม Follow และจำนวนผู้ติดตาม -->
+                    <div class="mt-4 sm:mt-0 flex items-center space-x-4">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                            <span id="follower-count" class="font-bold text-text dark:text-darktext text-lg">{{ store.followers.count }}</span> Followers
+                        </span>
+
+                        {% if user.is_authenticated and user != store.owner %}
+                            <button onclick="toggleFollowStore('{{ store.id }}')" 
+                                    id="follow-btn"
+                                    class="px-6 py-2 rounded-full font-bold transition-all shadow-sm transform active:scale-95
+                                    {% if user in store.followers.all %}
+                                        bg-gray-200 dark:bg-gray-700 text-text dark:text-darktext hover:bg-gray-300 dark:hover:bg-gray-600
+                                    {% else %}
+                                        bg-accent text-white hover:bg-blue-600
+                                    {% endif %}">
+                                {% if user in store.followers.all %}Following{% else %}Follow{% endif %}
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- คำอธิบายร้าน -->
+                <p class="mt-4 text-text dark:text-darktext leading-relaxed max-w-3xl">{{ store.description }}</p>
+            </div>
         </div>
     </div>
 
@@ -40,14 +78,24 @@
                         <span class="ml-2 text-gray-500 dark:text-gray-400">based on {{ reviews.count }} review{{ reviews.count|pluralize }}.</span>
                     </div>
                 {% else %}
-                    <p class="text-gray-500 dark:text-gray-400">No reviews yet.</p>
+                    <p class="text-gray-500 dark:text-gray-400">No reviews on store yet.</p>
+                {% endif %}
+                {% if product_review_count > 0 %}
+                    <div class="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <svg class="w-4 h-4 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                        <span>
+                            Total 
+                            <span class="font-bold text-accent">{{ product_review_count }}</span> 
+                            review{{ product_review_count|pluralize }} on products
+                        </span>
+                    </div>
                 {% endif %}
             </div>
             <div class="mt-4 sm:mt-0 flex space-x-3">
-                <a href="{% url 'store_review_list' pk=store.pk %}" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text dark:text-darktext font-bold py-2 px-4 rounded-lg">
+                <a href="{% url 'store_review_list' pk=store.pk %}" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text dark:text-darktext font-bold py-2 px-4 rounded-lg transition-colors">
                     See All Reviews
                 </a>
-                <a href="{% url 'store_review_create' pk=store.pk %}" class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                <a href="{% url 'store_review_create' pk=store.pk %}" class="bg-accent hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
                     Write a Review
                 </a>
             </div>
@@ -58,8 +106,8 @@
     <h2 class="text-2xl font-bold text-text dark:text-darktext mb-4">All products from {{ store.name }}</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {% for product in products %}
-            <div class="bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded-lg shadow flex flex-col group transition-shadow hover:shadow-xl">
-                <a href="{% url 'product_detail' pk=product.pk %}" class="overflow-hidden rounded-t-lg">
+            <div class="bg-surface dark:bg-darksurface border border-border dark:border-darkborder rounded-lg shadow flex flex-col group transition-all hover:shadow-xl hover:-translate-y-1">
+                <a href="{% url 'product_detail' pk=product.pk %}" class="overflow-hidden rounded-t-lg relative">
                     {% if product.image %}
                         <img class="h-48 w-full object-cover group-hover:scale-105 transition-transform duration-300" src="{{ product.image.url }}" alt="{{ product.name }}" />
                     {% else %}
@@ -67,17 +115,74 @@
                             <span class="text-gray-500 dark:text-gray-400">no image</span>
                         </div>
                     {% endif %}
+                    
+                    {% if product.stock == 0 %}
+                        <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                            <span class="text-white font-bold border-2 border-white px-3 py-1 rounded">OUT OF STOCK</span>
+                        </div>
+                    {% endif %}
                 </a>
                 <div class="p-5 flex-grow flex flex-col">
                     <a href="{% url 'product_detail' pk=product.pk %}">
-                        <h5 class="mb-2 text-xl font-bold tracking-tight text-text dark:text-darktext group-hover:text-accent transition-colors">{{ product.name }}</h5>
+                        <h5 class="mb-2 text-xl font-bold tracking-tight text-text dark:text-darktext group-hover:text-accent transition-colors line-clamp-1">{{ product.name }}</h5>
                     </a>
-                    <p class="mb-3 font-normal text-lg text-accent">{{ product.price }} บาท</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">{{ product.description }}</p>
+                    <div class="mt-auto flex justify-between items-center">
+                        <p class="font-bold text-lg text-accent">{{ product.price }} ฿</p>
+                        <span class="text-xs text-gray-400">{{ product.stock }} left</span>
+                    </div>
                 </div>
             </div>
         {% empty %}
-            <p class="col-span-full text-center text-gray-500 dark:text-gray-400 py-10">This store doesn't have any products yet.</p>
+            <div class="col-span-full text-center py-16 bg-surface dark:bg-darksurface rounded-lg border border-dashed border-border dark:border-darkborder">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <p class="text-gray-500 dark:text-gray-400 text-lg">This store doesn't have any products yet.</p>
+            </div>
         {% endfor %}
     </div>
 </div>
+
+<!-- JavaScript สำหรับปุ่ม Follow (AJAX) -->
+<script>
+function toggleFollowStore(storeId) {
+    fetch(`/stores/store/${storeId}/follow/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.status === 403 || response.status === 401) {
+            // ถ้ายังไม่ล็อกอิน ให้เด้งไปหน้า Login
+            window.location.href = "{% url 'login' %}";
+            return;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data) {
+            const btn = document.getElementById('follow-btn');
+            const count = document.getElementById('follower-count');
+            
+            // อัปเดตตัวเลข
+            count.innerText = data.count;
+
+            // อัปเดตปุ่ม
+            if (data.following) {
+                btn.innerText = "Following";
+                btn.classList.remove('bg-accent', 'text-white', 'hover:bg-blue-600');
+                btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-text', 'dark:text-darktext', 'hover:bg-gray-300', 'dark:hover:bg-gray-600');
+            } else {
+                btn.innerText = "Follow";
+                btn.classList.add('bg-accent', 'text-white', 'hover:bg-blue-600');
+                btn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-text', 'dark:text-darktext', 'hover:bg-gray-300', 'dark:hover:bg-gray-600');
+            }
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
 {% endblock content %}

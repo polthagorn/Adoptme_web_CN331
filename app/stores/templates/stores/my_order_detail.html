@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load humanize %} <!-- อย่าลืม load humanize ถ้าจะใช้ intcomma -->
+
 {% block content %}
 <div class="container mx-auto px-4 py-8 max-w-3xl">
     <div class="flex justify-between items-center mb-6">
@@ -69,7 +71,16 @@
                             <a href="{% url 'product_detail' pk=item.product.pk %}" class="font-bold text-text dark:text-darktext hover:text-accent text-lg">
                                 {{ item.product.name }}
                             </a>
-                            <p class="text-sm text-gray-500">Qty: {{ item.quantity }} x ฿{{ item.price }}</p>
+                            <p class="text-sm text-gray-500">
+                                Qty: {{ item.quantity }} x ฿{{ item.price }}
+                                
+                                <!-- ✅ แสดงยอดประหยัด (ถ้ามี) -->
+                                {% if item.is_promotional %}
+                                    <span class="text-red-500 text-xs ml-1 font-bold">
+                                        (Discounted from ฿{{ item.original_price }})
+                                    </span>
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
 

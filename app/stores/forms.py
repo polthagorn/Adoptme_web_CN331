@@ -51,33 +51,52 @@ class StoreUpdateForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'description', 'price', 'image', 'stock']
+        fields = ['name', 'description', 'price', 'discount_price', 'image', 'stock']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         common_classes = "w-full p-2 border border-border dark:border-darkborder rounded-md bg-background dark:bg-darkbg text-text dark:text-darktext focus:ring-accent focus:border-accent"
         self.fields['name'].widget.attrs.update({'class': common_classes})
         self.fields['description'].widget.attrs.update({'class': common_classes, 'rows': 4})
-        self.fields['price'].widget.attrs.update({'class': common_classes, 'type': 'number', 'step': '0.01'})
+        self.fields['price'].widget.attrs.update({'class': common_classes, 'type': 'number', 'step': '1'})
         self.fields['image'].widget.attrs.update({'class': 'w-full text-sm text-text dark:text-darktext border border-border dark:border-darkborder rounded-lg cursor-pointer bg-background dark:bg-darkbg'})
         self.fields['stock'].widget.attrs.update({'class': common_classes, 'type': 'number'})
+        self.fields['discount_price'].widget.attrs.update({
+            'class': common_classes, 
+            'placeholder': 'Optional: Leave blank if no discount'
+        })
+
+    def clean(self):
+        cleaned_data = super().clean()
+        price = cleaned_data.get('price')
+        discount_price = cleaned_data.get('discount_price')
+
+        if price and discount_price:
+            if discount_price >= price:
+                self.add_error('discount_price', "Discount price must be lower than the original price.")
+            if discount_price <= 0:
+                self.add_error('discount_price', "Discount price must be greater than 0.")
+        
+        return cleaned_data
 
 class StoreReviewForm(forms.ModelForm):
     class Meta:
         model = StoreReview
-        fields = ['rating', 'comment']
+        fields = ['rating', 'comment', 'image']
         widgets = {
             'rating': forms.Select(attrs={'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
             'comment': forms.Textarea(attrs={'rows': 4, 'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
+             'image': forms.FileInput(attrs={'class': 'w-full text-sm text-text dark:text-darktext border border-border dark:border-darkborder rounded-lg cursor-pointer bg-background dark:bg-darkbg focus:outline-none'})
         }
 
 class ProductReviewForm(forms.ModelForm):
     class Meta:
         model = ProductReview
-        fields = ['rating', 'comment']
+        fields = ['rating', 'comment', 'image']
         widgets = {
             'rating': forms.Select(attrs={'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
             'comment': forms.Textarea(attrs={'rows': 4, 'class': 'w-full p-2 ...'}), # ใส่คลาส Tailwind
+            'image': forms.FileInput(attrs={'class': 'w-full text-sm text-text dark:text-darktext border border-border dark:border-darkborder rounded-lg cursor-pointer bg-background dark:bg-darkbg focus:outline-none'})
         }
 
 class AddToCartForm(forms.Form):

@@ -5,17 +5,38 @@
 {% block content %}
 <div class="max-w-2xl mx-auto bg-surface dark:bg-darksurface p-8 rounded-lg shadow-md border border-border dark:border-darkborder">
     
-    <form method="POST">
+    <!-- เพิ่ม enctype="multipart/form-data" เพื่อให้ส่งรูปได้ -->
+    <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <fieldset>
             <legend class="text-2xl font-bold text-text dark:text-darktext border-b border-border dark:border-darkborder pb-4 mb-6">
                 Write a Review for "{{ target_object.name }}"
             </legend>
             
-            <!-- แสดงฟิลด์ Rating -->
-            <div class="mb-5">
-                <label for="{{ form.rating.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">Rating</label>
-                {{ form.rating }}
+            <!-- ส่วน Rating แบบดาว (Interactive Star Rating) -->
+            <div class="mb-6">
+                <label class="block mb-2 text-sm font-medium text-text dark:text-darktext">Rating</label>
+                
+                <!-- ซ่อน Input จริงของ Django ไว้ -->
+                <div class="hidden">
+                    {{ form.rating }}
+                </div>
+
+                <!-- แสดงดาวสำหรับกดเลือก -->
+                <div class="flex items-center space-x-1" id="star-rating-container">
+                    {% for i in "12345" %}
+                    <button type="button" 
+                            data-value="{{ i }}"
+                            class="star-btn focus:outline-none transition-transform transform hover:scale-110">
+                        <svg class="w-8 h-8 text-gray-300 dark:text-gray-600 hover:text-yellow-400" 
+                             fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                    </button>
+                    {% endfor %}
+                    <span id="rating-text" class="ml-3 text-sm font-medium text-gray-500 dark:text-gray-400">Select a rating</span>
+                </div>
+
                 {% if form.rating.errors %}
                     <div class="text-red-500 text-sm mt-1">
                         {% for error in form.rating.errors %}
@@ -38,26 +59,91 @@
                 {% endif %}
             </div>
 
+            <!--  แสดงฟิลด์ Image  -->
+            <div class="mb-5">
+                <label for="{{ form.image.id_for_label }}" class="block mb-2 text-sm font-medium text-text dark:text-darktext">
+                    Add Photo (Optional)
+                </label>
+                {{ form.image }}
+                {% if form.image.errors %}
+                    <div class="text-red-500 text-sm mt-1">
+                        {% for error in form.image.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
         </fieldset>
 
         <div class="mt-6 flex flex-col-reverse sm:flex-row gap-3">
-            <!-- ปุ่ม Cancel (เปลี่ยนลิงก์ตามประเภทรีวิว) -->
-            {% if review_type == 'Store' %}
-                <a href="{% url 'store_profile' pk=target_object.pk %}" class="w-full sm:w-auto text-center bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text dark:text-darktext font-medium rounded-lg text-sm px-5 py-2.5">
-                    Cancel
-                </a>
-            {% elif review_type == 'Product' %}
-                <a href="{% url 'product_detail' pk=target_object.pk %}" class="w-full sm:w-auto text-center bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text dark:text-darktext font-medium rounded-lg text-sm px-5 py-2.5">
-                    Cancel
-                </a>
-            {% endif %}
+            <!-- ปุ่ม Cancel -->
+            <button type="button" onclick="history.back()" class="w-full sm:w-auto text-center bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text dark:text-darktext font-medium rounded-lg text-sm px-5 py-2.5 transition-colors">
+                Cancel
+            </button>
 
             <!-- ปุ่ม Submit -->
-            <button type="submit" class="w-full sm:flex-1 text-white bg-accent hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+            <button type="submit" class="w-full sm:flex-1 text-white bg-accent hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors shadow-lg">
                 Submit Review
             </button>
         </div>
     </form>
 
 </div>
+
+<!-- JavaScript สำหรับจัดการดาว -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('.star-btn');
+    const ratingInput = document.querySelector('select[name="rating"]'); // หา input ของ Django
+    const ratingText = document.getElementById('rating-text');
+    const ratingLabels = ["Very Bad", "Bad", "Okay", "Good", "Excellent"];
+
+    // ฟังก์ชันอัปเดตสีดาว
+    function updateStars(value) {
+        stars.forEach(star => {
+            const starValue = parseInt(star.getAttribute('data-value'));
+            const svg = star.querySelector('svg');
+            
+            if (starValue <= value) {
+                svg.classList.remove('text-gray-300', 'dark:text-gray-600');
+                svg.classList.add('text-yellow-400');
+            } else {
+                svg.classList.add('text-gray-300', 'dark:text-gray-600');
+                svg.classList.remove('text-yellow-400');
+            }
+        });
+        
+        if (value > 0) {
+            ratingText.textContent = ratingLabels[value - 1];
+            ratingText.classList.add('text-accent');
+        }
+    }
+
+    // Event Listener เมื่อกดดาว
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
+            ratingInput.value = value; // อัปเดตค่าลงใน Hidden Input ของ Django
+            updateStars(value);
+        });
+        
+        // Hover Effect (Optional: ถ้าอยากให้ Hover แล้วเปลี่ยนสีด้วย)
+        star.addEventListener('mouseenter', function() {
+            const value = this.getAttribute('data-value');
+            updateStars(value);
+        });
+    });
+
+    // Reset stars when mouse leaves container (กลับไปเป็นค่าที่เลือกไว้)
+    document.getElementById('star-rating-container').addEventListener('mouseleave', function() {
+        updateStars(ratingInput.value || 0);
+    });
+
+    // Init: ถ้ามีค่าเดิมอยู่แล้ว (กรณี Form Error) ให้แสดงดาวตามนั้น
+    if (ratingInput.value) {
+        updateStars(ratingInput.value);
+    }
+});
+</script>
 {% endblock content %}

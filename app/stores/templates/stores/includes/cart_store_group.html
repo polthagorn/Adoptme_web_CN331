@@ -1,5 +1,3 @@
-<!-- app/stores/templates/stores/includes/cart_store_group.html -->
-
 <div class="bg-surface dark:bg-darksurface rounded-lg shadow-sm border border-border dark:border-darkborder overflow-hidden mb-4">
     <!-- Store Header -->
     <div class="bg-gray-50 dark:bg-gray-800 p-4 border-b border-border dark:border-darkborder flex items-center">
@@ -44,9 +42,17 @@
                 <a href="{% url 'product_detail' pk=item.product.pk %}" class="text-lg font-medium text-text dark:text-darktext hover:text-accent line-clamp-1">
                     {{ item.product.name }}
                 </a>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                    Unit Price: ฿{{ item.product.price }} | Stock: {{ item.product.stock }}
-                </p>
+                
+                <!-- ✅ แสดงราคาต่อหน่วย (Unit Price) -->
+                <div class="text-sm text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-2">
+                    {% if item.product.is_on_sale %}
+                        <span class="text-red-500 font-bold">฿{{ item.product.discount_price }}</span>
+                        <span class="line-through text-xs">฿{{ item.product.price }}</span>
+                    {% else %}
+                        <span>Unit Price: ฿{{ item.product.price }}</span>
+                    {% endif %}
+                    <span>| Stock: {{ item.product.stock }}</span>
+                </div>
                 
                 <div class="flex justify-between items-center mt-2">
                     <!-- Quantity Control -->

@@ -7,6 +7,11 @@ from .models import ShelterProfile
 from .forms import ShelterRegistrationForm, ShelterUpdateForm
 from app.posts.models import Post
 from app.posts.forms import PostForm
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.views.generic import ListView
+from app.accounts.models import Notification
 
 class ShelterRegisterView(LoginRequiredMixin, CreateView):
     model = ShelterProfile
@@ -58,5 +63,43 @@ class PublicShelterProfileView(DetailView):
         context = super().get_context_data(**kwargs)
         shelter = self.get_object()
         context['shelter_posts'] = Post.objects.filter(shelter=shelter).order_by('-created_at')
+        if self.request.user.is_authenticated:
+            context['is_following'] = self.request.user in shelter.followers.all()
+        else:
+            context['is_following'] = False
+            
         return context
     
+
+
+@login_required
+@require_POST
+def follow_shelter(request, pk):
+    shelter = get_object_or_404(ShelterProfile, pk=pk)
+    
+    # ป้องกันไม่ให้เจ้าของ Shelter กดติดตามตัวเอง (Optional)
+    if shelter.user == request.user:
+        return JsonResponse({'error': 'You cannot follow your own shelter.'}, status=403)
+
+    if request.user in shelter.followers.all():
+        shelter.followers.remove(request.user)
+        is_following = False
+    else:
+        shelter.followers.add(request.user)
+        is_following = True
+
+    # ส่วนแจ้งเตือน 
+    if request.user != shelter.user:
+        Notification.objects.create(
+            user=shelter.user,
+            actor=request.user,
+            notification_type='system',
+            message=f"{request.user.username} started following your shelter."
+        )
+
+    return JsonResponse({
+        'is_following': is_following,
+        'follower_count': shelter.followers.count()
+    })
+    
+

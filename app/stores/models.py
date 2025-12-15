@@ -1,9 +1,8 @@
 # app/stores/models.py
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import pre_save
 from django.dispatch import receiver
-from app.accounts.models import Notification
+from django.db.models.signals import pre_save, post_save
 
 class Store(models.Model):
     # --- ย้ายโค้ดทั้งหมดนี้เข้ามาในคลาส Store ---
@@ -39,17 +38,58 @@ class Store(models.Model):
     payment_qr = models.ImageField(upload_to='store_qrs/', null=True, blank=True, verbose_name="Payment QR Code")
     bank_details = models.TextField(null=True, blank=True, verbose_name="Bank Account Details (Optional)")
 
+    followers = models.ManyToManyField(User, related_name='following_stores', blank=True)
+
     def __str__(self): # pragma: no cover
         return self.name
+    
+    # Helper Function: ตรวจสอบว่าสินค้ากำลังลดราคาอยู่หรือไม่
+    @property
+    def is_on_sale(self):
+        return self.discount_price is not None and self.discount_price > 0 and self.discount_price < self.price
+
+    # Helper Function: ดึงราคาขายจริง (ถ้าลดก็เอาราคาลด ถ้าไม่ลดก็ราคาเต็ม)
+    @property
+    def sell_price(self):
+        if self.is_on_sale:
+            return self.discount_price
+        return self.price
 
 class Product(models.Model):
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='products')
     name = models.CharField(max_length=255, verbose_name="product name")
     description = models.TextField(verbose_name="product description")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="product price")
+    discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Discount Price")
     image = models.ImageField(upload_to='product_images/', blank=True, null=True, verbose_name="product image")
     stock = models.PositiveIntegerField(default=0, verbose_name="stock quantity")
     created_at = models.DateTimeField(auto_now_add=True)
+    discount_price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True, 
+        verbose_name="Discount Price (Optional)"
+    )
+
+    # Helper: เช็คว่าสินค้านี้ลดราคาอยู่ไหม
+    @property
+    def is_on_sale(self):
+        return self.discount_price is not None and 0 < self.discount_price < self.price
+
+    # Helper: คืนค่าราคาขายจริง (ถ้าลดก็เอาราคาลด ถ้าไม่ลดก็ราคาเต็ม)
+    @property
+    def sell_price(self):
+        if self.is_on_sale:
+            return self.discount_price
+        return self.price
+
+    # Helper: คำนวณ % ส่วนลด (เอาไว้โชว์ป้าย -20%)
+    @property
+    def discount_percent(self):
+        if self.is_on_sale:
+            return int(((self.price - self.discount_price) / self.price) * 100)
+        return 0
 
     def __str__(self): # pragma: no cover
         return self.name
@@ -60,6 +100,7 @@ class StoreReview(models.Model):
     rating = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 6)]) # 1-5 ดาว
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(upload_to='store_reviews/', blank=True, null=True, verbose_name="Review Image")
 
     class Meta:
         ordering = ['-created_at']
@@ -76,11 +117,12 @@ class ProductReview(models.Model):
     rating = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 6)]) # 1-5 ดาว
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(upload_to='product_reviews/', blank=True, null=True, verbose_name="Review Image")
 
     class Meta:
         ordering = ['-created_at']
         # บังคับให้ 1 user รีวิว 1 สินค้าได้แค่ครั้งเดียว
-        unique_together = ('product', 'author')
+        unique_together = ('product', 'author', 'order')
 
     def __str__(self):
         return f'{self.rating} stars for {self.product.name} by {self.author.username}'
@@ -118,7 +160,7 @@ class CartItem(models.Model):
 
     @property
     def total_price(self):
-        return self.product.price * self.quantity
+        return self.product.sell_price * self.quantity
 
 # -- เพิ่มโค้ดสำหรับการสั่งซื้อสินค้า (Orders) ---
 
@@ -153,6 +195,7 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2) # ราคาต่อชิ้นตอนที่กดซื้อ
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
@@ -160,6 +203,7 @@ class OrderItem(models.Model):
     @property
     def total_price(self):
         return self.price * self.quantity
+        
 
 # สร้าง Model สำหรับแจ้งชำระเงิน (Payment)
 class Payment(models.Model):
