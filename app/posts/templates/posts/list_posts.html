@@ -111,11 +111,18 @@
         <div>
             <label class="block text-sm font-semibold mb-1">Animal Type</label>
             <select name="animal_type" class="p-2 border rounded-lg dark:bg-darksurface text-sm">
-                <option value="">All</option>
-                <option value="dog" {% if selected_animal_type == "dog" %}selected{% endif %}>Dog</option>
-                <option value="cat" {% if selected_animal_type == "cat" %}selected{% endif %}>Cat</option>
-                <option value="bird" {% if selected_animal_type == "bird" %}selected{% endif %}>Bird</option>
-                <option value="other" {% if selected_animal_type == "other" %}selected{% endif %}>Other</option>
+                <option value="">ทั้งหมด</option>
+                <option value="dog" {% if selected_animal_type == "dog" %}selected{% endif %}>สุนัข</option>
+                <option value="cat" {% if selected_animal_type == "cat" %}selected{% endif %}>แมว</option>
+                <option value="bird" {% if selected_animal_type == "bird" %}selected{% endif %}>นก</option>
+                <option value="rabbit" {% if selected_animal_type == "rabbit" %}selected{% endif %}>กระต่าย</option>
+                <option value="hamster" {% if selected_animal_type == "hamster" %}selected{% endif %}>แฮมสเตอร์</option>
+                <option value="small_pet" {% if selected_animal_type == "small_pet" %}selected{% endif %}>-สัตวจิ๋ว-</option>
+                <option value="reptile" {% if selected_animal_type == "reptile" %}selected{% endif %}>สัตว์เลื้อยคลาน</option>
+                <option value="fish" {% if selected_animal_type == "fish" %}selected{% endif %}>ปลา</option>
+                <option value="invertebrate" {% if selected_animal_type == "invertebrate" %}selected{% endif %}>สัตว์ไม่มีกระดูกสันหลัง</option>
+                <option value="fox" {% if selected_animal_type == "fox" %}selected{% endif %}>  จิ้งจอก</option>
+                <option value="other" {% if selected_animal_type == "other" %}selected{% endif %}>อื่นๆ</option>
             </select>
         </div>
         <button type="submit" class="h-[38px] px-4 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent/90">Apply</button>

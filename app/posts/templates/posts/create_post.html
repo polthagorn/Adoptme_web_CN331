@@ -40,7 +40,7 @@
       {% endif %}
     </div>
 
-    <!-- ⭐ TAG FIELD (DROPDOWN) -->
+    <!-- TAG FIELD (DROPDOWN) -->
     <div>
       <label for="id_tag" class="block text-sm font-semibold mb-2">หมวดหมู่โพสต์</label>
       {{ form.tag }}
@@ -49,7 +49,7 @@
       {% endif %}
     </div>
 
-    <!-- 🐾 ANIMAL TYPE + RACE -->
+    <!--  ANIMAL TYPE + RACE -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Animal Type -->
       <div>
@@ -76,7 +76,7 @@
       </div>
     </div>
 
-    <!-- ⭐ LOCATION TEXT FIELD -->
+    <!--  LOCATION TEXT FIELD -->
     <div>
       <label for="id_location" class="block text-sm font-semibold mb-2">สถานที่ (ตัวหนังสือ)</label>
       {{ form.location }}
@@ -88,7 +88,7 @@
       </p>
     </div>
 
-    <!-- 📍 MAP + SEARCH -->
+    <!--  MAP + SEARCH -->
     <div class="space-y-2">
       <label class="block text-sm font-semibold mb-2">เลือกตำแหน่งบนแผนที่</label>
 
@@ -135,7 +135,7 @@
   crossorigin="">
 </script>
 
-<!-- 🔍 Leaflet Geocoder plugin (search bar using OpenStreetMap Nominatim) -->
+<!--  Leaflet Geocoder plugin (search bar using OpenStreetMap Nominatim) -->
 <link
   rel="stylesheet"
   href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
@@ -184,7 +184,7 @@
       reverseGeocode(lat, lng);
     });
 
-    // 🔍 Search bar
+    //  Search bar
     const geocoderControl = L.Control.geocoder({
       collapsed: false,
       placeholder: "Search place...",
@@ -206,7 +206,7 @@
     .addTo(map);
 
 
-    // ⭐ REVERSE GEOCODING FUNCTION
+    //  REVERSE GEOCODING FUNCTION
     function reverseGeocode(lat, lng) {
       const url =
         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
