@@ -169,13 +169,6 @@
               🐞 Report Bug / Glitches
             </a>
 
-            {% if request.user.is_staff or request.user.is_superuser %}
-              <div class="border-t border-border dark:border-darkborder"></div>
-              <a href="{% url 'admin_report_list' %}"
-                 class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-white/5 transition font-semibold">
-                🛡️ Reports Admin
-              </a>
-            {% endif %}
           </div>
         </div>
 
